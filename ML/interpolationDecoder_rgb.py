@@ -36,7 +36,6 @@ for x in range(resolution):
 
 decoder.eval()
 for i in range(num_interp):
-    # interp_late_vecs = (i/(num_interp-1) * lat_vecs(idx[id_car_A]) + (1 - i/(num_interp-1)) * lat_vecs(idx[id_car_B])).repeat(num_samples_per_scene,1)
     interp_late_vecs = (i/(num_interp-1) * lat_vecs(idx[id_car_A]) + (1 - i/(num_interp-1)) * lat_vecs(idx[id_car_B])).repeat(resolution * resolution,1)
     
     # free variable for memory space
@@ -46,11 +45,6 @@ for i in range(num_interp):
         print("sdf_pred wasn't defined")
 
     # decode
-    # sdf_pred = decoder(interp_late_vecs,xyz)
-    
-    # sdf_pred[:,0] = sdf_pred[:,0] * resolution
-    # sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
-    # sdf_pred[:,1:] = sdf_pred[:,1:] * 255
 
     sdf_result = np.empty([resolution, resolution, resolution, 4])
 
@@ -64,14 +58,13 @@ for i in range(num_interp):
         for y in range(resolution):
             for z in range(resolution):
                 sdf_result[x,y,z,:] = sdf_pred[y * resolution + z,:].detach().cpu()
-                # sdf_result[x,y,z,:] = sdf_pred[x * resolution * resolution + y * resolution + z,:].detach().cpu()
 
     print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result[:,:,:,0]), np.max(sdf_result[:,:,:,0])))
     if(np.min(sdf_result[:,:,:,0]) < 0 and np.max(sdf_result[:,:,:,0]) > 0):
         vertices, faces = marching_cubes(sdf_result[:,:,:,0])
         colors_v = exctract_colors_v(vertices, sdf_result)
         colors_f = exctract_colors_f(colors_v, faces)
-        off_file = 'output/interpolation/%d.off' % i
+        off_file = '../../data_processing/output_interpolation/%d.off' % i
         write_off(off_file, vertices, faces, colors_f)
         print('Wrote %s.' % off_file)
     else:

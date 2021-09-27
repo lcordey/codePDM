@@ -16,7 +16,7 @@ LATENT_VECS_PATH = "models_pth/latent_vecs.pth"
 MODEL_PATH_TEST = "models_pth/decoderSDF_TEST.pth"
 LATENT_VECS_PATH_TEST = "models_pth/latent_vecs_TEST.pth"
 
-input_file = "../../data_processing/rgb/sdf_12_cars.h5"
+input_file = "../../data_processing/sdf_12_cars.h5"
 
 latent_size = 16
 num_epoch = 50000
@@ -167,6 +167,9 @@ else:
     torch.save(decoder, MODEL_PATH)
     torch.save(lat_vecs, LATENT_VECS_PATH)
 
+
+print("final loss: {:f}".format(torch.Tensor(log_loss_sdf[-100:]).mean()))
+
 #save logs plot
 avrg_loss = []
 avrg_loss_sdf = []
@@ -175,6 +178,7 @@ for i in range(0,len(log_loss)):
     avrg_loss.append(torch.Tensor(log_loss[i-20:i]).mean())
     avrg_loss_sdf.append(torch.Tensor(log_loss_sdf[i-20:i]).mean())
     avrg_loss_rgb.append(torch.Tensor(log_loss_rgb[i-20:i]).mean())
+    
 
 import pickle
 with open("logs/log.txt", "wb") as fp:
@@ -184,15 +188,12 @@ from matplotlib import pyplot as plt
 plt.figure()
 plt.title("Total loss")
 plt.semilogy(avrg_loss[:])
-plt.savefig("logs/log_total")
+plt.savefig("../../data_processing/logs/log_total")
 plt.figure()
 plt.title("SDF loss")
 plt.semilogy(avrg_loss_sdf[:])
-plt.savefig("logs/log_sdf")
+plt.savefig("../../data_processing/logs/log_sdf")
 plt.figure()
 plt.title("RGB loss")
 plt.semilogy(avrg_loss_rgb[:])
-plt.savefig("logs/log_rgb")
-
-
-print("final loss: {:f}".format(torch.Tensor(log_loss_sdf[-100:]).mean()))
+plt.savefig("../../data_processing/logs/log_rgb")

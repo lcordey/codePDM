@@ -60,7 +60,7 @@ for i in range(num_scenes):
         vertices, faces = marching_cubes(sdf_result[:,:,:,0])
         colors_v = exctract_colors_v(vertices, sdf_result)
         colors_f = exctract_colors_f(colors_v, faces)
-        off_file = 'output/prediction/%d.off' % i
+        off_file = '../../data_processing/output_prediction/%d.off' % i
         write_off(off_file, vertices, faces, colors_f)
         print('Wrote %s.' % off_file)
     else:
