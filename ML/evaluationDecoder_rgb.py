@@ -2,7 +2,7 @@ import torch
 
 from marching_cubes_rgb import *
 
-TESTING = True
+TESTING = False
 
 resolution = 64
 num_samples_per_scene = resolution * resolution * resolution

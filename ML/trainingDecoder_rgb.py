@@ -8,7 +8,7 @@ from marching_cubes_rgb import *
 
 ###### parameter #####
 
-TESTING = True
+TESTING = False
 
 MODEL_PATH = "models_pth/decoderSDF.pth"
 LATENT_VECS_PATH = "models_pth/latent_vecs.pth"
