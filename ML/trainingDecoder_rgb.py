@@ -16,12 +16,12 @@ LATENT_VECS_PATH = "models_pth/latent_vecs.pth"
 MODEL_PATH_TEST = "models_pth/decoderSDF_TEST.pth"
 LATENT_VECS_PATH_TEST = "models_pth/latent_vecs_TEST.pth"
 
-# input_file = "../../data_processing/sdf_12_cars.h5"
-input_file = "../sdf/sdf_input.h5"
+input_file = "../../data_processing/sdf_12_cars.h5"
+# input_file = "../sdf/sdf_input.h5"
 
 latent_size = 16
-num_epoch = 50000
-batch_size = 10000
+num_epoch = 100000
+batch_size = 100000
 
 eta_decoder = 5e-3
 eta_latent_space = 1e-2
@@ -159,7 +159,6 @@ for epoch in range(num_epoch):
         sdf_pred[:,0].max() * resolution, sdf_pred[:,1:].min() * 255, sdf_pred[:,1:].max() * 255, optimizer.param_groups[0]['lr'], (lat_vecs.weight).std(), (lat_vecs.weight).mean()))
 
 
-
 #save model
 if (TESTING == True):
     torch.save(decoder, MODEL_PATH_TEST)
@@ -170,6 +169,53 @@ else:
 
 
 print("final loss: {:f}".format(torch.Tensor(log_loss_sdf[-100:]).mean()))
+
+
+#save sdf results
+sdf_output = np.empty([num_scenes , resolution, resolution, resolution, 4])
+
+decoder.eval()
+for i in range(num_scenes):
+    
+    # free variable for memory space
+    try:
+        del sdf_pred
+    except:
+        print("sdf_pred wasn't defined")
+
+    # decode
+    sdf_result = np.empty([resolution, resolution, resolution, 4])
+
+    for x in range(resolution):
+        
+        sdf_pred = decoder(lat_vecs(idx[i].repeat(resolution * resolution)),xyz[x * resolution * resolution: (x+1) * resolution * resolution])
+
+        sdf_pred[:,0] = sdf_pred[:,0] * resolution
+        sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
+        sdf_pred[:,1:] = sdf_pred[:,1:] * 255
+
+        for y in range(resolution):
+            for z in range(resolution):
+                sdf_result[x,y,z,:] = sdf_pred[y * resolution + z,:].detach().cpu()
+
+    sdf_output[i] = sdf_result
+
+    print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result[:,:,:,0]), np.max(sdf_result[:,:,:,0])))
+    if(np.min(sdf_result[:,:,:,0]) < 0 and np.max(sdf_result[:,:,:,0]) > 0):
+        vertices, faces = marching_cubes(sdf_result[:,:,:,0])
+        colors_v = exctract_colors_v(vertices, sdf_result)
+        colors_f = exctract_colors_f(colors_v, faces)
+        off_file = '../../data_processing/output_prediction/%d.off' % i
+        write_off(off_file, vertices, faces, colors_f)
+        print('Wrote %s.' % off_file)
+    else:
+        print("surface level: 0, should be comprise in between the minimum and maximum value")
+
+
+#save sdf
+with h5py.File('../sdf/sdf_output.h5', 'w') as f:
+    dset = f.create_dataset("tensor", data = sdf_output)
+
 
 #save logs plot
 avrg_loss = []
