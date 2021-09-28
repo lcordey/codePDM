@@ -17,8 +17,7 @@ LATENT_VECS_PATH = "models_pth/latent_vecs.pth"
 MODEL_PATH_TEST = "models_pth/decoderSDF_TEST.pth"
 LATENT_VECS_PATH_TEST = "models_pth/latent_vecs_TEST.pth"
 
-input_file = "../../data_processing/sdf.h5"
-# input_file = "../sdf/sdf_input.h5"
+input_file = "../../data_processing/sdf/sdf.h5"
 
 latent_size = 16
 num_epoch = 100000
@@ -216,7 +215,7 @@ for i in range(num_scenes):
 
 #save sdf
 # with h5py.File('../sdf/sdf_output.h5', 'w') as f:
-with h5py.File('../../data_processing/sdf_output.h5', 'w') as f:
+with h5py.File('../../data_processing/sdf/sdf_output.h5', 'w') as f:
     dset = f.create_dataset("tensor", data = sdf_output)
 
 
