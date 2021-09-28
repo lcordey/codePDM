@@ -20,11 +20,12 @@ input_file = "../../data_processing/sdf.h5"
 # input_file = "../sdf/sdf_input.h5"
 
 latent_size = 16
-num_epoch = 10000
-batch_size = 100000
+num_epoch = 100000
+batch_size = 10000
 
 eta_decoder = 5e-3
 eta_latent_space = 1e-2
+gammaLR = 0.99995
 
 # load file
 h5f = h5py.File(input_file, 'r')
@@ -50,7 +51,7 @@ for x in range(resolution):
             xyz[x * resolution * resolution + y * resolution + z, :] = torch.Tensor([x/(resolution-1)-0.5,y/(resolution-1)-0.5,z/(resolution-1)-0.5])
 
 for id in range(num_scenes):
-    if id%4 == 0:
+    if id%10 == 0:
         print(id)
     for x in range(resolution):
         for y in range(resolution):
@@ -95,7 +96,7 @@ optimizer = torch.optim.Adam(
     ]
 )
 
-scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9995)
+scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=gammaLR)
 
 
 
@@ -154,7 +155,7 @@ for epoch in range(num_epoch):
     optimizer.step()
     scheduler.step()
 
-    print("After {} epoch,  loss sdf: {:.5f}, loss rgb: {:.5f}, loss reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, lr: {:f}, lat_vec mean/std: {:.2f}/{:.2f}".format(\
+    print("After {} epoch,  loss sdf: {:.5f}, loss rgb: {:.5f}, loss reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, lr: {:f}, lat_vec std/mean: {:.2f}/{:.2f}".format(\
         epoch, torch.Tensor(log_loss_sdf[-10:]).mean(), torch.Tensor(log_loss_rgb[-10:]).mean(), torch.Tensor(log_loss_reg[-10:]).mean(), sdf_pred[:,0].min() * resolution, \
         sdf_pred[:,0].max() * resolution, sdf_pred[:,1:].min() * 255, sdf_pred[:,1:].max() * 255, optimizer.param_groups[0]['lr'], (lat_vecs.weight).std(), (lat_vecs.weight).mean()))
 
@@ -213,7 +214,8 @@ for i in range(num_scenes):
 
 
 #save sdf
-with h5py.File('../sdf/sdf_output.h5', 'w') as f:
+# with h5py.File('../sdf/sdf_output.h5', 'w') as f:
+with h5py.File('../../data_processing/sdf_output.h5', 'w') as f:
     dset = f.create_dataset("tensor", data = sdf_output)
 
 
