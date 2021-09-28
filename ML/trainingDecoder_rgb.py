@@ -2,6 +2,7 @@ import h5py
 import math
 import numpy as np
 import torch
+import pickle
 
 from decoderSDF_rgb import DecoderSDF
 from marching_cubes_rgb import *
@@ -229,10 +230,6 @@ for i in range(0,len(log_loss)):
     avrg_loss_rgb.append(torch.Tensor(log_loss_rgb[i-20:i]).mean())
     
 
-import pickle
-with open("logs/log.txt", "wb") as fp:
-    pickle.dump(avrg_loss, fp)
-
 from matplotlib import pyplot as plt
 plt.figure()
 plt.title("Total loss")
@@ -246,3 +243,6 @@ plt.figure()
 plt.title("RGB loss")
 plt.semilogy(avrg_loss_rgb[:])
 plt.savefig("../../data_processing/logs/log_rgb")
+
+with open("../../data_processing/logs/log.txt", "wb") as fp:
+    pickle.dump(avrg_loss, fp)
