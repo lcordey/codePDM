@@ -20,7 +20,7 @@ input_file = "../../data_processing/sdf.h5"
 # input_file = "../sdf/sdf_input.h5"
 
 latent_size = 16
-num_epoch = 100000
+num_epoch = 10000
 batch_size = 100000
 
 eta_decoder = 5e-3
@@ -95,7 +95,7 @@ optimizer = torch.optim.Adam(
     ]
 )
 
-scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99995)
+scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9995)
 
 
 
