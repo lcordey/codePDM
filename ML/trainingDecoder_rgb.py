@@ -20,12 +20,12 @@ LATENT_VECS_PATH_TEST = "models_pth/latent_vecs_TEST.pth"
 input_file = "../../data_processing/sdf/sdf.h5"
 
 latent_size = 16
-num_epoch = 100000
+num_epoch = 50000
 batch_size = 10000
 
-eta_decoder = 5e-3
-eta_latent_space = 1e-2
-gammaLR = 0.99995
+eta_decoder = 1e-3
+eta_latent_space = 2e-2
+gammaLR = 0.99990
 
 # load file
 h5f = h5py.File(input_file, 'r')

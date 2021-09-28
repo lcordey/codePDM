@@ -4,7 +4,7 @@ from marching_cubes_rgb import *
 
 TESTING = False
 
-resolution = 64
+resolution = 32
 num_samples_per_scene = resolution * resolution * resolution
 
 MODEL_PATH = "models_pth/decoderSDF.pth"
