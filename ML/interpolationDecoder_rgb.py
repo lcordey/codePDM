@@ -4,9 +4,9 @@ from marching_cubes_rgb import *
 
 TESTING = False
 
-id_car_A = 0
-id_car_B = 1
-num_interp = 7
+id_car_A = 1
+id_car_B = 2
+num_interp = 12
 
 resolution = 64
 num_samples_per_scene = resolution * resolution * resolution
