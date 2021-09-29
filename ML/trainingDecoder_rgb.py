@@ -26,7 +26,7 @@ batch_size = 10000
 
 eta_decoder = 1e-3
 eta_latent_space = 5e-3
-gammaLR = 0.99995
+gammaLR = 0.99997
 
 
 if __name__ == '__main__':
