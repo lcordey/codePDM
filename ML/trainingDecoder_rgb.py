@@ -21,12 +21,12 @@ LATENT_VECS_PATH_TEST = "models_pth/latent_vecs_TEST.pth"
 input_dir = "../../data_processing/sdf/"
 
 latent_size = 16
-num_epoch = 1000
+num_epoch = 10000
 batch_size = 10000
 
-eta_decoder = 1e-5
+eta_decoder = 1e-4
 eta_latent_space = 1e-4
-gammaLR = 0.99994
+gammaLR = 0.99990
 
 
 if __name__ == '__main__':
@@ -46,7 +46,8 @@ if __name__ == '__main__':
     # load file
     h5f = h5py.File(path_input, 'r')
 
-    sdf_data = torch.tensor(h5f["tensor"][()], dtype = torch.half)
+    # sdf_data = torch.tensor(h5f["tensor"][()], dtype = torch.half)
+    sdf_data = torch.tensor(h5f["tensor"][()])
 
     resolution = sdf_data.shape[1]
     num_samples_per_scene = resolution * resolution * resolution
@@ -57,7 +58,8 @@ if __name__ == '__main__':
 
     #fill tensors
     idx = torch.arange(num_scenes).type(torch.LongTensor).cuda()
-    xyz = torch.empty(num_samples_per_scene, 3,  dtype=torch.half).cuda()
+    # xyz = torch.empty(num_samples_per_scene, 3,  dtype=torch.half).cuda()
+    xyz = torch.empty(num_samples_per_scene, 3).cuda()
 
     for x in range(resolution):
         for y in range(resolution):
@@ -78,7 +80,8 @@ if __name__ == '__main__':
 
 
     # initialize random latent code for every shape
-    lat_vecs = torch.nn.Embedding(num_scenes, latent_size, dtype = torch.half).cuda()
+    # lat_vecs = torch.nn.Embedding(num_scenes, latent_size, dtype = torch.half).cuda()
+    lat_vecs = torch.nn.Embedding(num_scenes, latent_size).cuda()
     torch.nn.init.normal_(
         lat_vecs.weight.data,
         0.0,
@@ -97,12 +100,12 @@ if __name__ == '__main__':
             {
                 "params": decoder.parameters(),
                 "lr": eta_decoder,
-                "eps": 1e-5,
+                "eps": 1e-8,
             },
             {
                 "params": lat_vecs.parameters(),
                 "lr": eta_latent_space,
-                "eps": 1e-5,
+                "eps": 1e-8,
             },
         ]
     )
@@ -113,7 +116,7 @@ if __name__ == '__main__':
 
     ####################### Training loop ##########################
     decoder.train()
-    decoder.half()
+    # decoder.half()
 
     log_loss = []
     log_loss_sdf = []
