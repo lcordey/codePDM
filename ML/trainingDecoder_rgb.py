@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import pickle
 
-from torch._C import dtype
+from torch._C import dtype, float16
 
 from decoderSDF_rgb import DecoderSDF
 from marching_cubes_rgb import *
@@ -216,7 +216,7 @@ if __name__ == '__main__':
         sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
         sdf_pred[:,1:] = sdf_pred[:,1:] * 255
 
-        sdf_result = np.reshape(sdf_pred[:,:].detach().cpu(), [resolution, resolution, resolution, 4], dtype = np.float16)
+        sdf_result = np.reshape(sdf_pred[:,:].type(torch.float16).detach().cpu(), [resolution, resolution, resolution, 4])
 
         sdf_output[i] = sdf_result
 
