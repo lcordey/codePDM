@@ -17,7 +17,7 @@ LATENT_VECS_PATH = "models_pth/latent_vecs.pth"
 MODEL_PATH_TEST = "models_pth/decoderSDF_TEST.pth"
 LATENT_VECS_PATH_TEST = "models_pth/latent_vecs_TEST.pth"
 
-input_file = "../../data_processing/sdf/sdf_2_cars.h5"
+input_file = "../../data_processing/sdf/sdf.h5"
 
 latent_size = 16
 num_epoch = 100000
