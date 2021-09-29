@@ -32,6 +32,8 @@ for x in range(resolution):
 
 
 decoder.eval()
+decoder.half()
+
 for i in range(num_scenes):
     
     # free variable for memory space
@@ -51,16 +53,16 @@ for i in range(num_scenes):
         sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
         sdf_pred[:,1:] = sdf_pred[:,1:] * 255
 
-        for y in range(resolution):
-            for z in range(resolution):
-                sdf_result[x,y,z,:] = sdf_pred[y * resolution + z,:].detach().cpu()
+        sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:].detach().cpu(), [resolution, resolution, 4])
+
 
     print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result[:,:,:,0]), np.max(sdf_result[:,:,:,0])))
     if(np.min(sdf_result[:,:,:,0]) < 0 and np.max(sdf_result[:,:,:,0]) > 0):
         vertices, faces = marching_cubes(sdf_result[:,:,:,0])
         colors_v = exctract_colors_v(vertices, sdf_result)
         colors_f = exctract_colors_f(colors_v, faces)
-        off_file = '../../data_processing/output_prediction/%d.off' % i
+        # off_file = '../../data_processing/output_prediction/%d.off' % i
+        off_file = '../../data_processing/output_synthesized/%d.off' % i
         write_off(off_file, vertices, faces, colors_f)
         print('Wrote %s.' % off_file)
     else:
