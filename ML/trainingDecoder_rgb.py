@@ -4,6 +4,8 @@ import numpy as np
 import torch
 import pickle
 
+from torch._C import dtype
+
 from decoderSDF_rgb import DecoderSDF
 from marching_cubes_rgb import *
 
@@ -47,7 +49,7 @@ if __name__ == '__main__':
     h5f = h5py.File(path_input, 'r')
 
     # sdf_data = torch.tensor(h5f["tensor"][()], dtype = torch.half)
-    sdf_data = torch.tensor(h5f["tensor"][()])
+    sdf_data = torch.tensor(h5f["tensor"][()], dtype = torch.float)
 
     resolution = sdf_data.shape[1]
     num_samples_per_scene = resolution * resolution * resolution
