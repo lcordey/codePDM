@@ -201,24 +201,25 @@ if __name__ == '__main__':
         except:
             print("sdf_pred wasn't defined")
 
-        # sdf_result = np.empty([resolution, resolution, resolution, 4], dtype = np.float16)
-        # for x in range(resolution):
-            # sdf_pred = decoder(lat_vecs(idx[i].repeat(resolution * resolution)),xyz[x * resolution * resolution: (x+1) * resolution * resolution])
-
-            # sdf_pred[:,0] = sdf_pred[:,0] * resolution
-            # sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
-            # sdf_pred[:,1:] = sdf_pred[:,1:] * 255
-            # sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:].detach().cpu(), [resolution, resolution, 4])
-
-        sdf_pred = decoder(lat_vecs(idx[i].repeat(num_samples_per_scene)),xyz)
-
-        sdf_pred[:,0] = sdf_pred[:,0] * resolution
-        sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
-        sdf_pred[:,1:] = sdf_pred[:,1:] * 255
-
-
         sdf_result = np.empty([resolution, resolution, resolution, 4], dtype = np.float16)
-        sdf_result[:,:,:,:] = np.reshape(sdf_pred[:,:].type(torch.float16).detach().cpu(), [resolution, resolution, resolution, 4])
+        for x in range(resolution):
+            sdf_pred = decoder(lat_vecs(idx[i].repeat(resolution * resolution)),xyz[x * resolution * resolution: (x+1) * resolution * resolution])
+
+            sdf_pred[:,0] = sdf_pred[:,0] * resolution
+            sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
+            sdf_pred[:,1:] = sdf_pred[:,1:] * 255
+            
+            sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:].detach().cpu(), [resolution, resolution, 4])
+
+        # sdf_pred = decoder(lat_vecs(idx[i].repeat(num_samples_per_scene)),xyz)
+
+        # sdf_pred[:,0] = sdf_pred[:,0] * resolution
+        # sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
+        # sdf_pred[:,1:] = sdf_pred[:,1:] * 255
+
+
+        # sdf_result = np.empty([resolution, resolution, resolution, 4], dtype = np.float16)
+        # sdf_result[:,:,:,:] = np.reshape(sdf_pred[:,:].type(torch.float16).detach().cpu(), [resolution, resolution, resolution, 4])
 
         sdf_output[i] = sdf_result
 
