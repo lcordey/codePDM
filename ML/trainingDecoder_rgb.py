@@ -4,6 +4,8 @@ import numpy as np
 import torch
 import pickle
 
+from torch._C import dtype
+
 from decoderSDF_rgb import DecoderSDF
 from marching_cubes_rgb import *
 
@@ -199,26 +201,22 @@ if __name__ == '__main__':
         except:
             print("sdf_pred wasn't defined")
 
-        # decode
-        sdf_result = np.empty([resolution, resolution, resolution, 4], dtype = np.float16)
+        # sdf_result = np.empty([resolution, resolution, resolution, 4], dtype = np.float16)
+        # for x in range(resolution):
+            # sdf_pred = decoder(lat_vecs(idx[i].repeat(resolution * resolution)),xyz[x * resolution * resolution: (x+1) * resolution * resolution])
 
-        for x in range(resolution):
-            
-            sdf_pred = decoder(lat_vecs(idx[i].repeat(resolution * resolution)),xyz[x * resolution * resolution: (x+1) * resolution * resolution])
+            # sdf_pred[:,0] = sdf_pred[:,0] * resolution
+            # sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
+            # sdf_pred[:,1:] = sdf_pred[:,1:] * 255
+            # sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:].detach().cpu(), [resolution, resolution, 4])
 
-            sdf_pred[:,0] = sdf_pred[:,0] * resolution
-            sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
-            sdf_pred[:,1:] = sdf_pred[:,1:] * 255
+        sdf_pred = decoder(lat_vecs(idx[i].repeat(num_samples_per_scene)),xyz)
 
-            # for y in range(resolution):
-            #     for z in range(resolution):
-            #         sdf_result[x,y,z,:] = sdf_pred[y * resolution + z,:].detach().cpu()
+        sdf_pred[:,0] = sdf_pred[:,0] * resolution
+        sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
+        sdf_pred[:,1:] = sdf_pred[:,1:] * 255
 
-            sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:].detach().cpu(), [resolution, resolution, 4])
-
-            ###### gt
-            # sdf_result[x, :, :, 0] = np.reshape(sdf_gt[i * num_samples_per_scene + x * resolution * resolution: i * num_samples_per_scene + (x + 1) * resolution * resolution].detach().cpu(), [resolution, resolution])
-            # sdf_result[x, :, :, 1:] = np.reshape(rgb_gt[i * num_samples_per_scene + x * resolution * resolution: i * num_samples_per_scene + (x + 1) * resolution * resolution,:].detach().cpu(), [resolution, resolution,3])
+        sdf_result = np.reshape(sdf_pred[:,:].detach().cpu(), [resolution, resolution, resolution, 4], dtype = np.float16)
 
         sdf_output[i] = sdf_result
 
