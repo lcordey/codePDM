@@ -25,8 +25,8 @@ num_epoch = 10000
 batch_size = 10000
 
 eta_decoder = 1e-3
-eta_latent_space = 1e-3
-gammaLR = 0.99990
+eta_latent_space = 1e-4
+gammaLR = 0.99950
 
 
 if __name__ == '__main__':
@@ -214,7 +214,9 @@ if __name__ == '__main__':
         sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
         sdf_pred[:,1:] = sdf_pred[:,1:] * 255
 
-        sdf_result = np.reshape(sdf_pred[:,:].type(torch.float16).detach().cpu(), [resolution, resolution, resolution, 4])
+
+        sdf_result = np.empty([resolution, resolution, resolution, 4], dtype = np.float16)
+        sdf_result[:,:,:,:] = np.reshape(sdf_pred[:,:].type(torch.float16).detach().cpu(), [resolution, resolution, resolution, 4])
 
         sdf_output[i] = sdf_result
 
