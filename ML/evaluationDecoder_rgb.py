@@ -32,7 +32,6 @@ for x in range(resolution):
 
 
 decoder.eval()
-decoder.half()
 
 for i in range(num_scenes):
     

@@ -28,6 +28,7 @@ else:
 num_scenes = len(lat_vecs.weight)
 idx = torch.arange(num_scenes).cuda()
 xyz = torch.empty(num_samples_per_scene, 3,  dtype=torch.float).cuda()
+
 for x in range(resolution):
     for y in range(resolution):
         for z in range(resolution):
@@ -56,9 +57,12 @@ for i in range(num_interp):
         sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
         sdf_pred[:,1:] = sdf_pred[:,1:] * 255
 
-        for y in range(resolution):
-            for z in range(resolution):
-                sdf_result[x,y,z,:] = sdf_pred[y * resolution + z,:].detach().cpu()
+        # for y in range(resolution):
+        #     for z in range(resolution):
+        #         sdf_result[x,y,z,:] = sdf_pred[y * resolution + z,:].detach().cpu()
+
+
+        sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:].detach().cpu(), [resolution, resolution, 4])
 
     print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result[:,:,:,0]), np.max(sdf_result[:,:,:,0])))
     if(np.min(sdf_result[:,:,:,0]) < 0 and np.max(sdf_result[:,:,:,0]) > 0):
