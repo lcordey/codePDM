@@ -4,8 +4,6 @@ import numpy as np
 import torch
 import pickle
 
-from torch._C import dtype, float16
-
 from decoderSDF_rgb import DecoderSDF
 from marching_cubes_rgb import *
 
@@ -26,8 +24,8 @@ latent_size = 16
 num_epoch = 10000
 batch_size = 10000
 
-eta_decoder = 1e-4
-eta_latent_space = 1e-4
+eta_decoder = 1e-3
+eta_latent_space = 1e-3
 gammaLR = 0.99990
 
 
