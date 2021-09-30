@@ -104,12 +104,12 @@ if __name__ == '__main__':
             {
                 "params": decoder.parameters(),
                 "lr": eta_decoder,
-                "eps": 1e-8,
+                "eps": 1e-4,
             },
             {
                 "params": lat_vecs.parameters(),
                 "lr": eta_latent_space,
-                "eps": 1e-8,
+                "eps": 1e-4,
             },
         ]
     )
