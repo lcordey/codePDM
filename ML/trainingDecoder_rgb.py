@@ -23,11 +23,11 @@ LATENT_VECS_PATH_TEST = "models_pth/latent_vecs_TEST.pth"
 input_dir = "../../data_processing/sdf/"
 
 latent_size = 16
-num_epoch = 100000
+num_epoch = 5000
 batch_size = 10000
 
 eta_decoder = 1e-3
-eta_latent_space = 5e-3
+eta_latent_space = 5e-2
 gammaLR = 0.99997
 
 
@@ -60,6 +60,7 @@ if __name__ == '__main__':
 
     #fill tensors
     idx = torch.arange(num_scenes).type(torch.LongTensor).cuda()
+
     # xyz = torch.empty(num_samples_per_scene, 3,  dtype=torch.half).cuda()
     xyz = torch.empty(num_samples_per_scene, 3).cuda()
 
@@ -82,6 +83,7 @@ if __name__ == '__main__':
 
 
     # initialize random latent code for every shape
+
     # lat_vecs = torch.nn.Embedding(num_scenes, latent_size, dtype = torch.half).cuda()
     lat_vecs = torch.nn.Embedding(num_scenes, latent_size).cuda()
     torch.nn.init.normal_(
@@ -176,7 +178,6 @@ if __name__ == '__main__':
             epoch, torch.Tensor(log_loss_sdf[-10:]).mean(), torch.Tensor(log_loss_rgb[-10:]).mean(), torch.Tensor(log_loss_reg[-10:]).mean(), sdf_pred[:,0].min() * resolution, \
             sdf_pred[:,0].max() * resolution, sdf_pred[:,1:].min() * 255, sdf_pred[:,1:].max() * 255, optimizer.param_groups[0]['lr'], (lat_vecs.weight).std(), (lat_vecs.weight).mean()))
 
-
     #save model
     if (TESTING == True):
         torch.save(decoder, MODEL_PATH_TEST)
@@ -186,7 +187,8 @@ if __name__ == '__main__':
         torch.save(lat_vecs, LATENT_VECS_PATH)
 
 
-    print("final loss: {:f}".format(torch.Tensor(log_loss_sdf[-100:]).mean()))
+    print("final loss sdf: {:f}".format(torch.Tensor(log_loss_sdf[-100:]).mean()))
+    print("final loss rgb: {:f}".format(torch.Tensor(log_loss_rgb[-100:]).mean()))
 
 
     #save sdf results
@@ -236,7 +238,6 @@ if __name__ == '__main__':
 
 
     #save sdf
-    # with h5py.File('../sdf/sdf_output.h5', 'w') as f:
     with h5py.File('../../data_processing/sdf/sdf_output_half.h5', 'w') as f:
         dset = f.create_dataset("tensor", data = sdf_output)
 
