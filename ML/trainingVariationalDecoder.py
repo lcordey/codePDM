@@ -26,7 +26,7 @@ num_epoch = 100000
 batch_size = 10000
 
 eta_decoder = 1e-3
-eta_latent_space_mu = 5e-2
+eta_latent_space_mu = 5e-3
 eta_latent_space_std = 5e-2
 gammaLR = 0.99997
 
@@ -168,11 +168,10 @@ if __name__ == '__main__':
         # regularization loss
         lambda_kl = 1/1000
         loss_kl = (-0.5 * (1 + lat_vecs_logstd.weight - lat_vecs_mu.weight.pow(2) - lat_vecs_logstd.weight.exp())).mean()
-        # loss_kl = (-0.5 * (1 - lat_vecs_mu.weight.pow(2))).mean()
         loss_kl = loss_kl * lambda_kl
 
-        # loss_pred = loss_sdf + loss_rgb + loss_kl
-        loss_pred = loss_sdf + loss_rgb
+        loss_pred = loss_sdf + loss_rgb + loss_kl
+        # loss_pred = loss_sdf + loss_rgb
 
         #log
         log_loss.append(loss_pred.detach().cpu())
@@ -189,8 +188,8 @@ if __name__ == '__main__':
             epoch, torch.Tensor(log_loss_sdf[-10:]).mean(), torch.Tensor(log_loss_rgb[-10:]).mean(), torch.Tensor(log_loss_reg[-10:]).mean(), sdf_pred[:,0].min() * resolution, \
             sdf_pred[:,0].max() * resolution, sdf_pred[:,1:].min() * 255, sdf_pred[:,1:].max() * 255, optimizer.param_groups[0]['lr'], (lat_vecs_logstd.weight.exp()).mean(), (lat_vecs_mu.weight).std()))
 
-        # print(lat_vecs_logstd(idx[0]).exp())
-        print(lat_vecs_mu(idx[0]))
+        print(lat_vecs_logstd(idx[0]).exp())
+        # print(lat_vecs_mu(idx[0]))
 
     #save model
     if (TESTING == True):
