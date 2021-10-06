@@ -201,7 +201,7 @@ temp_file = tempfile.NamedTemporaryFile()
 #save initial scene
 bpy.ops.wm.save_as_mainfile(filepath=init_temp_file.name)
 
-
+    
 with open('/home/loic/MasterPDM/image2sdf/vehicle_whitelist.txt') as f:
     whitelisted_vehicles = f.read().splitlines()
 
