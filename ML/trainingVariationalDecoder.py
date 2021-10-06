@@ -22,7 +22,7 @@ LATENT_VECS_PATH_TEST = "models_pth/latent_vecs_TEST.pth"
 input_dir = "../../data_processing/sdf/"
 
 latent_size = 16
-num_epoch = 100000
+num_epoch = 50000
 batch_size = 10000
 
 eta_decoder = 1e-3
