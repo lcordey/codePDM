@@ -4,7 +4,7 @@ from marching_cubes_rgb import *
 
 num_synthesized_scene = 10
 
-TESTING = False
+TESTING = True
 
 resolution = 100
 num_samples_per_scene = resolution * resolution * resolution

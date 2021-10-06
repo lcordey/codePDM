@@ -11,7 +11,7 @@ from marching_cubes_rgb import *
 
 ###### parameter #####
 
-TESTING = False
+TESTING = True
 
 MODEL_PATH = "models_pth/decoderSDF.pth"
 LATENT_VECS_PATH = "models_pth/latent_vecs.pth"
@@ -19,16 +19,16 @@ LATENT_VECS_PATH = "models_pth/latent_vecs.pth"
 MODEL_PATH_TEST = "models_pth/decoderSDF_TEST.pth"
 LATENT_VECS_PATH_TEST = "models_pth/latent_vecs_TEST.pth"
 
-# input_file = "../../data_processing/sdf/sdf.h5"
 input_dir = "../../data_processing/sdf/"
 
 latent_size = 16
-num_epoch = 5000
+num_epoch = 100000
 batch_size = 10000
 
 eta_decoder = 1e-3
-eta_latent_space = 1e-2
-gammaLR = 0.99995
+eta_latent_space_mu = 5e-2
+eta_latent_space_std = 5e-2
+gammaLR = 0.99997
 
 
 if __name__ == '__main__':
@@ -84,12 +84,17 @@ if __name__ == '__main__':
 
     # initialize random latent code for every shape
 
-    # lat_vecs = torch.nn.Embedding(num_scenes, latent_size, dtype = torch.half).cuda()
-    lat_vecs = torch.nn.Embedding(num_scenes, latent_size).cuda()
+    lat_vecs_mu = torch.nn.Embedding(num_scenes, latent_size).cuda()
     torch.nn.init.normal_(
-        lat_vecs.weight.data,
+        lat_vecs_mu.weight.data,
         0.0,
-        1.0 / math.sqrt(latent_size),
+        1.0,
+    )
+    lat_vecs_logstd = torch.nn.Embedding(num_scenes, latent_size).cuda()
+    torch.nn.init.normal_(
+        lat_vecs_logstd.weight.data,
+        0.0,
+        0.0,
     )
 
     # decoder
@@ -107,8 +112,13 @@ if __name__ == '__main__':
                 "eps": 1e-8,
             },
             {
-                "params": lat_vecs.parameters(),
-                "lr": eta_latent_space,
+                "params": lat_vecs_mu.parameters(),
+                "lr": eta_latent_space_mu,
+                "eps": 1e-8,
+            },
+            {
+                "params": lat_vecs_logstd.parameters(),
+                "lr": eta_latent_space_std,
                 "eps": 1e-8,
             },
         ]
@@ -134,7 +144,7 @@ if __name__ == '__main__':
         batch_sample_idx = np.random.randint(num_samples_per_scene, size = batch_size)
         batch_scenes_idx = np.random.randint(num_scenes, size = batch_size)
 
-        latent_code = lat_vecs(idx[batch_scenes_idx])
+        latent_code =  torch.empty_like(lat_vecs_logstd(idx[batch_scenes_idx])).normal_() * lat_vecs_logstd(idx[batch_scenes_idx]).exp() / 10 + lat_vecs_mu(idx[batch_scenes_idx])
 
         sdf_pred = decoder(latent_code, xyz[batch_sample_idx])
 
@@ -155,22 +165,20 @@ if __name__ == '__main__':
         loss_rgb = loss(reduction='none')(sdf_pred[:,1:], rgb_gt_normalized)
         loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean() * weight_sdf.numel()/weight_sdf.count_nonzero() * lambda_rgb
         
+        # regularization loss
+        lambda_kl = 1/100
+        loss_kl = (-0.5 * (1 + lat_vecs_logstd.weight - lat_vecs_mu.weight.pow(2) - lat_vecs_logstd.weight.exp())).mean()
+        # loss_kl = (-0.5 * (1 - lat_vecs_mu.weight.pow(2))).mean()
+        loss_kl = loss_kl * lambda_kl
 
-        #regularization loss
-        lambda_reg_std = 1/100
-        lambda_reg_mean = 1/100
-        loss_reg_std = lambda_reg_std * abs(1.0 / math.sqrt(latent_size) - (lat_vecs.weight).std())
-        loss_reg_mean = lambda_reg_mean * abs((lat_vecs.weight).mean())
-        loss_reg = loss_reg_mean + loss_reg_std
-
-
-        loss_pred = loss_sdf + loss_rgb + loss_reg_std + loss_reg_mean
+        # loss_pred = loss_sdf + loss_rgb + loss_kl
+        loss_pred = loss_sdf + loss_rgb
 
         #log
         log_loss.append(loss_pred.detach().cpu())
         log_loss_sdf.append(loss_sdf.detach().cpu())
         log_loss_rgb.append(loss_rgb.detach().cpu())
-        log_loss_reg.append(loss_reg.detach().cpu())
+        log_loss_reg.append(loss_kl.detach().cpu())
 
         #update weights
         loss_pred.backward()
@@ -179,15 +187,27 @@ if __name__ == '__main__':
 
         print("After {} epoch,  loss sdf: {:.5f}, loss rgb: {:.5f}, loss reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, lr: {:f}, lat_vec std/mean: {:.2f}/{:.2f}".format(\
             epoch, torch.Tensor(log_loss_sdf[-10:]).mean(), torch.Tensor(log_loss_rgb[-10:]).mean(), torch.Tensor(log_loss_reg[-10:]).mean(), sdf_pred[:,0].min() * resolution, \
-            sdf_pred[:,0].max() * resolution, sdf_pred[:,1:].min() * 255, sdf_pred[:,1:].max() * 255, optimizer.param_groups[0]['lr'], (lat_vecs.weight).std(), (lat_vecs.weight).mean()))
+            sdf_pred[:,0].max() * resolution, sdf_pred[:,1:].min() * 255, sdf_pred[:,1:].max() * 255, optimizer.param_groups[0]['lr'], (lat_vecs_logstd.weight.exp()).mean(), (lat_vecs_mu.weight).std()))
+
+        # print(lat_vecs_logstd(idx[0]).exp())
+        print(lat_vecs_mu(idx[0]))
 
     #save model
     if (TESTING == True):
         torch.save(decoder, MODEL_PATH_TEST)
-        torch.save(lat_vecs, LATENT_VECS_PATH_TEST)
+        torch.save(lat_vecs_mu, LATENT_VECS_PATH_TEST)
     else:
         torch.save(decoder, MODEL_PATH)
-        torch.save(lat_vecs, LATENT_VECS_PATH)
+        torch.save(lat_vecs_mu, LATENT_VECS_PATH)
+
+    
+    #save model
+    if (TESTING == True):
+        torch.save(decoder, MODEL_PATH_TEST)
+        torch.save(lat_vecs_mu, LATENT_VECS_PATH_TEST)
+    else:
+        torch.save(decoder, MODEL_PATH)
+        torch.save(lat_vecs_mu, LATENT_VECS_PATH)
 
 
     print("final loss sdf: {:f}".format(torch.Tensor(log_loss_sdf[-100:]).mean()))
@@ -208,7 +228,7 @@ if __name__ == '__main__':
 
         sdf_result = np.empty([resolution, resolution, resolution, 4], dtype = np.float16)
         for x in range(resolution):
-            sdf_pred = decoder(lat_vecs(idx[i].repeat(resolution * resolution)),xyz[x * resolution * resolution: (x+1) * resolution * resolution])
+            sdf_pred = decoder(lat_vecs_mu(idx[i].repeat(resolution * resolution)),xyz[x * resolution * resolution: (x+1) * resolution * resolution])
 
             sdf_pred[:,0] = sdf_pred[:,0] * resolution
             sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
