@@ -27,7 +27,7 @@ batch_size = 10000
 
 eta_decoder = 1e-3
 eta_latent_space_mu = 5e-3
-eta_latent_space_std = 5e-2
+eta_latent_space_std = 1e-2
 gammaLR = 0.99995
 
 

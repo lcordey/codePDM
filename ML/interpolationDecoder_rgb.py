@@ -2,7 +2,7 @@ import torch
 
 from marching_cubes_rgb import *
 
-TESTING = False
+TESTING = True
 
 id_car_A = 1
 id_car_B = 8

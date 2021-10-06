@@ -2,9 +2,9 @@ import torch
 
 from marching_cubes_rgb import *
 
-TESTING = False
+TESTING = True
 
-resolution = 32
+resolution = 64
 num_samples_per_scene = resolution * resolution * resolution
 
 MODEL_PATH = "models_pth/decoderSDF.pth"
@@ -60,8 +60,7 @@ for i in range(num_scenes):
         vertices, faces = marching_cubes(sdf_result[:,:,:,0])
         colors_v = exctract_colors_v(vertices, sdf_result)
         colors_f = exctract_colors_f(colors_v, faces)
-        # off_file = '../../data_processing/output_prediction/%d.off' % i
-        off_file = '../../data_processing/output_synthesized/%d.off' % i
+        off_file = '../../data_processing/output_prediction/%d.off' % i
         write_off(off_file, vertices, faces, colors_f)
         print('Wrote %s.' % off_file)
     else:
