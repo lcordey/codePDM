@@ -269,7 +269,7 @@ if __name__ == '__main__':
     else:
         print('Output directory exists; potentially overwriting contents.')
 
-    n = 0
+    # n = 0
     scale = max(args.height, args.width, args.depth)
 
     for filename in os.listdir(args.input):
@@ -315,5 +315,5 @@ if __name__ == '__main__':
         min, max = mesh.extents()
         print('%s extents after %f - %f, %f - %f, %f - %f.' % (os.path.basename(filepath), min[0], max[0], min[1], max[1], min[2], max[2]))
 
-        mesh.to_off(os.path.join(args.output, '%d.off' % n))
-        n += 1
+        mesh.to_off(os.path.join(args.output, '%s' % filename))
+        # n += 1

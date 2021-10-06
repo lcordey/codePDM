@@ -137,27 +137,36 @@ if __name__ == '__main__':
     parser.add_argument('output', type=str, help='Output directory for OFF files.')
 
     args = parser.parse_args()
+    
     if not os.path.exists(args.input):
         print('Input file does not exist.')
         exit(1)
 
-    if not os.path.exists(args.output):
-        os.makedirs(args.output)
-        print('Created output directory.')
-    else:
-        print('Output directory exists; potentially overwriting contents.')
-
     tensor = read_hdf5(args.input)
-    if len(tensor.shape) < 4:
-        tensor = np.expand_dims(tensor, axis=0)
+    if len(tensor.shape) == 5:
 
-    for n in range(tensor.shape[0]):
-        print('Minimum and maximum value: %f and %f. ' % (np.min(tensor[n,:,:,:,0]), np.max(tensor[n,:,:,:,0])))
-        vertices, faces = marching_cubes(tensor[n,:,:,:,0])
-        colors_v = exctract_colors_v(vertices, tensor[n,:,:,:,:])
+        if not os.path.exists(args.output):
+            os.makedirs(args.output)
+            print('Created output directory.')
+        else:
+            print('Output directory exists; potentially overwriting contents.')
+
+        for n in range(tensor.shape[0]):
+            print('Minimum and maximum value: %f and %f. ' % (np.min(tensor[n,:,:,:,0]), np.max(tensor[n,:,:,:,0])))
+            vertices, faces = marching_cubes(tensor[n,:,:,:,0])
+            colors_v = exctract_colors_v(vertices, tensor[n,:,:,:,:])
+            colors_f = exctract_colors_f(colors_v, faces)
+            off_file = '%s/%d.off' % (args.output, n)
+            write_off(off_file, vertices, faces, colors_f)
+            print('Wrote %s.' % off_file)
+    else:
+        print('Minimum and maximum value: %f and %f. ' % (np.min(tensor[:,:,:,0]), np.max(tensor[:,:,:,0])))
+        vertices, faces = marching_cubes(tensor[:,:,:,0])
+        colors_v = exctract_colors_v(vertices, tensor[:,:,:,:])
         colors_f = exctract_colors_f(colors_v, faces)
-        off_file = '%s/%d.off' % (args.output, n)
+        off_file = '%s' % (args.output)
         write_off(off_file, vertices, faces, colors_f)
         print('Wrote %s.' % off_file)
+
 
     print('Use MeshLab to visualize the created OFF files.')
