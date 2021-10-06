@@ -22,13 +22,13 @@ LATENT_VECS_PATH_TEST = "models_pth/latent_vecs_TEST.pth"
 input_dir = "../../data_processing/sdf/"
 
 latent_size = 16
-num_epoch = 50000
+num_epoch = 100000
 batch_size = 10000
 
 eta_decoder = 1e-3
 eta_latent_space_mu = 5e-3
 eta_latent_space_std = 5e-2
-gammaLR = 0.99997
+gammaLR = 0.99995
 
 
 if __name__ == '__main__':
@@ -166,7 +166,7 @@ if __name__ == '__main__':
         loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean() * weight_sdf.numel()/weight_sdf.count_nonzero() * lambda_rgb
         
         # regularization loss
-        lambda_kl = 1/1000
+        lambda_kl = 1/100
         loss_kl = (-0.5 * (1 + lat_vecs_logstd.weight - lat_vecs_mu.weight.pow(2) - lat_vecs_logstd.weight.exp())).mean()
         loss_kl = loss_kl * lambda_kl
 
