@@ -189,7 +189,7 @@ if __name__ == '__main__':
             sdf_pred[:,0].max() * resolution, sdf_pred[:,1:].min() * 255, sdf_pred[:,1:].max() * 255, optimizer.param_groups[0]['lr'], (lat_vecs_logstd.weight.exp()).mean(), (lat_vecs_mu.weight).std()))
 
         print(lat_vecs_logstd(idx[0]).exp())
-        # print(lat_vecs_mu(idx[0]))
+        print(lat_vecs_mu(idx[0]))
 
     #save model
     if (TESTING == True):
