@@ -26,7 +26,7 @@ else:
     lat_vecs = torch.load(LATENT_VECS_PATH).cuda()
 
 
-std_lat_space = lat_vecs.weight.std().item()
+std_lat_space = lat_vecs.weight.std().item() * 2
 
 # initialize random latent code 
 lat_vecs_synthesized = torch.nn.Embedding(num_synthesized_scene, lat_vecs.weight.shape[1]).cuda()

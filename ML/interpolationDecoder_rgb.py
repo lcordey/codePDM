@@ -6,9 +6,9 @@ TESTING = True
 
 id_car_A = 1
 id_car_B = 8
-num_interp = 9
+num_interp = 15
 
-resolution = 100
+resolution = 64
 num_samples_per_scene = resolution * resolution * resolution
 
 MODEL_PATH = "models_pth/decoderSDF.pth"
