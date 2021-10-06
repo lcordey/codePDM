@@ -28,7 +28,7 @@ batch_size = 10000
 
 eta_decoder = 1e-3
 eta_latent_space = 1e-2
-gammaLR = 0.99999
+gammaLR = 0.99995
 
 
 if __name__ == '__main__':
@@ -136,6 +136,10 @@ if __name__ == '__main__':
 
         sdf_pred = decoder(lat_vecs(idx[batch_scenes_idx]), xyz[batch_sample_idx])
 
+        variance_prediction = torch.normal(0,1.0 / math.sqrt(latent_size) / 10, sdf_pred.shape).cuda()
+
+        sdf_pred = sdf_pred + variance_prediction
+
         # assign weight of 0 for easy samples that are well trained
         weight_sdf = ~((sdf_pred[:,0] > threshold_precision).squeeze() * (sdf_gt[batch_scenes_idx * num_samples_per_scene + batch_sample_idx] > threshold_precision).squeeze()) \
             * ~((sdf_pred[:,0] < -threshold_precision).squeeze() * (sdf_gt[batch_scenes_idx * num_samples_per_scene + batch_sample_idx] < -threshold_precision).squeeze())
@@ -238,7 +242,7 @@ if __name__ == '__main__':
 
 
     #save sdf
-    with h5py.File('../../data_processing/sdf/sdf_output_half.h5', 'w') as f:
+    with h5py.File('../../data_processing/sdf/sdf_output.h5', 'w') as f:
         dset = f.create_dataset("tensor", data = sdf_output)
 
 
