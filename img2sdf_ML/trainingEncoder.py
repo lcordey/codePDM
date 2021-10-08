@@ -28,6 +28,7 @@ num_epoch = 1000
 batch_size = 10
 
 eta_encoder = 1e-4
+gammaLR = 0.9999
 
 
 
@@ -93,6 +94,7 @@ optimizer = torch.optim.Adam(
         ]
     )
 
+scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=gammaLR)
 
 ####################### Training loop ##########################
 log_loss = []
@@ -119,8 +121,8 @@ for epoch in range(num_epoch):
     loss_pred.backward()
     optimizer.step()
 
-    print("epoch: {}, L2 loss: {:.5f}, L1 loss: {:.5f} norm_pred: {:.5f}, norm target: {:.5f}".format(epoch, torch.Tensor(log_loss[-10:]).mean(), \
-        abs(pred_vecs - target_vecs[batch_scene_idx]).mean(), abs(pred_vecs).mean(), abs(target_vecs[batch_scene_idx]).mean()))
+    print("epoch: {}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.5f}".format(epoch, torch.Tensor(log_loss[-10:]).mean(), \
+        abs(pred_vecs - target_vecs[batch_scene_idx]).mean(), abs(pred_vecs).mean(), abs(target_vecs[batch_scene_idx]).mean(), optimizer.param_groups['lr']  ))
 
 
 
