@@ -66,32 +66,33 @@ class DecoderSDF(nn.Module):
 
         return x 
 
+features_encoder = 64
 
 class EncoderSDF(nn.Module):
     def __init__(self,latent_size):
         super(EncoderSDF, self).__init__()
 
 
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=(3, 3))
-        self.conv2 = nn.Conv2d(64, 128, kernel_size=(3, 3))
+        self.conv1 = nn.Conv2d(3, features_encoder, kernel_size=(3, 3))
+        self.conv2 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3))
 
-        self.conv3 = nn.Conv2d(128, 128, kernel_size=(3, 3))
-        self.conv4 = nn.Conv2d(128, 128, kernel_size=(3, 3))
+        self.conv3 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3))
+        self.conv4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3))
 
-        self.conv5 = nn.Conv2d(128, 128, kernel_size=(3, 3))
-        self.conv6 = nn.Conv2d(128, 128, kernel_size=(3, 3))
+        self.conv5 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3))
+        self.conv6 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3))
 
-        self.conv7 = nn.Conv2d(128, 128, kernel_size=(3, 3))
-        self.conv8 = nn.Conv2d(128, 128, kernel_size=(3, 3))
+        self.conv7 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3))
+        self.conv8 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3))
 
         # self.conv9 = nn.Conv2d(32, 32, kernel_size=(3, 3))
         # self.conv10 = nn.Conv2d(32, 32, kernel_size=(3, 3))
 
-        self.conv11 = nn.Conv2d(128, 64, kernel_size=(3, 3))
-        self.conv12 = nn.Conv2d(64, 1, kernel_size=(3, 3))
+        self.conv11 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3))
+        self.conv12 = nn.Conv2d(features_encoder, 1, kernel_size=(3, 3))
 
         self.maxpool1 = nn.MaxPool2d(2)
-        self.linear1 = nn.Linear(15 * 24 + 20, latent_size)
+        self.linear1 = nn.Linear(5 * 10 + 20, latent_size)
         # self.linear2 = nn.Linear(20, 2)
 
 
@@ -122,10 +123,10 @@ class EncoderSDF(nn.Module):
         image = self.relu(image)
         image = self.maxpool1(image)
 
-        # image = self.conv7(image)
-        # image = self.conv8(image)
-        # image = self.relu(image)
-        # image = self.maxpool1(image)
+        image = self.conv7(image)
+        image = self.conv8(image)
+        image = self.relu(image)
+        image = self.maxpool1(image)
 
         # image = self.conv9(image)
         # image = self.conv10(image)
@@ -139,7 +140,7 @@ class EncoderSDF(nn.Module):
         image = self.relu(image)
         image = self.maxpool1(image)
 
-        # print(image.shape)
+        print(image.shape)
         image = torch.flatten(image, start_dim=1)
 
 

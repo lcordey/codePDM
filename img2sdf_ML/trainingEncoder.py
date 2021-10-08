@@ -120,8 +120,9 @@ for epoch in range(num_epoch):
     #update weights
     loss_pred.backward()
     optimizer.step()
+    scheduler.step()
 
-    print("epoch: {}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.5f}".format(epoch, torch.Tensor(log_loss[-10:]).mean(), \
+    print("epoch: {}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}".format(epoch, torch.Tensor(log_loss[-10:]).mean(), \
         abs(pred_vecs - target_vecs[batch_scene_idx]).mean(), abs(pred_vecs).mean(), abs(target_vecs[batch_scene_idx]).mean(), optimizer.param_groups[0]['lr']  ))
 
 
