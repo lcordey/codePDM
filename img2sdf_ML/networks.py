@@ -93,11 +93,11 @@ class EncoderSDF(nn.Module):
         self.conv12 = nn.Conv2d((int)(features_encoder/4), 1, kernel_size=(3, 3))
 
         self.maxpool1 = nn.MaxPool2d(2)
-        self.linear1 = nn.Linear(5 * 10 + 20, features_encoder)
-        self.linear2 = nn.Linear(features_encoder, 2*features_encoder)
-        self.linear3 = nn.Linear(2*features_encoder, 2*features_encoder)
-        self.linear4 = nn.Linear(2*features_encoder, features_encoder)
-        self.linear5 = nn.Linear(features_encoder, latent_size)
+        self.linear1 = nn.Linear(5 * 10 + 20, 2*features_encoder)
+        self.linear2 = nn.Linear(2*features_encoder, 4*features_encoder)
+        self.linear3 = nn.Linear(4*features_encoder, 4*features_encoder)
+        self.linear4 = nn.Linear(4*features_encoder, 2*features_encoder)
+        self.linear5 = nn.Linear(2*features_encoder, latent_size)
         # self.linear2 = nn.Linear(20, 2)
 
 
