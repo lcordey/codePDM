@@ -26,7 +26,7 @@ ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
 
 num_epoch = 5000
-batch_size = 50
+batch_size = 150
 
 eta_encoder = 5e-4
 gammaLR = 0.9995
