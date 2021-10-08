@@ -1,10 +1,9 @@
 import torch
-
 from marching_cubes_rgb import *
 
 TESTING = True
 
-resolution = 64
+resolution = 150
 num_samples_per_scene = resolution * resolution * resolution
 
 MODEL_PATH = "models_pth/decoderSDF.pth"
@@ -33,7 +32,7 @@ for x in range(resolution):
 
 decoder.eval()
 
-for i in range(num_scenes):
+for i in range(5):
     
     # free variable for memory space
     try:

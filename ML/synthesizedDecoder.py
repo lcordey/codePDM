@@ -6,7 +6,7 @@ num_synthesized_scene = 10
 
 TESTING = True
 
-resolution = 64
+resolution = 100
 num_samples_per_scene = resolution * resolution * resolution
 
 MODEL_PATH = "models_pth/decoderSDF.pth"
@@ -26,7 +26,7 @@ else:
     lat_vecs = torch.load(LATENT_VECS_PATH).cuda()
 
 
-std_lat_space = lat_vecs.weight.std().item() * 2
+std_lat_space = lat_vecs.weight.std().item()
 
 # initialize random latent code 
 lat_vecs_synthesized = torch.nn.Embedding(num_synthesized_scene, lat_vecs.weight.shape[1]).cuda()

@@ -12,6 +12,8 @@ import pickle
 
 from random import random, randrange, choice
 
+num_scenes_per_vehicule = 50
+
 # import IPython
 
 parser = argparse.ArgumentParser()
@@ -131,7 +133,7 @@ def get_bounding_box() -> list:
 def randomize_vehicle_placement(temp_filepath: str):
     obj = bpy.data.objects['model']
 
-    r_scale = 5
+    r_scale = 6
     r_rot = random()
     r_x = 0
     r_y = 0
@@ -145,7 +147,7 @@ def randomize_vehicle_placement(temp_filepath: str):
 
 def set_fixed_vehicle_placement(temp_filepath: str):
     obj = bpy.data.objects['model']
-    r_scale = 3
+    r_scale = 7
     r_rot = 0.5
 
     obj.scale = (r_scale, r_scale, r_scale)
@@ -216,9 +218,11 @@ for i in range(len(vehicle_pool)):
 
     image_dict[model_id] = []
 
-    for j in range(3):
 
-        load_model(f'{model_dir}/models/model_normalized.obj')
+    load_model(f'{model_dir}/models/model_normalized.obj')
+
+    for j in range(num_scenes_per_vehicule):
+
 
         randomize_vehicle_placement(temp_file.name)
         # set_fixed_vehicle_placement(temp_file.name)
@@ -235,11 +239,11 @@ for i in range(len(vehicle_pool)):
         background_image_crop.paste(img, (0, 0), img)
         background_image_crop.save(f'{args.output_path}/{rendered_image_path}', "PNG")
 
-        # reload the scene to reduce the memory leak issue
-        bpy.ops.wm.read_factory_settings(use_empty=True)
-        bpy.ops.wm.open_mainfile(filepath=init_temp_file.name)
-        for obj in bpy.data.objects:
-            obj.tag = True
+    # reload the scene to reduce the memory leak issue
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    bpy.ops.wm.open_mainfile(filepath=init_temp_file.name)
+    for obj in bpy.data.objects:
+        obj.tag = True
 
 save_yaml_file(image_dict, yaml_file_path)
 save_pickle_file(image_dict, pickle_file_path)

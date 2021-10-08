@@ -1,7 +1,7 @@
 import h5py
 import math
 import numpy as np
-import torch
+import torch    
 import pickle
 
 from torch._C import dtype
@@ -199,14 +199,6 @@ if __name__ == '__main__':
         torch.save(decoder, MODEL_PATH)
         torch.save(lat_vecs_mu, LATENT_VECS_PATH)
 
-    
-    #save model
-    if (TESTING == True):
-        torch.save(decoder, MODEL_PATH_TEST)
-        torch.save(lat_vecs_mu, LATENT_VECS_PATH_TEST)
-    else:
-        torch.save(decoder, MODEL_PATH)
-        torch.save(lat_vecs_mu, LATENT_VECS_PATH)
 
 
     print("final loss sdf: {:f}".format(torch.Tensor(log_loss_sdf[-100:]).mean()))
