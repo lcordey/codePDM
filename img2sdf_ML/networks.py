@@ -104,6 +104,7 @@ class EncoderSDF(nn.Module):
         #  batch norm
         #  dropout
         #  dilation
+        #  batch size
 
 
         self.relu = nn.ReLU()
