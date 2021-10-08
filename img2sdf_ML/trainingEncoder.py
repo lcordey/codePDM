@@ -62,10 +62,13 @@ for scene, scene_id in zip(annotations.keys(), range(num_scene)):
 
         # save locations
         for loc, loc_id in zip(annotations[scene][image_id].keys(), range(len(annotations[scene][image_id].keys()))):
-            input_locations[scene_id, image_id, loc_id] = annotations[scene][image_id][loc]
+            if loc[-1] == 'x' or loc[-5:] == 'width':
+                input_locations[scene_id, image_id, loc_id] = annotations[scene][image_id][loc]/width
+            else:
+                input_locations[scene_id, image_id, loc_id] = annotations[scene][image_id][loc]/height
 
-input_locations = input_locations/450
-input_images = input_images/255
+input_locations = input_locations - 0.5
+input_images = input_images/255 - 0.5
 
 ratio_training_validation = 0.8
 num_training_image_per_scene = (np.int)(np.round(num_image_per_scene * ratio_training_validation))
