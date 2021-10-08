@@ -24,7 +24,7 @@ LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred.pth"
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
 
-num_epoch = 500
+num_epoch = 5000
 batch_size = 10
 
 eta_encoder = 5e-4
