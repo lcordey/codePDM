@@ -72,7 +72,7 @@ class EncoderSDF(nn.Module):
     def __init__(self,latent_size):
         super(EncoderSDF, self).__init__()
 
-        features_encoder = 256
+        features_encoder = 128
 
         self.conv1 = nn.Conv2d(3, (int)(features_encoder/4), kernel_size=(3, 3))
         self.conv2 = nn.Conv2d((int)(features_encoder/4), (int)(features_encoder/2), kernel_size=(3, 3))
