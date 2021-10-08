@@ -1,5 +1,3 @@
- 
-from types import AsyncGeneratorType
 import h5py
 import math
 import numpy as np
@@ -11,7 +9,6 @@ import os
 import IPython
 import glob
 import imageio
-from torch._C import dtype
 
 from networks import DecoderSDF, EncoderSDF
 from marching_cubes_rgb import *
