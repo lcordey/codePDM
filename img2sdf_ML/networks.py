@@ -74,14 +74,14 @@ class EncoderSDF(nn.Module):
 
         features_encoder = 32
 
-        self.conv1 = nn.Conv2d(3, (int)(features_encoder/4), kernel_size=(3, 3))
-        self.conv2 = nn.Conv2d((int)(features_encoder/4), (int)(features_encoder/2), kernel_size=(3, 3))
+        self.conv1 = nn.Conv2d(3, (int)(features_encoder/4), kernel_size=(3, 3), dilation=2,)
+        self.conv2 = nn.Conv2d((int)(features_encoder/4), (int)(features_encoder/2), kernel_size=(3, 3), dilation=2)
 
-        self.conv3 = nn.Conv2d((int)(features_encoder/2), features_encoder, kernel_size=(3, 3))
-        self.conv4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3))
+        self.conv3 = nn.Conv2d((int)(features_encoder/2), features_encoder, kernel_size=(3, 3), dilation=2)
+        self.conv4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3), dilation=2)
 
-        self.conv5 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3))
-        self.conv6 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3))
+        self.conv5 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3), dilation=2)
+        self.conv6 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3), dilation=2)
 
         # self.conv7 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3))
         # self.conv8 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3))
@@ -93,7 +93,7 @@ class EncoderSDF(nn.Module):
         self.conv12 = nn.Conv2d((int)(features_encoder/4), 1, kernel_size=(3, 3))
 
         self.maxpool1 = nn.MaxPool2d(2)
-        self.linear1 = nn.Linear(5 * 10 + 20, 2*features_encoder)
+        self.linear1 = nn.Linear(4 * 9 + 20, 2*features_encoder)
         self.linear2 = nn.Linear(2*features_encoder, 4*features_encoder)
         self.linear3 = nn.Linear(4*features_encoder, 4*features_encoder)
         self.linear4 = nn.Linear(4*features_encoder, 2*features_encoder)
@@ -101,6 +101,9 @@ class EncoderSDF(nn.Module):
         # self.linear2 = nn.Linear(20, 2)
 
 
+        #  batch norm
+        #  dropout
+        #  dilation
 
 
         self.relu = nn.ReLU()
@@ -137,8 +140,6 @@ class EncoderSDF(nn.Module):
         image = self.conv10(image)
         image = self.relu(image)
         image = self.maxpool1(image)
-
-        # print(image.shape)
 
         image = self.conv11(image)
         image = self.conv12(image)
