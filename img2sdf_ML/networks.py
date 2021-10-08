@@ -66,7 +66,7 @@ class DecoderSDF(nn.Module):
 
         return x 
 
-features_encoder = 100
+features_encoder = 64
 
 class EncoderSDF(nn.Module):
     def __init__(self,latent_size):
