@@ -4,11 +4,12 @@ import torch.nn.functional as F
 
 import IPython
 
-dimension = 256
 
 class DecoderSDF(nn.Module):
     def __init__(self, latent_size):
         super(DecoderSDF, self).__init__()
+
+        dimension = 256
 
         self.linearStart = nn.Linear(latent_size + 3, dimension)
 
@@ -66,12 +67,12 @@ class DecoderSDF(nn.Module):
 
         return x 
 
-features_encoder = 256
 
 class EncoderSDF(nn.Module):
     def __init__(self,latent_size):
         super(EncoderSDF, self).__init__()
 
+        features_encoder = 256
 
         self.conv1 = nn.Conv2d(3, features_encoder/4, kernel_size=(3, 3))
         self.conv2 = nn.Conv2d(features_encoder/4, features_encoder/2, kernel_size=(3, 3))
