@@ -3,6 +3,7 @@ import math
 import numpy as np
 from numpy.core.fromnumeric import transpose
 import torch
+import torch.nn as nn
 import pickle
 import argparse
 import os
@@ -28,13 +29,18 @@ num_epoch = 5000
 batch_size = 10
 
 eta_encoder = 5e-4
-gammaLR = 0.9995
+gammaLR = 0.9990
+
+
+def init_weights(m):
+    if isinstance(m, (nn.Linear, nn.Conv2d)):
+        torch.nn.init.xavier_uniform(m.weight)
+        m.bias.data.fill_(0.01)
 
 
 
 decoder = torch.load(MODEL_PATH).cuda()
 target_vecs = torch.load(LATENT_VECS_TARGET_PATH).cuda()
-
 
 annotations_file = open(ANNOTATIONS_PATH, "rb")
 annotations = pickle.load(annotations_file)
@@ -85,6 +91,7 @@ validation_input_loc = torch.tensor(input_locations[:,validation_images_idx,:], 
 
 # encoder
 encoder = EncoderSDF(latent_size).cuda()
+encoder.apply(init_weights)
 loss = torch.nn.MSELoss()
 
 optimizer = torch.optim.Adam(
