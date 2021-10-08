@@ -94,8 +94,10 @@ class EncoderSDF(nn.Module):
 
         self.maxpool1 = nn.MaxPool2d(2)
         self.linear1 = nn.Linear(5 * 10 + 20, features_encoder)
-        self.linear2 = nn.Linear(features_encoder, features_encoder)
-        self.linear3 = nn.Linear(features_encoder, latent_size)
+        self.linear2 = nn.Linear(features_encoder, 2*features_encoder)
+        self.linear3 = nn.Linear(2*features_encoder, 2*features_encoder)
+        self.linear4 = nn.Linear(2*features_encoder, features_encoder)
+        self.linear5 = nn.Linear(features_encoder, latent_size)
         # self.linear2 = nn.Linear(20, 2)
 
 
@@ -150,7 +152,7 @@ class EncoderSDF(nn.Module):
         merged = torch.cat([image,loc], dim = 1)
 
         # print(merged.shape)
-        latent_code = self.linear3(self.relu(self.linear2(self.relu(self.linear1(merged)))))
+        latent_code = self.linear5(self.relu(self.linear4(self.relu(self.linear3(self.relu(self.linear2(self.relu(self.linear1(merged)))))))))
 
 
         return latent_code
