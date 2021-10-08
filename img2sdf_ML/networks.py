@@ -92,7 +92,7 @@ class EncoderSDF(nn.Module):
         self.conv12 = nn.Conv2d(features_encoder, 1, kernel_size=(3, 3))
 
         self.maxpool1 = nn.MaxPool2d(2)
-        self.linear1 = nn.Linear(5 * 10 + 20, latent_size)
+        self.linear1 = nn.Linear(15 * 24 + 20, latent_size)
         # self.linear2 = nn.Linear(20, 2)
 
 
@@ -140,7 +140,7 @@ class EncoderSDF(nn.Module):
         image = self.relu(image)
         image = self.maxpool1(image)
 
-        print(image.shape)
+        # print(image.shape)
         image = torch.flatten(image, start_dim=1)
 
 

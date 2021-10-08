@@ -220,12 +220,8 @@ if __name__ == '__main__':
         # print(lat_vecs_mu(idx[0]))
 
     #save model
-    if (TESTING == True):
-        torch.save(decoder, MODEL_PATH_TEST)
-        torch.save(lat_vecs_mu(idx).detach(), LATENT_VECS_TARGET_PATH_TEST)
-    else:
-        torch.save(decoder, MODEL_PATH)
-        torch.save(lat_vecs_mu(idx).detach(), LATENT_VECS_TARGET_PATH)
+    torch.save(decoder, MODEL_PATH)
+    torch.save(lat_vecs_mu(idx).detach(), LATENT_VECS_TARGET_PATH)
 
 
 
