@@ -72,8 +72,8 @@ class EncoderSDF(nn.Module):
         super(EncoderSDF, self).__init__()
 
 
-        self.conv1 = nn.Conv2d(3, 16, kernel_size=(10, 10))
-        self.conv2 = nn.Conv2d(16, 32, kernel_size=(10, 10))
+        self.conv1 = nn.Conv2d(3, 16, kernel_size=(3, 3))
+        self.conv2 = nn.Conv2d(16, 32, kernel_size=(3, 3))
 
         self.conv3 = nn.Conv2d(32, 32, kernel_size=(3, 3))
         self.conv4 = nn.Conv2d(32, 32, kernel_size=(3, 3))
@@ -81,17 +81,17 @@ class EncoderSDF(nn.Module):
         self.conv5 = nn.Conv2d(32, 32, kernel_size=(3, 3))
         self.conv6 = nn.Conv2d(32, 32, kernel_size=(3, 3))
 
-        self.conv7 = nn.Conv2d(32, 32, kernel_size=(3, 3))
-        self.conv8 = nn.Conv2d(32, 32, kernel_size=(3, 3))
+        # self.conv7 = nn.Conv2d(32, 32, kernel_size=(3, 3))
+        # self.conv8 = nn.Conv2d(32, 32, kernel_size=(3, 3))
 
-        self.conv9 = nn.Conv2d(32, 32, kernel_size=(3, 3))
-        self.conv10 = nn.Conv2d(32, 32, kernel_size=(3, 3))
+        # self.conv9 = nn.Conv2d(32, 32, kernel_size=(3, 3))
+        # self.conv10 = nn.Conv2d(32, 32, kernel_size=(3, 3))
 
         self.conv11 = nn.Conv2d(32, 16, kernel_size=(3, 3))
         self.conv12 = nn.Conv2d(16, 1, kernel_size=(3, 3))
 
-        self.maxpool1 = nn.MaxPool2d(4)
-        self.linear1 = nn.Linear(3 * 5 + 20, latent_size)
+        self.maxpool1 = nn.MaxPool2d(2)
+        self.linear1 = nn.Linear(15 * 24 + 20, latent_size)
         # self.linear2 = nn.Linear(20, 2)
 
 
@@ -117,10 +117,10 @@ class EncoderSDF(nn.Module):
         image = self.relu(image)
         image = self.maxpool1(image)
 
-        # image = self.conv5(image)
-        # image = self.conv6(image)
-        # image = self.relu(image)
-        # image = self.maxpool1(image)
+        image = self.conv5(image)
+        image = self.conv6(image)
+        image = self.relu(image)
+        image = self.maxpool1(image)
 
         # image = self.conv7(image)
         # image = self.conv8(image)

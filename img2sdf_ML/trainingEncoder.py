@@ -27,7 +27,7 @@ IMAGES_PATH = "../../image2sdf/input_images/images/"
 num_epoch = 1000
 batch_size = 10
 
-eta_encoder = 1e-3
+eta_encoder = 1e-4
 
 
 
