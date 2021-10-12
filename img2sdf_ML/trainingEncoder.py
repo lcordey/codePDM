@@ -19,7 +19,7 @@ from marching_cubes_rgb import *
 TESTING = False
 
 DECODER_PATH = "models_pth/decoderSDF.pth"
-ENCODER_PATH = "models_pth/decoderSDF.pth"
+ENCODER_PATH = "models_pth/encoderSDF.pth"
 LATENT_VECS_TARGET_PATH = "models_pth/latent_vecs_target.pth"
 LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred.pth"
 
