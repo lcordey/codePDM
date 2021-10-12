@@ -18,7 +18,8 @@ from marching_cubes_rgb import *
 
 TESTING = False
 
-MODEL_PATH = "models_pth/decoderSDF.pth"
+DECODER_PATH = "models_pth/decoderSDF.pth"
+ENCODER_PATH = "models_pth/decoderSDF.pth"
 LATENT_VECS_TARGET_PATH = "models_pth/latent_vecs_target.pth"
 LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred.pth"
 
@@ -38,7 +39,7 @@ def init_weights(m):
         m.bias.data.fill_(0.01)
 
 
-decoder = torch.load(MODEL_PATH).cuda()
+decoder = torch.load(DECODER_PATH).cuda()
 target_vecs = torch.load(LATENT_VECS_TARGET_PATH).cuda()
 
 annotations_file = open(ANNOTATIONS_PATH, "rb")
@@ -175,5 +176,6 @@ print("L2 loss: {:.5f}, L1 loss: {:.5f} norm_pred: {:.5f}, norm target: {:.5f}".
 
 #save model
 torch.save(pred_vecs.detach().cpu(), LATENT_VECS_PRED_PATH)
+torch.save(encoder, ENCODER_PATH)
 
 # IPython.embed()
