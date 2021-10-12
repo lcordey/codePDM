@@ -30,7 +30,7 @@ num_epoch = 10000
 batch_size = 50
 
 eta_encoder = 1e-4
-gammaLR = 0.9998
+gammaLR = 0.9999
 
 
 def init_weights(m):
