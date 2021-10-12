@@ -16,16 +16,18 @@ import pickle
 
 from random import random, randrange, choice
 
-num_scenes_per_vehicule = 50
+NUM_SCENE_TRAINING = 50
+NUM_SCENE_VALIDATION = 3
 
 # import IPython
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--mode', type=str, dest='mode', default='validation')
 parser.add_argument('--venv', dest='venv_path', default='/home/loic/venvs/blender/lib/python3.7/site-packages',
                     help = 'path to the site-packages folder of the virtual environment')
 parser.add_argument('--shapenet_path', dest='shapenet_path', default='/home/loic/data/vehicle',
                     help='path to the dataset')
-parser.add_argument('--output_path', dest='output_path', default='/home/loic/MasterPDM/image2sdf/input_images', help='path to the output folder')
+parser.add_argument('--directory_path', dest='directory_path', default='/home/loic/MasterPDM/image2sdf/', help='path to the folder directory')
 parser.add_argument('--height', type=int, dest='height', default=300)
 parser.add_argument('--width', type=int, dest='width', default=450)
 # parser.add_argument('--num_images', type=int, dest='num_images', default=100, help='number of output images')
@@ -188,14 +190,25 @@ def generate_white_background(w: int, h: int) -> Image:
     return Image.new('RGB', (w, h), (255, 255, 255))
 
 
+assert(args.mode == 'training' or args.mode == 'validation'), "please give either training or validation as mode"
+
 #create folder and annotation file
+assert os.path.isdir(args.directory_path), f"main directory does not exists: {args.directory_path}"
 
-assert os.path.isdir(args.output_path), f"Log directory does not exists: {args.output_path}"
-if not os.path.isdir(f'{args.output_path}/images') :
-    os.mkdir(f'{args.output_path}/images')
+if args.mode == 'training':
+    output_path = args.directory_path + 'input_images'
+    whitelist_path = '/home/loic/MasterPDM/image2sdf/vehicle_whitelist.txt'
+    num_scenes_per_vehicule = NUM_SCENE_TRAINING
+else:
+    output_path = args.directory_path + 'input_images_validation'
+    whitelist_path = '/home/loic/MasterPDM/image2sdf/vehicle_whitelist_validation.txt'
+    num_scenes_per_vehicule = NUM_SCENE_VALIDATION
 
-yaml_file_path = f'{args.output_path}/annotations.yaml'
-pickle_file_path = f'{args.output_path}/annotations.pkl'
+if not os.path.isdir(f'{output_path}/images') :
+    os.mkdir(f'{output_path}/images')
+
+yaml_file_path = f'{output_path}/annotations.yaml'
+pickle_file_path = f'{output_path}/annotations.pkl'
 
 w, h = args.width, args.height
 
@@ -208,7 +221,7 @@ temp_file = tempfile.NamedTemporaryFile()
 bpy.ops.wm.save_as_mainfile(filepath=init_temp_file.name)
 
     
-with open('/home/loic/MasterPDM/image2sdf/vehicle_whitelist.txt') as f:
+with open(whitelist_path) as f:
     whitelisted_vehicles = f.read().splitlines()
 
 whitelisted_vehicles = set(whitelisted_vehicles)
@@ -234,14 +247,14 @@ for i in range(len(vehicle_pool)):
         points_2d = get_bounding_box()
         rendered_image_path = f'images/{model_id}/{j}.png'
         image_dict[model_id].append(generate_image_dict(rendered_image_path, points_2d))
-        render_to_file(f'{args.output_path}/{rendered_image_path}')
+        render_to_file(f'{output_path}/{rendered_image_path}')
 
 
         # load the image and apply background if needed
-        img = Image.open(f'{args.output_path}/{rendered_image_path}')
+        img = Image.open(f'{output_path}/{rendered_image_path}')
         background_image_crop = generate_white_background(w, h)
         background_image_crop.paste(img, (0, 0), img)
-        background_image_crop.save(f'{args.output_path}/{rendered_image_path}', "PNG")
+        background_image_crop.save(f'{output_path}/{rendered_image_path}', "PNG")
 
     # reload the scene to reduce the memory leak issue
     bpy.ops.wm.read_factory_settings(use_empty=True)
