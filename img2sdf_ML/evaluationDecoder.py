@@ -11,7 +11,7 @@ LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred.pth"
 
 
 DEFAULT_RESOLUTION = 50
-DEFAULT_NUM_IMAGE = 3
+DEFAULT_NUM_IMAGE = 1
 DEFAULT_TYPE = "pred"
 
 def load_vecs(type):

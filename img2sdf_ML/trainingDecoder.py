@@ -267,7 +267,7 @@ if __name__ == '__main__':
 
 
     #save sdf
-    with h5py.File('../../data_processing/sdf/sdf_output.h5', 'w') as f:
+    with h5py.File('../../image2sdf/sdf/sdf_output_decoder.h5', 'w') as f:
         dset = f.create_dataset("tensor", data = sdf_output)
 
 

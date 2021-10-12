@@ -178,4 +178,20 @@ print("L2 loss: {:.5f}, L1 loss: {:.5f} norm_pred: {:.5f}, norm target: {:.5f}".
 torch.save(pred_vecs.detach().cpu(), LATENT_VECS_PRED_PATH)
 torch.save(encoder, ENCODER_PATH)
 
+#save logs plot
+avrg_loss = []
+for i in range(0,len(log_loss)):
+    avrg_loss.append(torch.Tensor(log_loss[i-20:i]).mean())
+    
+
+from matplotlib import pyplot as plt
+plt.figure()
+plt.title("Total loss")
+plt.semilogy(avrg_loss[:])
+plt.savefig("../../data_processing/logs/log_total")
+
+with open("../../data_processing/logs/log.txt", "wb") as fp:
+    pickle.dump(avrg_loss, fp)
+
+
 # IPython.embed()
