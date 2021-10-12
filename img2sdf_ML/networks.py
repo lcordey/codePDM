@@ -163,11 +163,22 @@ class EncoderSDF(nn.Module):
 
 
 
+
+code = torch.empty(10,16)
+xyz_coord = torch.empty(10,3)
+
+decoder = DecoderSDF(16)
+
+decoder(code,xyz_coord)
+pytorch_total_params = sum(p.numel() for p in decoder.parameters())
+print("Decoder paramter: {}".format(pytorch_total_params))
+
+
 image = torch.empty(10,3,300,450)
 loc = torch.empty(10,20)
 
-model = EncoderSDF(16)
+encoder = EncoderSDF(16)
 
-model(image,loc)
-pytorch_total_params = sum(p.numel() for p in model.parameters())
-print(pytorch_total_params)
+encoder(image,loc)
+pytorch_total_params = sum(p.numel() for p in encoder.parameters())
+print("Encoder paramter: {}".format(pytorch_total_params))

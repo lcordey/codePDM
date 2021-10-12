@@ -259,7 +259,7 @@ if __name__ == '__main__':
             vertices, faces = marching_cubes(sdf_result[:,:,:,0])
             colors_v = exctract_colors_v(vertices, sdf_result)
             colors_f = exctract_colors_f(colors_v, faces)
-            off_file = '../../image2sdf/output_prediction/%d.off' % i
+            off_file = '../../image2sdf/output_decoder/%d.off' % i
             write_off(off_file, vertices, faces, colors_f)
             print('Wrote %s.' % off_file)
         else:

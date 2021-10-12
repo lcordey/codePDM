@@ -1,3 +1,7 @@
+### NEED TO BE RUN WITH: blender -b -P synthesize_images.py --venv <path/to/venv/dir>
+###--shapenet_path <path/to/shapenent/dir> --output_path <path/to/output/synthesized_images> 
+
+
 import bpy
 import bpy_extras
 import os
