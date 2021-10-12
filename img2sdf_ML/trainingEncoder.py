@@ -26,7 +26,7 @@ ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
 
 num_epoch = 5000
-batch_size = 150
+batch_size = 50
 
 eta_encoder = 5e-4
 gammaLR = 0.9995
@@ -36,7 +36,6 @@ def init_weights(m):
     if isinstance(m, (nn.Linear, nn.Conv2d)):
         torch.nn.init.xavier_uniform(m.weight)
         m.bias.data.fill_(0.01)
-
 
 
 decoder = torch.load(MODEL_PATH).cuda()
