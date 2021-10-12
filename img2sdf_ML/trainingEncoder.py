@@ -26,11 +26,11 @@ LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred.pth"
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
 
-num_epoch = 5000
+num_epoch = 10000
 batch_size = 50
 
-eta_encoder = 5e-4
-gammaLR = 0.9995
+eta_encoder = 1e-4
+gammaLR = 0.9998
 
 
 def init_weights(m):
@@ -188,9 +188,9 @@ from matplotlib import pyplot as plt
 plt.figure()
 plt.title("Total loss")
 plt.semilogy(avrg_loss[:])
-plt.savefig("../../data_processing/logs/log_total")
+plt.savefig("../../image2sdf/logs/log_total")
 
-with open("../../data_processing/logs/log.txt", "wb") as fp:
+with open("../../image2sdf/logs/log.txt", "wb") as fp:
     pickle.dump(avrg_loss, fp)
 
 
