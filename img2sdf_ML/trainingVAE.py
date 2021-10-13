@@ -25,7 +25,8 @@ DEFAULT_SDF_DIR = '64'
 
 
 num_epoch = 50000
-batch_size = 25
+batch_size_scene = 5
+batch_size_sample = 3000
 latent_size = 16
 
 eta_encoder = 5e-4
@@ -187,7 +188,78 @@ if __name__ == '__main__':
 
     loss = torch.nn.MSELoss(reduction='none')
 
-    print("done")
+    print("start taining")
+
+    log_loss = []
+    log_loss_sdf = []
+    log_loss_rgb = []
+    log_loss_reg = []
+
+    encoder.train()
+    decoder.train()
+    for epoch in range(num_epoch):
+
+        optimizer.zero_grad()
+
+        # random batch
+        batch_scene_idx = np.random.randint(num_scene, size = batch_size_scene)
+        batch_image_idx = np.random.randint(num_training_image_per_scene, size = batch_size_scene)
+
+        latent_code = encoder(train_input_im[batch_scene_idx, batch_image_idx, :, :, :], train_input_loc[batch_scene_idx,batch_image_idx, :])
+
+        # IPython.embed()
+
+        latent_code = latent_code.repeat_interleave(batch_size_sample, dim=0)
+        batch_scene_idx = np.repeat(batch_scene_idx, batch_size_sample)
+        batch_sample_idx = np.tile(np.random.randint(num_samples_per_scene, size = batch_size_sample), batch_size_scene)
+
+        sdf_pred = decoder(latent_code, xyz[batch_sample_idx])
+
+        # assign weight of 0 for easy samples that are well trained
+        weight_sdf = ~((sdf_pred[:,0] > threshold_precision).squeeze() * (sdf_gt[batch_scene_idx * num_samples_per_scene + batch_sample_idx] > threshold_precision).squeeze()) \
+            * ~((sdf_pred[:,0] < -threshold_precision).squeeze() * (sdf_gt[batch_scene_idx * num_samples_per_scene + batch_sample_idx] < -threshold_precision).squeeze())
+
+        
+        #L1 loss, only for hard samples
+        loss_sdf = loss(sdf_pred[:,0].squeeze(), sdf_gt[batch_scene_idx * num_samples_per_scene + batch_sample_idx])
+        loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
+
+        # loss rgb
+        lambda_rgb = 1/100
+        
+        rgb_gt_normalized = rgb_gt[batch_scene_idx * num_samples_per_scene + batch_sample_idx,:]/255
+        loss_rgb = loss(sdf_pred[:,1:], rgb_gt_normalized)
+        loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean() * weight_sdf.numel()/weight_sdf.count_nonzero() * lambda_rgb
+        
+        # regularization loss
+        # lambda_kl = 1/100
+        # loss_kl = (-0.5 * (1 + lat_vecs_log_std.weight - lat_vecs_mu.weight.pow(2) - lat_vecs_log_std.weight.exp())).mean()
+        # loss_kl = loss_kl * lambda_kl
+
+        # loss_pred = loss_sdf + loss_rgb + loss_kl
+        loss_pred = loss_sdf + loss_rgb
+
+
+        log_loss.append(loss_pred.detach().cpu())
+        log_loss_sdf.append(loss_sdf.detach().cpu())
+        log_loss_rgb.append(loss_rgb.detach().cpu())
+        # log_loss_reg.append(loss_kl.detach().cpu())
+
+        #update weights
+        loss_pred.backward()
+        optimizer.step()
+        scheduler.step()
+
+        print("After {} epoch,  loss sdf: {:.5f}, loss rgb: {:.5f}, loss reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, lr: {:f}".format(\
+            epoch, torch.Tensor(log_loss_sdf[-10:]).mean(), torch.Tensor(log_loss_rgb[-10:]).mean(), torch.Tensor(log_loss_reg[-10:]).mean(), sdf_pred[:,0].min() * resolution, \
+            sdf_pred[:,0].max() * resolution, sdf_pred[:,1:].min() * 255, sdf_pred[:,1:].max() * 255, optimizer.param_groups[0]['lr']))
+
+
+        # print("After {} epoch,  loss sdf: {:.5f}, loss rgb: {:.5f}, loss reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, lr: {:f}, lat_vec std/mu: {:.2f}/{:.2f}".format(\
+        #     epoch, torch.Tensor(log_loss_sdf[-10:]).mean(), torch.Tensor(log_loss_rgb[-10:]).mean(), torch.Tensor(log_loss_reg[-10:]).mean(), sdf_pred[:,0].min() * resolution, \
+        #     sdf_pred[:,0].max() * resolution, sdf_pred[:,1:].min() * 255, sdf_pred[:,1:].max() * 255, optimizer.param_groups[0]['lr'], (lat_vecs_log_std.weight.exp()).mean(), (lat_vecs_mu.weight).abs().mean()))
+
+
 
 
 

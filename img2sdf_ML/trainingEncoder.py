@@ -118,10 +118,6 @@ for epoch in range(num_epoch):
     batch_scene_idx = np.random.randint(num_scene, size = batch_size)
     batch_image_idx = np.random.randint(num_training_image_per_scene, size = batch_size)
 
-    ### all samples together
-    # batch_scene_idx = np.repeat(np.arange(num_scene), num_training_image_per_scene)
-    # batch_image_idx = np.tile(np.arange(num_training_image_per_scene), num_scene)
-
     pred_vecs = encoder(train_input_im[batch_scene_idx, batch_image_idx, :, :, :], train_input_loc[batch_scene_idx,batch_image_idx, :])
 
     loss_pred = loss(pred_vecs, target_vecs[batch_scene_idx])
