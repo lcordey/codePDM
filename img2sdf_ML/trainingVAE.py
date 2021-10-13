@@ -30,7 +30,8 @@ batch_size_sample = 3000
 latent_size = 16
 
 eta_encoder = 5e-4
-eta_decoder = 1e-3
+# eta_decoder = 1e-3
+eta_decoder = 5e-4
 gammaLR = 0.99995
 
 def init_weights(m):
@@ -145,8 +146,8 @@ if __name__ == '__main__':
     annotations_file = open(ANNOTATIONS_PATH, "rb")
     annotations = pickle.load(annotations_file)
 
-    # num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
-    num_image_per_scene = 5
+    num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
+    # num_image_per_scene = 5
     num_scene = len(annotations.keys())
 
 
@@ -239,8 +240,8 @@ if __name__ == '__main__':
         loss_kl = (-0.5 * (1 + latent_code_std - latent_code_mu.pow(2) - latent_code_std.exp())).mean()
         loss_kl = loss_kl * lambda_kl
 
-        # loss_pred = loss_sdf + loss_rgb + loss_kl
-        loss_pred = loss_sdf + loss_rgb
+        loss_pred = loss_sdf + loss_rgb + loss_kl
+        # loss_pred = loss_sdf + loss_rgb
 
 
         log_loss.append(loss_pred.detach().cpu())
