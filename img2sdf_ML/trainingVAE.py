@@ -14,8 +14,8 @@ from networks import DecoderSDF, EncoderSDF
 from marching_cubes_rgb import *
 
 
-DECODER_PATH = "models_pth/decoderSDF.pth"
-ENCODER_PATH = "models_pth/encoderSDF.pth"
+DECODER_PATH = "models_pth/decoderSDF_VAE.pth"
+ENCODER_PATH = "models_pth/encoderSDF_VAE.pth"
 
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
@@ -24,7 +24,7 @@ ALL_SDF_DIR_PATH = "../../image2sdf/sdf/"
 DEFAULT_SDF_DIR = '64'
 
 
-num_epoch = 50000
+num_epoch = 1000
 batch_size_scene = 5
 batch_size_sample = 3000
 latent_size = 16
@@ -145,8 +145,8 @@ if __name__ == '__main__':
     annotations_file = open(ANNOTATIONS_PATH, "rb")
     annotations = pickle.load(annotations_file)
 
-    # num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
-    num_image_per_scene = 2
+    num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
+    # num_image_per_scene = 5
     num_scene = len(annotations.keys())
 
 
@@ -259,6 +259,10 @@ if __name__ == '__main__':
         #     epoch, torch.Tensor(log_loss_sdf[-10:]).mean(), torch.Tensor(log_loss_rgb[-10:]).mean(), torch.Tensor(log_loss_reg[-10:]).mean(), sdf_pred[:,0].min() * resolution, \
         #     sdf_pred[:,0].max() * resolution, sdf_pred[:,1:].min() * 255, sdf_pred[:,1:].max() * 255, optimizer.param_groups[0]['lr'], (lat_vecs_log_std.weight.exp()).mean(), (lat_vecs_mu.weight).abs().mean()))
 
+
+
+torch.save(encoder, ENCODER_PATH)
+torch.save(decoder, DECODER_PATH)
 
 
 
