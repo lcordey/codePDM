@@ -24,15 +24,16 @@ ALL_SDF_DIR_PATH = "../../image2sdf/sdf/"
 DEFAULT_SDF_DIR = '64'
 
 
-num_epoch = 50000
+num_epoch = 500000
 batch_size_scene = 5
 batch_size_sample = 3000
 latent_size = 16
 
 eta_encoder = 5e-4
-# eta_decoder = 1e-3
-eta_decoder = 5e-4
-gammaLR = 0.99995
+eta_decoder = 1e-3
+# eta_decoder = 5e-4
+# gammaLR = 0.99995
+gammaLR = 0.99999
 
 def init_weights(m):
     if isinstance(m, (nn.Linear, nn.Conv2d)):
@@ -146,8 +147,8 @@ if __name__ == '__main__':
     annotations_file = open(ANNOTATIONS_PATH, "rb")
     annotations = pickle.load(annotations_file)
 
-    num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
-    # num_image_per_scene = 5
+    # num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
+    num_image_per_scene = 5
     num_scene = len(annotations.keys())
 
 
