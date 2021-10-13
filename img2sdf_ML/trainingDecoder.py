@@ -24,7 +24,7 @@ ALL_SDF_DIR_PATH = "../../image2sdf/sdf/"
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 
 latent_size = 16
-num_epoch = 50000
+num_epoch = 100000
 batch_size = 10000
 
 eta_decoder = 1e-3

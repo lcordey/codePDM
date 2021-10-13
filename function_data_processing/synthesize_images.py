@@ -1,4 +1,4 @@
-### NEED TO BE RUN WITH: blender -b -P synthesize_images.py --venv <path/to/venv/dir>
+### NEED TO BE RUN WITH: blender -b -P synthesize_images.py -- --venv <path/to/venv/dir>
 ###--shapenet_path <path/to/shapenent/dir> --output_path <path/to/output/synthesized_images> 
 
 
@@ -16,13 +16,14 @@ import pickle
 
 from random import random, randrange, choice
 
-NUM_SCENE_TRAINING = 50
+DEFAULT_MODE = 'validation'
+NUM_SCENE_TRAINING = 36
 NUM_SCENE_VALIDATION = 3
 
 # import IPython
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--mode', type=str, dest='mode', default='validation')
+parser.add_argument('--mode', type=str, dest='mode', default= DEFAULT_MODE, help='training or validation images')
 parser.add_argument('--venv', dest='venv_path', default='/home/loic/venvs/blender/lib/python3.7/site-packages',
                     help = 'path to the site-packages folder of the virtual environment')
 parser.add_argument('--shapenet_path', dest='shapenet_path', default='/home/loic/data/vehicle',
@@ -151,13 +152,15 @@ def randomize_vehicle_placement(temp_filepath: str):
     bpy.ops.wm.save_as_mainfile(filepath=temp_filepath)
 
 
-def set_fixed_vehicle_placement(temp_filepath: str):
+def set_fixed_vehicle_placement(temp_filepath: str, r_rot: int):
     obj = bpy.data.objects['model']
-    r_scale = 7
-    r_rot = 0.5
+    r_scale = 6
+    # r_rot = 0.5
 
+    obj.location = (0, 0, 0)
     obj.scale = (r_scale, r_scale, r_scale)
     obj.rotation_euler.rotate_axis("Y", math.radians(2 * r_rot * 180))
+    print(r_rot)
     # file needs to be saved so that the bounding box information is updated
     bpy.ops.wm.save_as_mainfile(filepath=temp_filepath)
 
@@ -240,9 +243,10 @@ for i in range(len(vehicle_pool)):
 
     for j in range(num_scenes_per_vehicule):
 
-
-        randomize_vehicle_placement(temp_file.name)
-        # set_fixed_vehicle_placement(temp_file.name)
+        if args.mode == 'training':
+            set_fixed_vehicle_placement(temp_file.name, j/num_scenes_per_vehicule)
+        else:
+            randomize_vehicle_placement(temp_file.name)
 
         points_2d = get_bounding_box()
         rendered_image_path = f'images/{model_id}/{j}.png'

@@ -83,9 +83,6 @@ class EncoderSDF(nn.Module):
         self.conv5 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3))
         self.conv6 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3))
 
-        # self.conv7 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3))
-        # self.conv8 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3))
-
         self.conv9 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3, 3))
         self.conv10 = nn.Conv2d(features_encoder, (int)(features_encoder/2), kernel_size=(3, 3))
 
@@ -98,7 +95,6 @@ class EncoderSDF(nn.Module):
         self.linear3 = nn.Linear(4*features_encoder, 4*features_encoder)
         self.linear4 = nn.Linear(4*features_encoder, 2*features_encoder)
         self.linear5 = nn.Linear(2*features_encoder, latent_size)
-        # self.linear2 = nn.Linear(20, 2)
 
 
         #  batch norm
@@ -113,9 +109,6 @@ class EncoderSDF(nn.Module):
     def forward(self, image, loc):
         # image: N x 3 x 300 x 450
         # loc N x 20
-
-        # print(image.shape)
-        # print(loc.shape)
 
         image = self.conv1(image)
         image = self.conv2(image)
@@ -132,17 +125,10 @@ class EncoderSDF(nn.Module):
         image = self.relu(image)
         image = self.maxpool1(image)
 
-        # image = self.conv7(image)
-        # image = self.conv8(image)
-        # image = self.relu(image)
-        # image = self.maxpool1(image)
-
         image = self.conv9(image)
         image = self.conv10(image)
         image = self.relu(image)
         image = self.maxpool1(image)
-
-        # print(image.shape)
 
         image = self.conv11(image)
         image = self.conv12(image)
@@ -151,11 +137,8 @@ class EncoderSDF(nn.Module):
 
         # print(image.shape)
         image = torch.flatten(image, start_dim=1)
-
-
         merged = torch.cat([image,loc], dim = 1)
 
-        # print(merged.shape)
         latent_code = self.linear5(self.relu(self.linear4(self.relu(self.linear3(self.relu(self.linear2(self.relu(self.linear1(merged)))))))))
 
 
