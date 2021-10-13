@@ -145,8 +145,8 @@ if __name__ == '__main__':
     annotations_file = open(ANNOTATIONS_PATH, "rb")
     annotations = pickle.load(annotations_file)
 
-    num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
-    # num_image_per_scene = 5
+    # num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
+    num_image_per_scene = 5
     num_scene = len(annotations.keys())
 
 
@@ -179,7 +179,7 @@ if __name__ == '__main__':
 
 
     # encoder
-    encoder = EncoderSDF(latent_size).cuda()
+    encoder = EncoderSDF(latent_size, vae = True).cuda()
     encoder.apply(init_weights)
     decoder = DecoderSDF(latent_size).cuda()
     decoder.apply(init_weights)
@@ -205,9 +205,12 @@ if __name__ == '__main__':
         batch_scene_idx = np.random.randint(num_scene, size = batch_size_scene)
         batch_image_idx = np.random.randint(num_training_image_per_scene, size = batch_size_scene)
 
-        latent_code = encoder(train_input_im[batch_scene_idx, batch_image_idx, :, :, :], train_input_loc[batch_scene_idx,batch_image_idx, :])
+        latent_code_mu_std = encoder(train_input_im[batch_scene_idx, batch_image_idx, :, :, :], train_input_loc[batch_scene_idx,batch_image_idx, :])
 
-        # IPython.embed()
+        latent_code_mu = latent_code_mu_std[:, :latent_size]
+        latent_code_std = latent_code_mu_std[:, latent_size:]
+
+        latent_code = torch.empty_like(latent_code_std).normal_() * latent_code_std.exp() / 10 + latent_code_mu
 
         latent_code = latent_code.repeat_interleave(batch_size_sample, dim=0)
         batch_scene_idx = np.repeat(batch_scene_idx, batch_size_sample)
@@ -232,9 +235,9 @@ if __name__ == '__main__':
         loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean() * weight_sdf.numel()/weight_sdf.count_nonzero() * lambda_rgb
         
         # regularization loss
-        # lambda_kl = 1/100
-        # loss_kl = (-0.5 * (1 + lat_vecs_log_std.weight - lat_vecs_mu.weight.pow(2) - lat_vecs_log_std.weight.exp())).mean()
-        # loss_kl = loss_kl * lambda_kl
+        lambda_kl = 1/100
+        loss_kl = (-0.5 * (1 + latent_code_std - latent_code_mu.pow(2) - latent_code_std.exp())).mean()
+        loss_kl = loss_kl * lambda_kl
 
         # loss_pred = loss_sdf + loss_rgb + loss_kl
         loss_pred = loss_sdf + loss_rgb
@@ -243,21 +246,21 @@ if __name__ == '__main__':
         log_loss.append(loss_pred.detach().cpu())
         log_loss_sdf.append(loss_sdf.detach().cpu())
         log_loss_rgb.append(loss_rgb.detach().cpu())
-        # log_loss_reg.append(loss_kl.detach().cpu())
+        log_loss_reg.append(loss_kl.detach().cpu())
 
         #update weights
         loss_pred.backward()
         optimizer.step()
         scheduler.step()
 
-        print("After {} epoch,  loss sdf: {:.5f}, loss rgb: {:.5f}, loss reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, lr: {:f}".format(\
-            epoch, torch.Tensor(log_loss_sdf[-10:]).mean(), torch.Tensor(log_loss_rgb[-10:]).mean(), torch.Tensor(log_loss_reg[-10:]).mean(), sdf_pred[:,0].min() * resolution, \
-            sdf_pred[:,0].max() * resolution, sdf_pred[:,1:].min() * 255, sdf_pred[:,1:].max() * 255, optimizer.param_groups[0]['lr']))
-
-
-        # print("After {} epoch,  loss sdf: {:.5f}, loss rgb: {:.5f}, loss reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, lr: {:f}, lat_vec std/mu: {:.2f}/{:.2f}".format(\
+        # print("After {} epoch,  loss sdf: {:.5f}, loss rgb: {:.5f}, loss reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, lr: {:f}".format(\
         #     epoch, torch.Tensor(log_loss_sdf[-10:]).mean(), torch.Tensor(log_loss_rgb[-10:]).mean(), torch.Tensor(log_loss_reg[-10:]).mean(), sdf_pred[:,0].min() * resolution, \
-        #     sdf_pred[:,0].max() * resolution, sdf_pred[:,1:].min() * 255, sdf_pred[:,1:].max() * 255, optimizer.param_groups[0]['lr'], (lat_vecs_log_std.weight.exp()).mean(), (lat_vecs_mu.weight).abs().mean()))
+        #     sdf_pred[:,0].max() * resolution, sdf_pred[:,1:].min() * 255, sdf_pred[:,1:].max() * 255, optimizer.param_groups[0]['lr']))
+
+
+        print("After {} epoch,  loss sdf: {:.5f}, loss rgb: {:.5f}, loss reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, lr: {:f}, lat_vec std/mu: {:.2f}/{:.2f}".format(\
+            epoch, torch.Tensor(log_loss_sdf[-10:]).mean(), torch.Tensor(log_loss_rgb[-10:]).mean(), torch.Tensor(log_loss_reg[-10:]).mean(), sdf_pred[:,0].min() * resolution, \
+            sdf_pred[:,0].max() * resolution, sdf_pred[:,1:].min() * 255, sdf_pred[:,1:].max() * 255, optimizer.param_groups[0]['lr'], (latent_code_std.exp()).mean(), (latent_code_mu).abs().mean()))
 
 
 

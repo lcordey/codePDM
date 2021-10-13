@@ -69,7 +69,7 @@ class DecoderSDF(nn.Module):
 
 
 class EncoderSDF(nn.Module):
-    def __init__(self,latent_size):
+    def __init__(self,latent_size, vae = False):
         super(EncoderSDF, self).__init__()
 
         features_encoder = 32
@@ -94,7 +94,12 @@ class EncoderSDF(nn.Module):
         self.linear2 = nn.Linear(2*features_encoder, 4*features_encoder)
         self.linear3 = nn.Linear(4*features_encoder, 4*features_encoder)
         self.linear4 = nn.Linear(4*features_encoder, 2*features_encoder)
-        self.linear5 = nn.Linear(2*features_encoder, latent_size)
+        
+        if not vae:
+            self.linear5 = nn.Linear(2*features_encoder, latent_size)
+        else:
+            self.linear5 = nn.Linear(2*features_encoder, 2 * latent_size)
+
 
 
         #  batch norm
