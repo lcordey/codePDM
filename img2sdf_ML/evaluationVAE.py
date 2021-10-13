@@ -10,9 +10,9 @@ DEFAULT_RESOLUTION = 50
 DEFAULT_NUM_IMAGE = 3
 DEFAULT_TYPE = "validation"
 
-DECODER_PATH = "models_pth/decoderSDF.pth"
-ENCODER_PATH = "models_pth/encoderSDF.pth"
-LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred.pth"
+DECODER_PATH = "models_pth/decoderSDF_VAE.pth"
+ENCODER_PATH = "models_pth/encoderSDF_VAE.pth"
+LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred_vae.pth"
 ANNOTATIONS_PATH = "../../image2sdf/input_images_validation/annotations.pkl"
 IMAGES_PATH = "../../image2sdf/input_images_validation/images/"
 # ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
@@ -99,10 +99,10 @@ if __name__ == '__main__':
 
     if args.type == "training":
         lat_vecs = torch.load(LATENT_VECS_PRED_PATH).cuda()
-        output_dir = "training_prediction"
+        output_dir = "VAE_training_prediction_vae"
     elif args.type == "validation":
         lat_vecs = load_from_validation_data(annotations, args.num_image)
-        output_dir = "validation_prediction"
+        output_dir = "VAE_validation_prediction"
 
     num_scene = lat_vecs.shape[0]
     num_image_per_scene = lat_vecs.shape[1]
@@ -115,7 +115,7 @@ if __name__ == '__main__':
 
     for scene, scene_id in zip(annotations.keys(), range(num_scene)):
         for j in range(num_image_per_scene):
-        
+
             # decode
             sdf_result = np.empty([resolution, resolution, resolution, 4])
 

@@ -196,7 +196,6 @@ if __name__ == '__main__':
         loss_kl = loss_kl * lambda_kl
 
         loss_pred = loss_sdf + loss_rgb + loss_kl
-        # loss_pred = loss_sdf + loss_rgb
 
         #log
         log_loss.append(loss_pred.detach().cpu())

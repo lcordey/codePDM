@@ -24,7 +24,7 @@ ALL_SDF_DIR_PATH = "../../image2sdf/sdf/"
 DEFAULT_SDF_DIR = '64'
 
 
-num_epoch = 1000
+num_epoch = 50000
 batch_size_scene = 5
 batch_size_sample = 3000
 latent_size = 16
