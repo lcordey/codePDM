@@ -25,7 +25,7 @@ ALL_SDF_DIR_PATH = "../../image2sdf/sdf/"
 DEFAULT_SDF_DIR = '64'
 
 
-num_epoch = 200000
+num_epoch = 1000000
 batch_size_scene = 5
 batch_size_sample = 3000
 latent_size = 16
@@ -34,7 +34,7 @@ eta_encoder = 5e-4
 eta_decoder = 1e-3
 # eta_decoder = 5e-4
 # gammaLR = 0.99995
-gammaLR = 0.99999
+gammaLR = 0.999997
 
 ratio_image_used = 0.5
 
@@ -327,14 +327,15 @@ if __name__ == '__main__':
             epoch, torch.Tensor(log_loss_sdf[-10:]).mean(), torch.Tensor(log_loss_rgb[-10:]).mean(), torch.Tensor(log_loss_reg[-10:]).mean(), sdf_pred[:,0].min() * resolution, \
             sdf_pred[:,0].max() * resolution, sdf_pred[:,1:].min() * 255, sdf_pred[:,1:].max() * 255, optimizer.param_groups[0]['lr'], (latent_code_std.exp()).mean(), (latent_code_mu).abs().mean()))
             
-        if epoch %500 == 0:
-            evaluate_on_validation_datas(encoder, decoder, num_scene, num_validation_image_per_scene, num_samples_per_scene, sdf_gt, rgb_gt, validation_input_im, validation_input_loc)
+        # if epoch %500 == 0:
+        #     evaluate_on_validation_datas(encoder, decoder, num_scene, num_validation_image_per_scene, num_samples_per_scene, sdf_gt, rgb_gt, validation_input_im, validation_input_loc)
 
-
-    evaluate_on_validation_datas(encoder, decoder, num_scene, num_validation_image_per_scene, num_samples_per_scene, sdf_gt, rgb_gt, validation_input_im, validation_input_loc)
 
     torch.save(encoder, ENCODER_PATH)
     torch.save(decoder, DECODER_PATH)
+    
+    evaluate_on_validation_datas(encoder, decoder, num_scene, num_validation_image_per_scene, num_samples_per_scene, sdf_gt, rgb_gt, validation_input_im, validation_input_loc)
+
 
     #save logs plot
     avrg_loss = []
