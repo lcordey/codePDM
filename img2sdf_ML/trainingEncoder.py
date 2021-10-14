@@ -83,7 +83,7 @@ num_validation_image_per_scene = (np.int)(np.round(num_image_per_scene * ratio_i
 
 rand_idx = np.arange(num_image_per_scene)
 np.random.shuffle(rand_idx)
-train_images_idx = rand_idx[num_training_image_per_scene]
+train_images_idx = rand_idx[:num_training_image_per_scene]
 validation_images_idx = rand_idx[num_training_image_per_scene : num_image_per_scene]
 
 
@@ -93,12 +93,14 @@ validation_images_idx = rand_idx[num_training_image_per_scene : num_image_per_sc
 # train_images_idx = np.arange(num_training_image_per_scene)
 # validation_images_idx = np.arange(num_training_image_per_scene, num_image_per_scene)
 
+print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
+
 train_input_im = torch.tensor(input_images[:,train_images_idx,:,:,:], dtype = torch.float).cuda()
 validation_input_im = torch.tensor(input_images[:,validation_images_idx,:,:,:], dtype = torch.float).cuda()
 train_input_loc = torch.tensor(input_locations[:,train_images_idx,:], dtype = torch.float).cuda()
 validation_input_loc = torch.tensor(input_locations[:,validation_images_idx,:], dtype = torch.float).cuda()
 
-IPython.embed()
+print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
 
 # encoder
 encoder = EncoderSDF(latent_size).cuda()
