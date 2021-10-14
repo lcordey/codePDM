@@ -71,7 +71,6 @@ def load_encoder_input(annotations: dict, num_scene: int, num_image_per_scene: i
     input_locations = input_locations - 0.5
     input_images = input_images/255 - 0.5
 
-    print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
     print("images loaded")
     return input_images, input_locations
 
@@ -96,7 +95,6 @@ def load_sdf_data(input: str, annotations: dict) -> torch.tensor:
 
         sdf_data[scene_id, :,:,:,:] = h5f_tensor
 
-    print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
     print("sdf data loaded")
     return sdf_data
 
@@ -115,9 +113,7 @@ def init_gt(sdf_data, resolution, num_samples_per_scene, num_scenes):
     sdf_gt = np.reshape(sdf_data[:,:,:,:,0], [num_samples_per_scene * num_scenes])
     rgb_gt = np.reshape(sdf_data[:,:,:,:,1:], [num_samples_per_scene * num_scenes, 3])
 
-    print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
     sdf_gt = sdf_gt.cuda()
-    print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
     sdf_gt = sdf_gt /resolution
 
     rgb_gt = rgb_gt.cuda()
@@ -225,16 +221,21 @@ if __name__ == '__main__':
     # train_images_idx = np.arange(num_training_image_per_scene)
     # validation_images_idx = np.arange(num_training_image_per_scene, num_image_per_scene)
 
+    print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
+
     train_input_im = torch.tensor(input_images[:,train_images_idx,:,:,:], dtype = torch.float).cuda()
     validation_input_im = torch.tensor(input_images[:,validation_images_idx,:,:,:], dtype = torch.float).cuda()
     train_input_loc = torch.tensor(input_locations[:,train_images_idx,:], dtype = torch.float).cuda()
     validation_input_loc = torch.tensor(input_locations[:,validation_images_idx,:], dtype = torch.float).cuda()
 
+    print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
     
     # decoder target
     sdf_data = load_sdf_data(args.input, annotations)
     assert(num_scene == len(sdf_data)), "sdf folder should correspond to annotations input file"
 
+    print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
+    
     resolution = sdf_data.shape[1]
     threshold_precision = 1.0/resolution
     num_samples_per_scene = resolution * resolution * resolution
