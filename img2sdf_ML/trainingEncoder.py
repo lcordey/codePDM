@@ -39,7 +39,6 @@ def init_weights(m):
         m.bias.data.fill_(0.01)
 
 
-print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
 
 decoder = torch.load(DECODER_PATH).cuda()
 target_vecs = torch.load(LATENT_VECS_TARGET_PATH).cuda()
