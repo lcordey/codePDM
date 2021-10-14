@@ -31,7 +31,7 @@ batch_size = 25
 eta_encoder = 5e-4
 gammaLR = 0.9999
 
-ratio_image_used = 0.5
+ratio_image_used = 0.1
 
 def init_weights(m):
     if isinstance(m, (nn.Linear, nn.Conv2d)):
@@ -42,8 +42,6 @@ def init_weights(m):
 
 decoder = torch.load(DECODER_PATH).cuda()
 target_vecs = torch.load(LATENT_VECS_TARGET_PATH).cuda()
-
-print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
 
 annotations_file = open(ANNOTATIONS_PATH, "rb")
 annotations = pickle.load(annotations_file)
@@ -56,8 +54,6 @@ assert(num_scene == len(annotations.keys()))
 input_images = None
 input_locations = np.empty([num_scene, num_image_per_scene, 20])
 
-
-print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
 
 for scene, scene_id in zip(annotations.keys(), range(num_scene)):
     for image, image_id in zip(glob.glob(IMAGES_PATH + scene + '/*'), range(num_image_per_scene)):
@@ -82,9 +78,6 @@ for scene, scene_id in zip(annotations.keys(), range(num_scene)):
 
 input_locations = input_locations - 0.5
 input_images = input_images/255 - 0.5
-
-
-print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
 
 ratio_training_validation = 0.8
 num_training_image_per_scene = (np.int)(np.round(num_image_per_scene * ratio_image_used * ratio_training_validation))
