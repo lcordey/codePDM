@@ -212,7 +212,7 @@ if __name__ == '__main__':
     rand_idx = np.arange(num_image_per_scene)
     np.random.shuffle(rand_idx)
     train_images_idx = rand_idx[num_training_image_per_scene]
-    validation_images_idx = rand_idx[num_training_image_per_scene : num_image_per_scene]
+    validation_images_idx = rand_idx[num_training_image_per_scene : num_training_image_per_scene + num_validation_image_per_scene]
 
 
     # num_training_image_per_scene = (np.int)(np.round(num_image_per_scene * ratio_training_validation))
@@ -221,7 +221,6 @@ if __name__ == '__main__':
     # train_images_idx = np.arange(num_training_image_per_scene)
     # validation_images_idx = np.arange(num_training_image_per_scene, num_image_per_scene)
 
-    print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
 
     train_input_im = torch.tensor(input_images[:,train_images_idx,:,:,:], dtype = torch.float).cuda()
     validation_input_im = torch.tensor(input_images[:,validation_images_idx,:,:,:], dtype = torch.float).cuda()
@@ -235,7 +234,7 @@ if __name__ == '__main__':
     assert(num_scene == len(sdf_data)), "sdf folder should correspond to annotations input file"
 
     print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
-    
+
     resolution = sdf_data.shape[1]
     threshold_precision = 1.0/resolution
     num_samples_per_scene = resolution * resolution * resolution
