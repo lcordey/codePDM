@@ -60,7 +60,7 @@ def load_from_validation_data(annotations, argument_num_image):
     encoder = torch.load(ENCODER_PATH).cuda()
     encoder.eval()
 
-    latent_size = encoder(torch.empty([1,3,input_images.shape[3], input_images.shape[4]]).cuda(), torch.empty([1, input_locations.shape[2]]).cuda()).shape[1]
+    latent_size = (int)(encoder(torch.empty([1,3,input_images.shape[3], input_images.shape[4]]).cuda(), torch.empty([1, input_locations.shape[2]]).cuda()).shape[1] /2)
 
     latent_code_mu_std = torch.empty([num_scene, num_image_per_scene, 2 * latent_size]).cuda()
     for scene_id in range(num_scene):

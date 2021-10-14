@@ -17,7 +17,7 @@ import pickle
 from random import random, randrange, choice
 
 DEFAULT_MODE = 'validation'
-NUM_SCENE_TRAINING = 36
+NUM_SCENE_TRAINING = 30
 NUM_SCENE_VALIDATION = 3
 
 # import IPython
@@ -141,6 +141,7 @@ def randomize_vehicle_placement(temp_filepath: str):
     obj = bpy.data.objects['model']
 
     r_scale = 6
+    # r_rot = (int)(random() * 18) /18
     r_rot = random()
     r_x = 0
     r_y = 0
@@ -152,15 +153,14 @@ def randomize_vehicle_placement(temp_filepath: str):
     bpy.ops.wm.save_as_mainfile(filepath=temp_filepath)
 
 
-def set_fixed_vehicle_placement(temp_filepath: str, r_rot: int):
+def set_fixed_vehicle_placement(temp_filepath: str):
     obj = bpy.data.objects['model']
     r_scale = 6
-    # r_rot = 0.5
+    r_rot = 0.5
 
     obj.location = (0, 0, 0)
     obj.scale = (r_scale, r_scale, r_scale)
     obj.rotation_euler.rotate_axis("Y", math.radians(2 * r_rot * 180))
-    print(r_rot)
     # file needs to be saved so that the bounding box information is updated
     bpy.ops.wm.save_as_mainfile(filepath=temp_filepath)
 
@@ -240,13 +240,18 @@ for i in range(len(vehicle_pool)):
 
 
     load_model(f'{model_dir}/models/model_normalized.obj')
+    set_fixed_vehicle_placement(temp_file.name)
+
+    obj = bpy.data.objects['model']
 
     for j in range(num_scenes_per_vehicule):
 
         if args.mode == 'training':
-            set_fixed_vehicle_placement(temp_file.name, j/num_scenes_per_vehicule)
+            # set_fixed_vehicle_placement(temp_file.name, j/num_scenes_per_vehicule)
+            obj.rotation_euler.rotate_axis("Y", math.radians(2 * 1/num_scenes_per_vehicule * 180))
         else:
-            randomize_vehicle_placement(temp_file.name)
+            # randomize_vehicle_placement(temp_file.name)
+            obj.rotation_euler.rotate_axis("Y", math.radians(2 * random() * 180))
 
         points_2d = get_bounding_box()
         rendered_image_path = f'images/{model_id}/{j}.png'

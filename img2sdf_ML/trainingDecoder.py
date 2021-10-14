@@ -212,9 +212,6 @@ if __name__ == '__main__':
             epoch, torch.Tensor(log_loss_sdf[-10:]).mean(), torch.Tensor(log_loss_rgb[-10:]).mean(), torch.Tensor(log_loss_reg[-10:]).mean(), sdf_pred[:,0].min() * resolution, \
             sdf_pred[:,0].max() * resolution, sdf_pred[:,1:].min() * 255, sdf_pred[:,1:].max() * 255, optimizer.param_groups[0]['lr'], (lat_vecs_log_std.weight.exp()).mean(), (lat_vecs_mu.weight).abs().mean()))
 
-        # print(lat_vecs_log_std(idx[0]).exp())
-        # print(lat_vecs_mu(idx[0]))
-
     #save model
     torch.save(decoder, MODEL_PATH)
     torch.save(lat_vecs_mu(idx).detach(), LATENT_VECS_TARGET_PATH)
@@ -281,15 +278,15 @@ if __name__ == '__main__':
     plt.figure()
     plt.title("Total loss")
     plt.semilogy(avrg_loss[:])
-    plt.savefig("../../data_processing/logs/log_total")
+    plt.savefig("../../image2sdf/logs/log_total")
     plt.figure()
     plt.title("SDF loss")
     plt.semilogy(avrg_loss_sdf[:])
-    plt.savefig("../../data_processing/logs/log_sdf")
+    plt.savefig("../../image2sdf/logs/log_sdf")
     plt.figure()
     plt.title("RGB loss")
     plt.semilogy(avrg_loss_rgb[:])
-    plt.savefig("../../data_processing/logs/log_rgb")
+    plt.savefig("../../image2sdf/logs/log_rgb")
 
-    with open("../../data_processing/logs/log.txt", "wb") as fp:
+    with open("../../image2sdf/logs/log.txt", "wb") as fp:
         pickle.dump(avrg_loss, fp)

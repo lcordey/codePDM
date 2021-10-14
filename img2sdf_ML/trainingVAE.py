@@ -1,6 +1,7 @@
 import h5py
 import math
 import numpy as np
+from numpy.lib.financial import ipmt
 import torch
 import torch.nn as nn
 import pickle
@@ -24,7 +25,7 @@ ALL_SDF_DIR_PATH = "../../image2sdf/sdf/"
 DEFAULT_SDF_DIR = '64'
 
 
-num_epoch = 500000
+num_epoch = 200000
 batch_size_scene = 5
 batch_size_sample = 3000
 latent_size = 16
@@ -138,6 +139,52 @@ def init_opt_sched(encoder, decoder):
 
     return optimizer, scheduler
 
+def evaluate_on_validation_datas(encoder, decoder, num_scene, num_validation_image_per_scene, num_samples_per_scene, sdf_gt, rgb_gt, validation_input_im, validation_input_loc):
+
+    encoder.eval()
+    decoder.eval()
+
+    sum_loss_sdf = 0
+    sum_loss_rgb = 0
+
+    for scene_id in range(num_scene):
+        for image_id in range(num_validation_image_per_scene):
+
+            latent_code_validation = encoder(validation_input_im[scene_id, image_id, :, :, :].unsqueeze(0), validation_input_loc[scene_id,image_id, :].unsqueeze(0))[:,:latent_size].detach()
+            sdf_pred_validation = decoder(latent_code_validation.repeat(num_samples_per_scene,1), xyz).detach()
+
+            # assign weight of 0 for easy samples that are well trained
+            weight_sdf_validation = ~((sdf_pred_validation[:,0] > threshold_precision).squeeze() * (sdf_gt[scene_id * num_samples_per_scene : (scene_id + 1) * num_samples_per_scene] > threshold_precision).squeeze()) \
+                * ~((sdf_pred_validation[:,0] < -threshold_precision).squeeze() * (sdf_gt[scene_id * num_samples_per_scene : (scene_id + 1) * num_samples_per_scene] < -threshold_precision).squeeze())
+
+            
+            #L1 loss, only for hard samples
+            loss_sdf_validation = loss(sdf_pred_validation[:,0].squeeze(), sdf_gt[scene_id * num_samples_per_scene : (scene_id + 1) * num_samples_per_scene])
+            loss_sdf_validation = (loss_sdf_validation * weight_sdf_validation).mean() * weight_sdf_validation.numel()/weight_sdf_validation.count_nonzero()
+
+            # loss rgb
+            lambda_rgb = 1/100
+            
+            rgb_gt_normalized = rgb_gt[scene_id * num_samples_per_scene : (scene_id + 1) * num_samples_per_scene,:]/255
+            loss_rgb_validation = loss(sdf_pred_validation[:,1:], rgb_gt_normalized)
+            loss_rgb_validation = ((loss_rgb_validation[:,0] * weight_sdf_validation) + (loss_rgb_validation[:,1] * weight_sdf_validation) + (loss_rgb_validation[:,2] * weight_sdf_validation)).mean() * weight_sdf_validation.numel()/weight_sdf_validation.count_nonzero() * lambda_rgb
+            
+            sum_loss_sdf = sum_loss_sdf + loss_sdf_validation
+            sum_loss_rgb = sum_loss_rgb + loss_rgb_validation
+
+    sum_loss_sdf = sum_loss_sdf/(num_scene * num_validation_image_per_scene)
+    sum_loss_rgb = sum_loss_rgb/(num_scene * num_validation_image_per_scene)
+
+    print("****************************** VALIDATION ******************************")
+    print("loss sdf: {:.5f}, loss rgb: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}".format(\
+                sum_loss_sdf, sum_loss_rgb, sdf_pred_validation[:,0].min() * resolution, \
+                sdf_pred_validation[:,0].max() * resolution, sdf_pred_validation[:,1:].min() * 255, sdf_pred_validation[:,1:].max() * 255))
+
+    print("\n \n")
+
+    encoder.train()
+    decoder.train()
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Peform marching cubes.')
@@ -147,8 +194,8 @@ if __name__ == '__main__':
     annotations_file = open(ANNOTATIONS_PATH, "rb")
     annotations = pickle.load(annotations_file)
 
-    # num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
-    num_image_per_scene = 5
+    num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
+    # num_image_per_scene = 5
     num_scene = len(annotations.keys())
 
 
@@ -263,12 +310,39 @@ if __name__ == '__main__':
         print("After {} epoch,  loss sdf: {:.5f}, loss rgb: {:.5f}, loss reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, lr: {:f}, lat_vec std/mu: {:.2f}/{:.2f}".format(\
             epoch, torch.Tensor(log_loss_sdf[-10:]).mean(), torch.Tensor(log_loss_rgb[-10:]).mean(), torch.Tensor(log_loss_reg[-10:]).mean(), sdf_pred[:,0].min() * resolution, \
             sdf_pred[:,0].max() * resolution, sdf_pred[:,1:].min() * 255, sdf_pred[:,1:].max() * 255, optimizer.param_groups[0]['lr'], (latent_code_std.exp()).mean(), (latent_code_mu).abs().mean()))
+            
+        if epoch %500 == 0:
+            evaluate_on_validation_datas(encoder, decoder, num_scene, num_validation_image_per_scene, num_samples_per_scene, sdf_gt, rgb_gt, validation_input_im, validation_input_loc)
 
 
+    evaluate_on_validation_datas(encoder, decoder, num_scene, num_validation_image_per_scene, num_samples_per_scene, sdf_gt, rgb_gt, validation_input_im, validation_input_loc)
 
-torch.save(encoder, ENCODER_PATH)
-torch.save(decoder, DECODER_PATH)
+    torch.save(encoder, ENCODER_PATH)
+    torch.save(decoder, DECODER_PATH)
 
+    #save logs plot
+    avrg_loss = []
+    avrg_loss_sdf = []
+    avrg_loss_rgb = []
+    for i in range(0,len(log_loss)):
+        avrg_loss.append(torch.Tensor(log_loss[i-20:i]).mean())
+        avrg_loss_sdf.append(torch.Tensor(log_loss_sdf[i-20:i]).mean())
+        avrg_loss_rgb.append(torch.Tensor(log_loss_rgb[i-20:i]).mean())
+        
 
+    from matplotlib import pyplot as plt
+    plt.figure()
+    plt.title("Total loss")
+    plt.semilogy(avrg_loss[:])
+    plt.savefig("../../image2sdf/logs/log_total")
+    plt.figure()
+    plt.title("SDF loss")
+    plt.semilogy(avrg_loss_sdf[:])
+    plt.savefig("../../image2sdf/logs/log_sdf")
+    plt.figure()
+    plt.title("RGB loss")
+    plt.semilogy(avrg_loss_rgb[:])
+    plt.savefig("../../image2sdf/logs/log_rgb")
 
-
+    with open("../../image2sdf/logs/log.txt", "wb") as fp:
+        pickle.dump(avrg_loss, fp)

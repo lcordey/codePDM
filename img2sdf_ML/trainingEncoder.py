@@ -137,22 +137,6 @@ for epoch in range(num_epoch):
 
 encoder.eval()
 
-### evaluation on training data
-# batch_image_idx = np.arange(num_training_image_per_scene)
-# pred_vecs = torch.empty([num_scene, num_training_image_per_scene, latent_size]).cuda()
-
-# for scene_id in range(num_scene):
-#     pred_vecs[scene_id,:,:] = encoder(train_input_im[scene_id, batch_image_idx, :, :, :], train_input_loc[scene_id,batch_image_idx, :]).detach()
-
-# batch_scene_idx = np.repeat(np.arange(num_scene),num_training_image_per_scene)
-# loss_pred = loss(pred_vecs, target_vecs.unsqueeze(1).repeat(1, num_training_image_per_scene, 1))
-
-
-# print("******************** VALIDATION ********************")
-# print("L2 loss: {:.5f}, L1 loss: {:.5f} norm_pred: {:.5f}, norm target: {:.5f}".format(loss_pred.mean().item(), \
-#     abs(pred_vecs - target_vecs.unsqueeze(1).repeat(1, num_training_image_per_scene, 1)).mean(), abs(pred_vecs).mean(), abs(target_vecs[batch_scene_idx]).mean()))
-
-
 ### evaluation on validation data
 batch_image_idx = np.arange(num_validation_image_per_scene)
 pred_vecs = torch.empty([num_scene, num_validation_image_per_scene, latent_size]).cuda()
