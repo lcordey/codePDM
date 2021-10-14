@@ -36,6 +36,8 @@ eta_decoder = 1e-3
 # gammaLR = 0.99995
 gammaLR = 0.99999
 
+ratio_image_used = 0.5
+
 def init_weights(m):
     if isinstance(m, (nn.Linear, nn.Conv2d)):
         torch.nn.init.xavier_uniform(m.weight)
@@ -207,11 +209,21 @@ if __name__ == '__main__':
     input_images, input_locations = load_encoder_input(annotations, num_scene, num_image_per_scene)
 
     ratio_training_validation = 0.8
-    num_training_image_per_scene = (np.int)(np.round(num_image_per_scene * ratio_training_validation))
-    num_validation_image_per_scene = num_image_per_scene - num_training_image_per_scene
 
-    train_images_idx = np.arange(num_training_image_per_scene)
-    validation_images_idx = np.arange(num_training_image_per_scene, num_image_per_scene)
+    num_training_image_per_scene = (np.int)(np.round(num_image_per_scene * ratio_image_used * ratio_training_validation))
+    num_validation_image_per_scene = (np.int)(np.round(num_image_per_scene * ratio_image_used)) - num_training_image_per_scene
+
+    rand_idx = np.arange(num_image_per_scene)
+    np.random.shuffle(rand_idx)
+    train_images_idx = rand_idx[num_training_image_per_scene]
+    validation_images_idx = rand_idx[num_training_image_per_scene : num_image_per_scene]
+
+
+    # num_training_image_per_scene = (np.int)(np.round(num_image_per_scene * ratio_training_validation))
+    # num_validation_image_per_scene = num_image_per_scene - num_training_image_per_scene
+
+    # train_images_idx = np.arange(num_training_image_per_scene)
+    # validation_images_idx = np.arange(num_training_image_per_scene, num_image_per_scene)
 
     train_input_im = torch.tensor(input_images[:,train_images_idx,:,:,:], dtype = torch.float).cuda()
     validation_input_im = torch.tensor(input_images[:,validation_images_idx,:,:,:], dtype = torch.float).cuda()

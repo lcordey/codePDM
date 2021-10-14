@@ -46,6 +46,7 @@ annotations_file = open(ANNOTATIONS_PATH, "rb")
 annotations = pickle.load(annotations_file)
 
 num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
+# num_image_per_scene = 2
 num_scene, latent_size = target_vecs.shape
 assert(num_scene == len(annotations.keys()))
 
@@ -80,11 +81,14 @@ ratio_training_validation = 0.8
 num_training_image_per_scene = (np.int)(np.round(num_image_per_scene * ratio_image_used * ratio_training_validation))
 num_validation_image_per_scene = (np.int)(np.round(num_image_per_scene * ratio_image_used)) - num_training_image_per_scene
 
-
 rand_idx = np.arange(num_image_per_scene)
-
+np.random.shuffle(rand_idx)
 train_images_idx = rand_idx[num_training_image_per_scene]
 validation_images_idx = rand_idx[num_training_image_per_scene : num_image_per_scene]
+
+
+# num_training_image_per_scene = (np.int)(np.round(num_image_per_scene * ratio_training_validation))
+# num_validation_image_per_scene = num_image_per_scene - num_training_image_per_scene
 
 # train_images_idx = np.arange(num_training_image_per_scene)
 # validation_images_idx = np.arange(num_training_image_per_scene, num_image_per_scene)
@@ -93,7 +97,6 @@ train_input_im = torch.tensor(input_images[:,train_images_idx,:,:,:], dtype = to
 validation_input_im = torch.tensor(input_images[:,validation_images_idx,:,:,:], dtype = torch.float).cuda()
 train_input_loc = torch.tensor(input_locations[:,train_images_idx,:], dtype = torch.float).cuda()
 validation_input_loc = torch.tensor(input_locations[:,validation_images_idx,:], dtype = torch.float).cuda()
-
 
 # encoder
 encoder = EncoderSDF(latent_size).cuda()
