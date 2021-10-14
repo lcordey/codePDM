@@ -31,7 +31,7 @@ batch_size = 25
 eta_encoder = 5e-4
 gammaLR = 0.9999
 
-ratio_image_used = 1
+ratio_image_used = 0.5
 
 def init_weights(m):
     if isinstance(m, (nn.Linear, nn.Conv2d)):
@@ -97,16 +97,10 @@ validation_images_idx = rand_idx[num_training_image_per_scene : num_training_ima
 
 print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
 
-# train_input_im = torch.tensor(input_images[:,train_images_idx,:,:,:], dtype = torch.float).cuda()
-# validation_input_im = torch.tensor(input_images[:,validation_images_idx,:,:,:], dtype = torch.float).cuda()
-# train_input_loc = torch.tensor(input_locations[:,train_images_idx,:], dtype = torch.float).cuda()
-# validation_input_loc = torch.tensor(input_locations[:,validation_images_idx,:], dtype = torch.float).cuda()
-
-
-train_input_im = torch.tensor(input_images[:,train_images_idx,:,:,:], dtype = torch.uint8).cuda()
-validation_input_im = torch.tensor(input_images[:,validation_images_idx,:,:,:], dtype = torch.uint8).cuda()
-train_input_loc = torch.tensor(input_locations[:,train_images_idx,:], dtype = torch.uint8).cuda()
-validation_input_loc = torch.tensor(input_locations[:,validation_images_idx,:], dtype = torch.uint8).cuda()
+train_input_im = torch.tensor(input_images[:,train_images_idx,:,:,:], dtype = torch.float).cuda()
+validation_input_im = torch.tensor(input_images[:,validation_images_idx,:,:,:], dtype = torch.float).cuda()
+train_input_loc = torch.tensor(input_locations[:,train_images_idx,:], dtype = torch.float).cuda()
+validation_input_loc = torch.tensor(input_locations[:,validation_images_idx,:], dtype = torch.float).cuda()
 
 print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
 
@@ -138,8 +132,6 @@ for epoch in range(num_epoch):
     # random batch
     batch_scene_idx = np.random.randint(num_scene, size = batch_size)
     batch_image_idx = np.random.randint(num_training_image_per_scene, size = batch_size)
-
-    IPython.embed()
 
     pred_vecs = encoder(train_input_im[batch_scene_idx, batch_image_idx, :, :, :], train_input_loc[batch_scene_idx,batch_image_idx, :])
 
