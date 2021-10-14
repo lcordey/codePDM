@@ -211,7 +211,7 @@ if __name__ == '__main__':
 
     rand_idx = np.arange(num_image_per_scene)
     np.random.shuffle(rand_idx)
-    train_images_idx = rand_idx[num_training_image_per_scene]
+    train_images_idx = rand_idx[:num_training_image_per_scene]
     validation_images_idx = rand_idx[num_training_image_per_scene : num_training_image_per_scene + num_validation_image_per_scene]
 
 
@@ -233,7 +233,6 @@ if __name__ == '__main__':
     sdf_data = load_sdf_data(args.input, annotations)
     assert(num_scene == len(sdf_data)), "sdf folder should correspond to annotations input file"
 
-    print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
 
     resolution = sdf_data.shape[1]
     threshold_precision = 1.0/resolution
@@ -242,6 +241,7 @@ if __name__ == '__main__':
     xyz = init_xyz(resolution)
     sdf_gt, rgb_gt = init_gt(sdf_data, resolution, num_samples_per_scene, num_scene)
 
+    print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
 
     # encoder
     encoder = EncoderSDF(latent_size, vae = True).cuda()
