@@ -16,8 +16,6 @@ from marching_cubes_rgb import *
 
 ###### parameter #####
 
-TESTING = False
-
 DECODER_PATH = "models_pth/decoderSDF.pth"
 ENCODER_PATH = "models_pth/encoderSDF.pth"
 LATENT_VECS_TARGET_PATH = "models_pth/latent_vecs_target.pth"
@@ -26,12 +24,14 @@ LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred.pth"
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
 
+
 num_epoch = 100000
 batch_size = 25
 
 eta_encoder = 5e-4
 gammaLR = 0.9999
 
+ratio_image_used = 0.5
 
 def init_weights(m):
     if isinstance(m, (nn.Linear, nn.Conv2d)):
@@ -77,11 +77,17 @@ input_locations = input_locations - 0.5
 input_images = input_images/255 - 0.5
 
 ratio_training_validation = 0.8
-num_training_image_per_scene = (np.int)(np.round(num_image_per_scene * ratio_training_validation))
-num_validation_image_per_scene = num_image_per_scene - num_training_image_per_scene
+num_training_image_per_scene = (np.int)(np.round(num_image_per_scene * ratio_image_used * ratio_training_validation))
+num_validation_image_per_scene = (np.int)(np.round(num_image_per_scene * ratio_image_used)) - num_training_image_per_scene
 
-train_images_idx = np.arange(num_training_image_per_scene)
-validation_images_idx = np.arange(num_training_image_per_scene, num_image_per_scene)
+
+rand_idx = np.arange(num_image_per_scene)
+
+train_images_idx = rand_idx[num_training_image_per_scene]
+validation_images_idx = rand_idx[num_training_image_per_scene : num_image_per_scene]
+
+# train_images_idx = np.arange(num_training_image_per_scene)
+# validation_images_idx = np.arange(num_training_image_per_scene, num_image_per_scene)
 
 train_input_im = torch.tensor(input_images[:,train_images_idx,:,:,:], dtype = torch.float).cuda()
 validation_input_im = torch.tensor(input_images[:,validation_images_idx,:,:,:], dtype = torch.float).cuda()
