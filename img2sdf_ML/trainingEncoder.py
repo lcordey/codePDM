@@ -53,6 +53,9 @@ assert(num_scene == len(annotations.keys()))
 input_images = None
 input_locations = np.empty([num_scene, num_image_per_scene, 20])
 
+
+print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
+
 for scene, scene_id in zip(annotations.keys(), range(num_scene)):
     for image, image_id in zip(glob.glob(IMAGES_PATH + scene + '/*'), range(num_image_per_scene)):
 
@@ -76,6 +79,9 @@ for scene, scene_id in zip(annotations.keys(), range(num_scene)):
 
 input_locations = input_locations - 0.5
 input_images = input_images/255 - 0.5
+
+
+print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
 
 ratio_training_validation = 0.8
 num_training_image_per_scene = (np.int)(np.round(num_image_per_scene * ratio_image_used * ratio_training_validation))
@@ -101,6 +107,8 @@ train_input_loc = torch.tensor(input_locations[:,train_images_idx,:], dtype = to
 validation_input_loc = torch.tensor(input_locations[:,validation_images_idx,:], dtype = torch.float).cuda()
 
 print(torch.cuda.memory_allocated(0)/torch.cuda.memory_reserved(0))
+
+IPython.embed()
 
 # encoder
 encoder = EncoderSDF(latent_size).cuda()
