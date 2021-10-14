@@ -62,12 +62,14 @@ def load_from_validation_data(annotations, argument_num_image):
 
     latent_size = encoder(torch.empty([1,3,input_images.shape[3], input_images.shape[4]]).cuda(), torch.empty([1, input_locations.shape[2]]).cuda()).shape[1]
 
-    lat_vecs = torch.empty([num_scene, num_image_per_scene, latent_size]).cuda()
+    latent_code_mu_std = torch.empty([num_scene, num_image_per_scene, 2 * latent_size]).cuda()
     for scene_id in range(num_scene):
         for image_id in range(num_image_per_scene):
-            lat_vecs[scene_id,image_id,:] = encoder(input_images[scene_id, image_id, :, :, :].unsqueeze(0), input_locations[scene_id, image_id, :].unsqueeze(0)).detach()
+            latent_code_mu_std[scene_id,image_id,:] = encoder(input_images[scene_id, image_id, :, :, :].unsqueeze(0), input_locations[scene_id, image_id, :].unsqueeze(0)).detach()
 
-    return lat_vecs
+    latent_code_mu = latent_code_mu_std[:,:,:latent_size]
+
+    return latent_code_mu
 
 def init_xyz(resolution):
     xyz = torch.empty(resolution * resolution * resolution, 3).cuda()
@@ -98,14 +100,14 @@ if __name__ == '__main__':
     annotations = pickle.load(annotations_file)
 
     if args.type == "training":
-        lat_vecs = torch.load(LATENT_VECS_PRED_PATH).cuda()
+        latent_code = torch.load(LATENT_VECS_PRED_PATH).cuda()
         output_dir = "VAE_training_prediction_vae"
     elif args.type == "validation":
-        lat_vecs = load_from_validation_data(annotations, args.num_image)
+        latent_code = load_from_validation_data(annotations, args.num_image)
         output_dir = "VAE_validation_prediction"
 
-    num_scene = lat_vecs.shape[0]
-    num_image_per_scene = lat_vecs.shape[1]
+    num_scene = latent_code.shape[0]
+    num_image_per_scene = latent_code.shape[1]
     idx = torch.arange(num_scene).cuda()
     xyz = init_xyz(resolution)
 
@@ -121,7 +123,7 @@ if __name__ == '__main__':
 
             for x in range(resolution):
 
-                sdf_pred = decoder(lat_vecs[scene_id,j,:].repeat(resolution * resolution, 1),xyz[x * resolution * resolution: (x+1) * resolution * resolution]).detach()
+                sdf_pred = decoder(latent_code[scene_id,j,:].repeat(resolution * resolution, 1),xyz[x * resolution * resolution: (x+1) * resolution * resolution]).detach()
 
                 sdf_pred[:,0] = sdf_pred[:,0] * resolution
                 sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
