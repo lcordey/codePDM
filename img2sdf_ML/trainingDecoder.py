@@ -24,13 +24,13 @@ ALL_SDF_DIR_PATH = "../../image2sdf/sdf/"
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 
 latent_size = 16
-num_epoch = 100000
+num_epoch = 1000000
 batch_size = 10000
 
 eta_decoder = 1e-3
 eta_latent_space_mu = 5e-3
 eta_latent_space_std = 1e-2
-gammaLR = 0.99995
+gammaLR = 0.999995
 
 
 def load_sdf_data(input: str, annotations: dict) -> torch.tensor:
