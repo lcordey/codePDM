@@ -30,7 +30,7 @@ batch_size = 10000
 eta_decoder = 1e-3
 eta_latent_space_mu = 5e-3
 eta_latent_space_std = 1e-2
-gammaLR = 0.999995
+gammaLR = 0.999997
 
 
 def load_sdf_data(input: str, annotations: dict) -> torch.tensor:
