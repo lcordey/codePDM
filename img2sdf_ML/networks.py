@@ -262,16 +262,18 @@ class EncoderFace(nn.Module):
 
     def forward(self, front, left, back, right, top):
 
-        front = self.relu
+        latent_code = None
+
+        # front = self.relu
 
 
-        front = torch.flatten(front, start_dim=1)
+        # front = torch.flatten(front, start_dim=1)
 
-        image = self.relu(self.ln1(image))
-        image = self.relu(self.ln2(image))
-        image = self.relu(self.ln3(image))
+        # image = self.relu(self.ln1(image))
+        # image = self.relu(self.ln2(image))
+        # image = self.relu(self.ln3(image))
 
-        latent_code = self.ln4(image)
+        # latent_code = self.ln4(image)
 
         return latent_code    
 
