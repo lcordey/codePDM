@@ -286,17 +286,17 @@ decoder = DecoderSDF(16)
 
 decoder(code,xyz_coord)
 pytorch_total_params = sum(p.numel() for p in decoder.parameters())
-print("Decoder paramter: {}".format(pytorch_total_params))
+print("Decoder parameters: {}".format(pytorch_total_params))
 
 
-image = torch.empty(10,3,300,450)
-loc = torch.empty(10,20)
+# image = torch.empty(10,3,300,450)
+# loc = torch.empty(10,20)
 
-encoder = EncoderSDF(16)
+# encoder = EncoderSDF(16)
 
-encoder(image,loc)
-pytorch_total_params = sum(p.numel() for p in encoder.parameters())
-print("Encoder paramter: {}".format(pytorch_total_params))
+# encoder(image,loc)
+# pytorch_total_params = sum(p.numel() for p in encoder.parameters())
+# print("Encoder parameters: {}".format(pytorch_total_params))
 
 
 
@@ -306,7 +306,7 @@ encoder = EncoderGrid(16)
 
 encoder(grid)
 pytorch_total_params = sum(p.numel() for p in encoder.parameters())
-print("Encoder paramter: {}".format(pytorch_total_params))
+print("Encoder grid paramter: {}".format(pytorch_total_params))
 
 
 # width, height, depth = 100, 50, 50
@@ -321,4 +321,4 @@ print("Encoder paramter: {}".format(pytorch_total_params))
 
 # encoder(front, left, back, right, top)
 # pytorch_total_params = sum(p.numel() for p in encoder.parameters())
-# print("Encoder paramter: {}".format(pytorch_total_params))
+# print("Encoder face parameters: {}".format(pytorch_total_params))
