@@ -75,7 +75,7 @@ assert(num_scene == len(annotations.keys()))
 
 params = {'batch_size': batch_size,
           'shuffle': True,
-          'num_workers': 16,
+          'num_workers': 8,
           'pin_memory': False
           }
 
@@ -134,7 +134,9 @@ for epoch in range(num_epoch):
     for batch_input_im, batch_target_code in training_generator_grid:
     # for batch_front, batch_left, batch_back, batch_right, batch_top, batch_target_code in training_generator_grid:
 
-        print(f"time loading the data: {time.time() - start_time}")
+
+        print(f"time total time: {time.time() - start_time}")
+        start_time = time.time()
 
         optimizer.zero_grad()
 
@@ -154,8 +156,7 @@ for epoch in range(num_epoch):
         print("epoch: {}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}".format(epoch, torch.Tensor(log_loss[-10:]).mean(), \
         abs(pred_vecs - target_code).mean(), abs(pred_vecs).mean(), abs(target_code).mean(), optimizer.param_groups[0]['lr']  ))
 
-    print(f"total time: {time.time() - start_time}")
-    start_time = time.time()
+        print(f"network time: {time.time() - start_time}")
 
     
     scheduler.step()
