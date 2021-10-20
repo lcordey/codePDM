@@ -7,7 +7,7 @@ import cv2
 import time
 
 IMAGES_PATH = "../../image2sdf/input_images/images/"
-MATRIX_PATH = "../../image2sdf/input_images_validation/matrix_w2c.pkl"
+MATRIX_PATH = "../../image2sdf/input_images/matrix_w2c.pkl"
 
 
 def convert_w2c(matrix_world_to_camera, frame, point):

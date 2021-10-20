@@ -28,11 +28,11 @@ ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
 
 
-num_epoch = 200
+num_epoch = 2000
 batch_size = 10
 
 eta_encoder = 1e-4
-gammaLR = 0.999997
+gammaLR = 1
 
 # ratio_image_used = 0.5
 
@@ -42,6 +42,11 @@ width_input_image = 450
 num_slices = 50
 width_input_network = 25
 height_input_network = 25
+
+
+# width_input_network = 68
+# height_input_network = 68
+# depth_input_network = 120
 
 def init_weights(m):
     if isinstance(m, (nn.Linear, nn.Conv2d)):
