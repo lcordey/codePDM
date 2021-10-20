@@ -172,10 +172,10 @@ class EncoderGrid(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, image):
-        image = self.relu(self.conv2(self.conv1(image)))
+        image = self.conv2(self.conv1(image))
         image = self.mp(image)
         
-        image = self.relu(self.conv4(self.conv3(image)))
+        image = self.conv4(self.conv3(image))
         image = self.mp(image)
 
         # print(image.shape)
