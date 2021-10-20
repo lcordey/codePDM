@@ -2,6 +2,7 @@
 ###--shapenet_path <path/to/shapenent/dir> --output_path <path/to/output/synthesized_images> 
 
 
+from typing import Dict
 import bpy
 import bpy_extras
 import os
@@ -13,12 +14,13 @@ import numpy as np
 import tempfile
 import yaml
 import pickle
+import time
 
 from random import random, randrange, choice
 
 DEFAULT_MODE = 'validation'
-NUM_SCENE_TRAINING = 30
-NUM_SCENE_VALIDATION = 3
+NUM_SCENE_TRAINING = 1000
+NUM_SCENE_VALIDATION = 20
 
 # import IPython
 
@@ -40,6 +42,7 @@ sys.path.append(args.venv_path)
 
 import IPython
 import mathutils
+print(f'\nPath to bpy: {bpy.__file__}\n')
 from PIL import Image
 
 def init_blender():
@@ -73,29 +76,6 @@ def load_model(model_name: str):
         obj.select_set(True)
         obj.name = 'model'
 
-
-def generate_image_dict(rendered_image_path: str, points_2d: list) -> dict:
-    """ write bounding box information in pkl file"""
-    image_dict = dict()
-
-    for pid in range(8):
-        image_dict[f'p{pid + 1}x'] = points_2d[pid].x
-        image_dict[f'p{pid + 1}y'] = points_2d[pid].y
-    
-    # 2d bounding box values
-    min_px = min(p.x for p in points_2d)
-    min_py = min(p.y for p in points_2d)
-    max_px = max(p.x for p in points_2d)
-    max_py = max(p.y for p in points_2d)
-
-    image_dict['rect_height'] = max_py - min_py
-    image_dict['rect_width'] = max_px - min_px
-    image_dict['rect_x'] = min_px
-    image_dict['rect_y'] = min_py
-
-
-    return image_dict
-
 def get_bounding_box() -> list:
     """returns the pixel values of the 6 points needed for the bounding box reconstruction"""
     scene = bpy.context.scene
@@ -118,9 +98,9 @@ def get_bounding_box() -> list:
     p1 = mathutils.Vector((min_coord[0], min_coord[1], min_coord[2]))
     p2 = mathutils.Vector((min_coord[0], max_coord[1], min_coord[2]))
     p3 = mathutils.Vector((max_coord[0], max_coord[1], min_coord[2]))
-    p4 = mathutils.Vector((min_coord[0], min_coord[1], max_coord[2]))
-    p5 = mathutils.Vector((min_coord[0], max_coord[1], max_coord[2]))
-    p6 = mathutils.Vector((max_coord[0], min_coord[1], max_coord[2]))
+    p4 = mathutils.Vector((max_coord[0], min_coord[1], max_coord[2]))
+    p5 = mathutils.Vector((min_coord[0], min_coord[1], max_coord[2]))
+    p6 = mathutils.Vector((min_coord[0], max_coord[1], max_coord[2]))
     p7 = mathutils.Vector((max_coord[0], max_coord[1], max_coord[2]))
 
     points = [p0, p1, p2, p3, p4, p5, p6, p7]
@@ -129,19 +109,20 @@ def get_bounding_box() -> list:
 
     # get 2d placements of the points in the render
     points_2d = [bpy_extras.object_utils.world_to_camera_view(scene, cam, p) for p in points]
-    # rescaling to get pixel values
-    for p in points_2d:
-        p.x = p.x*res_x
-        p.y = res_y - p.y*res_y
 
-    return points_2d
+
+    ### rescaling to get pixel values
+    # for p in points_2d:
+    #     p.x = p.x*res_x
+    #     p.y = res_y - p.y*res_y
+
+    return points_2d, points
 
 
 def randomize_vehicle_placement(temp_filepath: str):
     obj = bpy.data.objects['model']
 
     r_scale = 6
-    # r_rot = (int)(random() * 18) /18
     r_rot = random()
     r_x = 0
     r_y = 0
@@ -164,19 +145,14 @@ def set_fixed_vehicle_placement(temp_filepath: str):
     # file needs to be saved so that the bounding box information is updated
     bpy.ops.wm.save_as_mainfile(filepath=temp_filepath)
 
-
-def save_yaml_file(image_dict_list: list, yaml_path: str):
-    #save current list
-    with open(yaml_path, 'w') as yamlfile:
-        yaml.dump(image_dict_list, yamlfile)
-
 def save_pickle_file(image_dict, pickle_file_path):
     output_file = open(pickle_file_path, "wb")
     pickle.dump(image_dict, output_file)
     output_file.close()
 
 def render_to_file(rendered_image_path: str):
-    """render the image and delete the current vehicle"""
+    """render the image"""
+
     bpy.context.scene.render.filepath = rendered_image_path
     bpy.ops.render.render(write_still = True)
 
@@ -209,9 +185,9 @@ else:
 
 if not os.path.isdir(f'{output_path}/images') :
     os.mkdir(f'{output_path}/images')
-
-yaml_file_path = f'{output_path}/annotations.yaml'
-pickle_file_path = f'{output_path}/annotations.pkl'
+    
+annotations_path = f'{output_path}/annotations.pkl'
+matrix_world_to_camera_path = f'{output_path}/matrix_w2c.pkl'
 
 w, h = args.width, args.height
 
@@ -220,44 +196,43 @@ init_blender()
 #temporary files used to save the blender scene
 init_temp_file = tempfile.NamedTemporaryFile()
 temp_file = tempfile.NamedTemporaryFile()
+
 #save initial scene
 bpy.ops.wm.save_as_mainfile(filepath=init_temp_file.name)
 
-    
 with open(whitelist_path) as f:
     whitelisted_vehicles = f.read().splitlines()
 
 whitelisted_vehicles = set(whitelisted_vehicles)
 vehicle_pool = get_shape_dirs(args.shapenet_path, whitelisted_vehicles)
 
-image_dict = dict()
+annotations = dict()
+
+time_start = time.time()
 
 for i in range(len(vehicle_pool)):
+
     model_dir = vehicle_pool[i]
     model_id = os.path.split(model_dir)[-1]
-
-    image_dict[model_id] = []
-
+    annotations[model_id] = dict()
 
     load_model(f'{model_dir}/models/model_normalized.obj')
     set_fixed_vehicle_placement(temp_file.name)
 
     obj = bpy.data.objects['model']
+    bpy.context.scene.render.engine = 'BLENDER_WORKBENCH'
 
     for j in range(num_scenes_per_vehicule):
-
-        if args.mode == 'training':
-            # set_fixed_vehicle_placement(temp_file.name, j/num_scenes_per_vehicule)
-            obj.rotation_euler.rotate_axis("Y", math.radians(2 * 1/num_scenes_per_vehicule * 180))
-        else:
-            # randomize_vehicle_placement(temp_file.name)
-            obj.rotation_euler.rotate_axis("Y", math.radians(2 * random() * 180))
-
-        points_2d = get_bounding_box()
+        
+        obj.rotation_euler.rotate_axis("Y", math.radians(2 * random() * 180))
         rendered_image_path = f'images/{model_id}/{j}.png'
-        image_dict[model_id].append(generate_image_dict(rendered_image_path, points_2d))
         render_to_file(f'{output_path}/{rendered_image_path}')
 
+        points_2d, points_3d = get_bounding_box()
+        annotations[model_id][j] = dict()
+        annotations[model_id][j]['2d'] = np.array(points_2d)
+        annotations[model_id][j]['3d'] = np.array(points_3d)
+        annotations[model_id][j]['frame'] = [v for v in np.array(bpy.data.objects['Camera'].data.view_frame(scene=bpy.context.scene)[:3])]
 
         # load the image and apply background if needed
         img = Image.open(f'{output_path}/{rendered_image_path}')
@@ -271,9 +246,15 @@ for i in range(len(vehicle_pool)):
     for obj in bpy.data.objects:
         obj.tag = True
 
-save_yaml_file(image_dict, yaml_file_path)
-save_pickle_file(image_dict, pickle_file_path)
+matrix_world_to_camera = np.array(bpy.data.objects['Camera'].matrix_world.normalized().inverted())
 
 
+print(f"rendering time: {time.time() - time_start}")
+time_start = time.time()
+
+save_pickle_file(annotations, annotations_path)
+save_pickle_file(matrix_world_to_camera, matrix_world_to_camera_path)
+
+print(f"saving time: {time.time() - time_start}")
 
 # IPython.embed()

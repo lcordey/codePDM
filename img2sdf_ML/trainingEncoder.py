@@ -11,8 +11,10 @@ import IPython
 import glob
 import imageio
 import random
+import time
 
 from networks import DecoderSDF, EncoderSDF
+from dataLoader import Dataset
 from marching_cubes_rgb import *
 
 ###### parameter #####
@@ -32,7 +34,7 @@ batch_size = 25
 eta_encoder = 5e-4
 gammaLR = 0.999997
 
-ratio_image_used = 0.5
+# ratio_image_used = 0.5
 
 height_image = 300
 width_image = 450
@@ -73,6 +75,15 @@ def load_batch_sample(annotations, num_scene, num_image_per_scene):
 
     return batch_input_im, batch_input_loc, batch_scene_idx
 
+def initialize_dataset():
+    list_scene = list(annotations.keys())
+    dict_scene_2_code = dict()
+
+    for scene_hash, scene_id in zip(list_scene, range(len(list_scene))):
+        dict_scene_2_code[scene_hash] = scene_id
+
+    return list_scene, dict_scene_2_code
+
 decoder = torch.load(DECODER_PATH).cuda()
 target_vecs = torch.load(LATENT_VECS_TARGET_PATH).cuda()
 
@@ -82,6 +93,17 @@ annotations = pickle.load(annotations_file)
 num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
 num_scene, latent_size = target_vecs.shape
 assert(num_scene == len(annotations.keys()))
+
+params = {'batch_size': batch_size,
+          'shuffle': True,
+          'num_workers': 1,
+          'pin_memory': True
+          }
+
+list_scene, dict_scene_2_code = initialize_dataset()
+
+training_set = Dataset(list_scene, dict_scene_2_code, target_vecs.cpu(), annotations, 0, num_image_per_scene, width_image, height_image)
+training_generator = torch.utils.data.DataLoader(training_set, **params)
 
 # input_images = None
 # input_locations = np.empty([num_scene, num_image_per_scene, 20])
@@ -147,10 +169,46 @@ scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=gammaLR)
 ####################### Training loop ##########################
 log_loss = []
 
+
+start_time = time.time()
+
+
+encoder.train()
+for epoch in range(num_epoch):
+    for batch_input_im, batch_input_loc, batch_target_code in training_generator:
+        optimizer.zero_grad()
+
+        print(f"total time: {time.time() - start_time}")
+        start_time = time.time()
+
+        inputIm, inputLoc, targetCode = batch_input_im.cuda(), batch_input_loc.cuda(), batch_target_code.cuda()
+
+        pred_vecs = encoder(inputIm, inputLoc)
+
+        loss_pred = loss(pred_vecs, targetCode)
+        log_loss.append(loss_pred.detach().cpu())
+
+        #update weights
+        loss_pred.backward()
+        optimizer.step()
+        scheduler.step()
+
+        print("epoch: {}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}".format(epoch, torch.Tensor(log_loss[-10:]).mean(), \
+        abs(pred_vecs - targetCode).mean(), abs(pred_vecs).mean(), abs(targetCode).mean(), optimizer.param_groups[0]['lr']  ))
+
+        print(f"netwok time: {time.time() - start_time}")
+
+        
+
+
+
+
+
 encoder.train()
 for epoch in range(num_epoch):
 
     optimizer.zero_grad()
+    start_time = time.time()
 
     # random batch
     # batch_scene_idx = np.random.randint(num_scene, size = batch_size)
@@ -174,6 +232,7 @@ for epoch in range(num_epoch):
         abs(pred_vecs - target_vecs[batch_scene_idx]).mean(), abs(pred_vecs).mean(), abs(target_vecs[batch_scene_idx]).mean(), optimizer.param_groups[0]['lr']  ))
 
 
+    print(f"total time: {time.time() - start_time}")
 
 ####################### Evaluation ##########################
 
