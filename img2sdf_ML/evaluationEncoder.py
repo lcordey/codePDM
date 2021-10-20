@@ -83,12 +83,12 @@ def init_xyz(resolution):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Peform marching cubes.')
-    parser.add_argument('--type', type=str, help='"target"or "pred"', default= DEFAULT_TYPE)
+    # parser.add_argument('--type', type=str, help='"target"or "pred"', default= DEFAULT_TYPE)
     parser.add_argument('--resolution', type=int, help='resolution', default= DEFAULT_RESOLUTION)
     parser.add_argument('--num_image', type=int, help='num max images per scene', default= DEFAULT_NUM_IMAGE)
     args = parser.parse_args()
 
-    assert(args.type == "training" or args.type == "validation"), "please precise which latent vectors you want to evaluate -> pred or target"
+    # assert(args.type == "training" or args.type == "validation"), "please precise which latent vectors you want to evaluate -> pred or target"
 
 
     resolution = args.resolution
@@ -97,12 +97,14 @@ if __name__ == '__main__':
     annotations_file = open(ANNOTATIONS_PATH, "rb")
     annotations = pickle.load(annotations_file)
 
-    if args.type == "training":
-        lat_vecs = torch.load(LATENT_VECS_PRED_PATH).cuda()
-        output_dir = "training_prediction"
-    elif args.type == "validation":
-        lat_vecs = load_from_validation_data(annotations, args.num_image)
-        output_dir = "validation_prediction"
+    # if args.type == "training":
+    #     lat_vecs = torch.load(LATENT_VECS_PRED_PATH).cuda()
+    #     output_dir = "training_prediction"
+    # elif args.type == "validation":
+    #     lat_vecs = load_from_validation_data(annotations, args.num_image)
+    #     output_dir = "validation_prediction"
+
+    
 
     num_scene = lat_vecs.shape[0]
     num_image_per_scene = lat_vecs.shape[1]

@@ -175,7 +175,7 @@ print(f"time for training: {time.time() - start_time}")
 
 
 #save model
-torch.save(pred_vecs.detach().cpu(), LATENT_VECS_PRED_PATH)
+# torch.save(pred_vecs.detach().cpu(), LATENT_VECS_PRED_PATH)
 torch.save(encoder, ENCODER_PATH)
 
 #save logs plot
