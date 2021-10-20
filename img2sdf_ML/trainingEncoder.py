@@ -28,7 +28,7 @@ ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
 
 
-num_epoch = 2000
+num_epoch = 20
 batch_size = 10
 
 eta_encoder = 1e-4
@@ -80,6 +80,8 @@ params = {'batch_size': batch_size,
           }
 
 list_scene, dict_scene_2_code = initialize_dataset()
+
+list_scene = np.repeat(list_scene, 100)
 
 training_set_grid = DatasetGrid(list_scene,
                        dict_scene_2_code,
