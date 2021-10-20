@@ -166,16 +166,16 @@ class EncoderGrid(nn.Module):
 
         self.ln1 = nn.Linear(6*3*3 * features_encoder, features_encoder)
         self.ln2 = nn.Linear(features_encoder, features_encoder)
-        self.ln3 = nn.Linear(features_encoder, features_encoder)
-        self.ln4 = nn.Linear(features_encoder, latent_size)
+        self.ln3 = nn.Linear(features_encoder, (int)(features_encoder/2))
+        self.ln4 = nn.Linear((int)(features_encoder/2), latent_size)
 
         self.relu = nn.ReLU()
 
     def forward(self, image):
-        image = self.conv2(self.conv1(image))
+        image = self.relu(self.conv2(self.conv1(image)))
         image = self.mp(image)
         
-        image = self.conv4(self.conv3(image))
+        image = self.relu(self.conv4(self.conv3(image)))
         image = self.mp(image)
 
         # print(image.shape)
@@ -260,16 +260,12 @@ class EncoderFace(nn.Module):
         self.mp = nn.MaxPool2d(2)
         self.relu = nn.ReLU()
 
-    def forward(self, image):
-        image = self.conv2(self.conv1(image))
-        image = self.mp(image)
-        
-        image = self.conv4(self.conv3(image))
-        image = self.mp(image)
+    def forward(self, front, left, back, right, top):
 
-        # print(image.shape)
+        front = self.relu
 
-        image = torch.flatten(image, start_dim=1)
+
+        front = torch.flatten(front, start_dim=1)
 
         image = self.relu(self.ln1(image))
         image = self.relu(self.ln2(image))
