@@ -28,11 +28,11 @@ ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
 
 
-num_epoch = 20
-batch_size = 10
+num_epoch = 100
+batch_size = 100
 
 eta_encoder = 1e-4
-gammaLR = 1
+gammaLR = 0.99
 
 # ratio_image_used = 0.5
 
@@ -99,12 +99,12 @@ training_generator_grid = torch.utils.data.DataLoader(training_set_grid, **param
 
 # encoder
 # encoder = EncoderSDF(latent_size).cuda()
-# encoder = EncoderGrid(latent_size).cuda()
+encoder = EncoderGrid(latent_size).cuda()
 # encoder = EncoderFace(latent_size).cuda()
 
-# encoder.apply(init_weights)
+encoder.apply(init_weights)
 
-encoder = torch.load(ENCODER_PATH).cuda()
+# encoder = torch.load(ENCODER_PATH).cuda()
 
 loss = torch.nn.MSELoss()
 

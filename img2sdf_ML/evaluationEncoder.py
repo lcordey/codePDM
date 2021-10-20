@@ -2,72 +2,134 @@ import pickle
 import glob
 import imageio
 import torch
+import cv2
 from marching_cubes_rgb import *
 
 import IPython
 
-DEFAULT_RESOLUTION = 50
+DEFAULT_RESOLUTION = 100
 DEFAULT_NUM_IMAGE = 3
 DEFAULT_TYPE = "validation"
 
 DECODER_PATH = "models_pth/decoderSDF.pth"
 ENCODER_PATH = "models_pth/encoderSDF.pth"
 LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred.pth"
+MATRIX_PATH = "../../image2sdf/input_images/matrix_w2c.pkl"
 ANNOTATIONS_PATH = "../../image2sdf/input_images_validation/annotations.pkl"
 IMAGES_PATH = "../../image2sdf/input_images_validation/images/"
-# ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
-# IMAGES_PATH = "../../image2sdf/input_images/images/"
+
+latent_size = 16
+
+height_input_image = 300
+width_input_image = 450
+
+num_slices = 50
+width_input_network = 25
+height_input_network = 25
+# depth_input_network = 120
 
 
+def convert_w2c(matrix_world_to_camera, frame, point):
 
-def load_from_validation_data(annotations, argument_num_image):
+    point_4d = np.resize(point, 4)
+    point_4d[3] = 1
+    co_local = matrix_world_to_camera.dot(point_4d)
+    z = -co_local[2]
+
+    if z == 0.0:
+            return np.array([0.5, 0.5, 0.0])
+    else:
+        for i in range(3):
+            frame[i] =  -(frame[i] / (frame[i][2]/z))
+
+    min_x, max_x = frame[2][0], frame[1][0]
+    min_y, max_y = frame[1][1], frame[0][1]
+
+    x = (co_local[0] - min_x) / (max_x - min_x)
+    y = (co_local[1] - min_y) / (max_y - min_y)
+
+    return np.array([x,y,z])
+
+
+def load_grid(annotations, argument_num_image):
+
+    matrix_world_to_camera = pickle.load(open(MATRIX_PATH, 'rb'))
+
     num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
     num_scene = len(annotations.keys())
     num_image_per_scene = min(num_image_per_scene, argument_num_image)
 
-    input_images = None
-    input_locations = np.empty([num_scene, num_image_per_scene, 20])
+    
+    all_grid = torch.empty([num_scene, num_image_per_scene, 3, num_slices, width_input_network, height_input_network], dtype=torch.float)
 
     for scene, scene_id in zip(annotations.keys(), range(num_scene)):
         for image, image_id in zip(glob.glob(IMAGES_PATH + scene + '/*'), range(num_image_per_scene)):
-        # for image_id in range(min(num_scene, num_image)):
-            # image = glob.glob(IMAGES_PATH + scene + '/*')[image_id]
 
-            # save image
-            im = imageio.imread(image)
+            # Load data and get label
+            image_pth = IMAGES_PATH + scene + '/' + str(image_id) + '.png'
+            input_im = imageio.imread(image_pth)
 
-            if input_images is None:
-                height = im.shape[0]
-                width = im.shape[1]
+            # loc_2d = self.annotations[scene_id][rand_image_id]['2d'].copy()
+            loc_3d = annotations[scene][image_id]['3d'].copy()
+            frame = annotations[scene][image_id]['frame'].copy()
 
-                input_images = np.empty([num_scene, num_image_per_scene, im.shape[2], im.shape[0], im.shape[1]])
+            # interpolate slices vertex coordinates
+            loc_slice_3d = np.empty([num_slices,4,3])
+            for i in range(num_slices):
+                loc_slice_3d[i,0,:] = loc_3d[0,:] * (1-i/(num_slices-1)) + loc_3d[4,:] * i/(num_slices-1)
+                loc_slice_3d[i,1,:] = loc_3d[1,:] * (1-i/(num_slices-1)) + loc_3d[5,:] * i/(num_slices-1)
+                loc_slice_3d[i,2,:] = loc_3d[2,:] * (1-i/(num_slices-1)) + loc_3d[6,:] * i/(num_slices-1)
+                loc_slice_3d[i,3,:] = loc_3d[3,:] * (1-i/(num_slices-1)) + loc_3d[7,:] * i/(num_slices-1)
 
-            input_images[scene_id, image_id, :,:,:] = np.transpose(im,(2,0,1))
+            # convert to image plane coordinate
+            loc_slice_2d = np.empty_like(loc_slice_3d)
+            for i in range(num_slices):
+                for j in range(4):
+                        loc_slice_2d[i,j,:] = convert_w2c(matrix_world_to_camera, frame, loc_slice_3d[i,j,:]) 
 
-            # save locations
-            for loc, loc_id in zip(annotations[scene][image_id].keys(), range(len(annotations[scene][image_id].keys()))):
-                if loc[-1] == 'x' or loc[-5:] == 'width':
-                    input_locations[scene_id, image_id, loc_id] = annotations[scene][image_id][loc]/width
-                else:
-                    input_locations[scene_id, image_id, loc_id] = annotations[scene][image_id][loc]/height
+            ###### y coordinate is inverted + rescaling #####
+            loc_slice_2d[:,:,1] = 1 - loc_slice_2d[:,:,1]
+            loc_slice_2d[:,:,0] = loc_slice_2d[:,:,0] * width_input_image
+            loc_slice_2d[:,:,1] = loc_slice_2d[:,:,1] * height_input_image
 
-    input_locations = input_locations - 0.5
-    input_images = input_images/255 - 0.5
+            # grid to give as input to the network
+            input_grid = np.empty([num_slices, width_input_network, height_input_network, 3])
 
-    input_locations = torch.tensor(input_locations, dtype = torch.float).cuda()
-    input_images = torch.tensor(input_images, dtype = torch.float).cuda()
-    
+
+            # fill grid by slices
+            for i in range(num_slices):
+                src = loc_slice_2d[i,:,:2].copy()
+                dst = np.array([[0, height_input_network], [width_input_network, height_input_network], [width_input_network, 0], [0,0]])
+                h, mask = cv2.findHomography(src, dst)
+                slice = cv2.warpPerspective(input_im, h, (width_input_network,height_input_network))
+                input_grid[i,:,:,:] = slice
+
+            # rearange, normalize and convert to tensor
+            input_grid = np.transpose(input_grid, [3,0,1,2])
+            input_grid = input_grid/255 - 0.5
+            input_grid = torch.tensor(input_grid, dtype = torch.float)
+
+            all_grid[scene_id, image_id, :, :, :, :] = input_grid
+
+    return all_grid
+
+
+def get_vecs(grid):
+
     encoder = torch.load(ENCODER_PATH).cuda()
     encoder.eval()
 
-    latent_size = encoder(torch.empty([1,3,input_images.shape[3], input_images.shape[4]]).cuda(), torch.empty([1, input_locations.shape[2]]).cuda()).shape[1]
+    num_scene = grid.shape[0]
+    num_image_per_scene = grid.shape[1]
 
     lat_vecs = torch.empty([num_scene, num_image_per_scene, latent_size]).cuda()
     for scene_id in range(num_scene):
+        print(f"encoding scene n°: {scene_id}")
         for image_id in range(num_image_per_scene):
-            lat_vecs[scene_id,image_id,:] = encoder(input_images[scene_id, image_id, :, :, :].unsqueeze(0), input_locations[scene_id, image_id, :].unsqueeze(0)).detach()
+            lat_vecs[scene_id,image_id,:] = encoder(grid[scene_id, image_id, :, :, :, :].unsqueeze(0).cuda()).detach()
 
     return lat_vecs
+
 
 def init_xyz(resolution):
     xyz = torch.empty(resolution * resolution * resolution, 3).cuda()
@@ -83,12 +145,10 @@ def init_xyz(resolution):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Peform marching cubes.')
-    # parser.add_argument('--type', type=str, help='"target"or "pred"', default= DEFAULT_TYPE)
     parser.add_argument('--resolution', type=int, help='resolution', default= DEFAULT_RESOLUTION)
     parser.add_argument('--num_image', type=int, help='num max images per scene', default= DEFAULT_NUM_IMAGE)
     args = parser.parse_args()
 
-    # assert(args.type == "training" or args.type == "validation"), "please precise which latent vectors you want to evaluate -> pred or target"
 
 
     resolution = args.resolution
@@ -97,14 +157,10 @@ if __name__ == '__main__':
     annotations_file = open(ANNOTATIONS_PATH, "rb")
     annotations = pickle.load(annotations_file)
 
-    # if args.type == "training":
-    #     lat_vecs = torch.load(LATENT_VECS_PRED_PATH).cuda()
-    #     output_dir = "training_prediction"
-    # elif args.type == "validation":
-    #     lat_vecs = load_from_validation_data(annotations, args.num_image)
-    #     output_dir = "validation_prediction"
+    output_dir = "output_encoder_grid"
 
-    
+    grid = load_grid(annotations, args.num_image)
+    lat_vecs = get_vecs(grid)
 
     num_scene = lat_vecs.shape[0]
     num_image_per_scene = lat_vecs.shape[1]

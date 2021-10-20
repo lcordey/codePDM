@@ -65,7 +65,7 @@ class DatasetGrid(torch.utils.data.Dataset):
 
         # loc_2d = self.annotations[scene_id][rand_image_id]['2d'].copy()
         loc_3d = self.annotations[scene_id][rand_image_id]['3d'].copy()
-        frame = self.annotations[scene_id][rand_image_id]['frame']
+        frame = self.annotations[scene_id][rand_image_id]['frame'].copy()
 
         # interpolate slices vertex coordinates
         loc_slice_3d = np.empty([self.num_slices,4,3])
@@ -146,7 +146,7 @@ class DatasetFaces(torch.utils.data.Dataset):
 
         loc_2d = self.annotations[scene_id][rand_image_id]['2d'].copy()
         # loc_3d = self.annotations[scene_id][rand_image_id]['3d'].copy()
-        # frame = self.annotations[scene_id][rand_image_id]['frame']
+        # frame = self.annotations[scene_id][rand_image_id]['frame'].copy()
 
         ###### y coordinate is inverted + rescaling #####
         loc_2d[:,1] = 1 - loc_2d[:,1]
