@@ -4,7 +4,7 @@ from marching_cubes_rgb import *
 
 num_synthesized_scene = 15
 
-resolution = 50
+resolution = 100
 num_samples_per_scene = resolution * resolution * resolution
 
 MODEL_PATH = "models_pth/decoderSDF.pth"

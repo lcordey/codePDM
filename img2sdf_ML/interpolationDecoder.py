@@ -6,7 +6,7 @@ id_car_A = 5
 id_car_B = 7
 num_interp = 10
 
-resolution = 50
+resolution = 100
 num_samples_per_scene = resolution * resolution * resolution
 
 MODEL_PATH = "models_pth/decoderSDF.pth"

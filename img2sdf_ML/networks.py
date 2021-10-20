@@ -2,6 +2,7 @@ import torch.nn as nn
 import torch
 import torch.nn.functional as F
 
+import time
 import IPython
 
 
@@ -150,7 +151,84 @@ class EncoderSDF(nn.Module):
         return latent_code
 
 
+class EncoderGrid(nn.Module):
+    def __init__(self,latent_size):
+        super(EncoderGrid, self).__init__()
 
+        features_encoder = 64
+
+        self.conv1 = nn.Conv3d(3, features_encoder, kernel_size=(5,3,3))
+        self.conv2 = nn.Conv3d(features_encoder, features_encoder, kernel_size=(5,3,3))
+        self.conv3 = nn.Conv3d(features_encoder, features_encoder, kernel_size=(5,3,3))
+        self.conv4 = nn.Conv3d(features_encoder, features_encoder, kernel_size=(5,3,3))
+
+        self.mp = nn.MaxPool3d(2)
+
+        self.ln1 = nn.Linear(6*3*3 * features_encoder, features_encoder)
+        self.ln2 = nn.Linear(features_encoder, features_encoder)
+        self.ln3 = nn.Linear(features_encoder, features_encoder)
+        self.ln4 = nn.Linear(features_encoder, latent_size)
+
+        self.relu = nn.ReLU()
+
+    def forward(self, image):
+        image = self.conv2(self.conv1(image))
+        image = self.mp(image)
+        
+        image = self.conv4(self.conv3(image))
+        image = self.mp(image)
+
+        # print(image.shape)
+
+        image = torch.flatten(image, start_dim=1)
+
+        image = self.relu(self.ln1(image))
+        image = self.relu(self.ln2(image))
+        image = self.relu(self.ln3(image))
+
+        latent_code = self.ln4(image)
+
+        return latent_code
+
+class EncoderFace(nn.Module):
+    def __init__(self,latent_size):
+        super(EncoderFace, self).__init__()
+
+        features_encoder = 64
+
+        self.convFront1 = nn.Conv2d(3, features_encoder, kernel_size=(3,3))
+        self.convFront2 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3,3))
+        self.convFront3 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3,3))
+        self.convFront4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3,3))
+        self.convFront4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3,3))
+        self.convFront4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3,3))
+
+        self.lnFront1 = nn.Linear(4*4 * features_encoder, features_encoder)
+        self.lnFront1 = nn.Linear(features_encoder, features_encoder)
+        self.lnFront3 = nn.Linear(features_encoder, latent_size)
+
+
+        self.mp = nn.MaxPool2d(2)
+        self.relu = nn.ReLU()
+
+    def forward(self, image):
+        image = self.conv2(self.conv1(image))
+        image = self.mp(image)
+        
+        image = self.conv4(self.conv3(image))
+        image = self.mp(image)
+
+        # print(image.shape)
+
+        image = torch.flatten(image, start_dim=1)
+
+        image = self.relu(self.ln1(image))
+        image = self.relu(self.ln2(image))
+        image = self.relu(self.ln3(image))
+
+        latent_code = self.ln4(image)
+
+        return latent_code    
 
 code = torch.empty(10,16)
 xyz_coord = torch.empty(10,3)
@@ -170,3 +248,28 @@ encoder = EncoderSDF(16)
 encoder(image,loc)
 pytorch_total_params = sum(p.numel() for p in encoder.parameters())
 print("Encoder paramter: {}".format(pytorch_total_params))
+
+
+
+grid = torch.empty(10,3,50,25,25)
+
+encoder = EncoderGrid(16)
+
+encoder(grid)
+pytorch_total_params = sum(p.numel() for p in encoder.parameters())
+print("Encoder paramter: {}".format(pytorch_total_params))
+
+
+# width, height, depth = 100, 50, 50
+
+# front = torch.empty(10,3,width,height)
+# left = torch.empty(10,3,depth,height)
+# back = torch.empty(10,3,width,height)
+# right = torch.empty(10,3,depth,height)
+# top = torch.empty(10,3,width,depth)
+
+# encoder = EncoderFace(16)
+
+# encoder(front, left, back, right, top)
+# pytorch_total_params = sum(p.numel() for p in encoder.parameters())
+# print("Encoder paramter: {}".format(pytorch_total_params))

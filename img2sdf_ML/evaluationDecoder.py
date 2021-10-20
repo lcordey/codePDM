@@ -8,7 +8,7 @@ import IPython
 MODEL_PATH = "models_pth/decoderSDF.pth"
 LATENT_VECS_TARGET_PATH = "models_pth/latent_vecs_target.pth"
 
-DEFAULT_RESOLUTION = 50
+DEFAULT_RESOLUTION = 100
 
 
 def init_xyz(resolution):
