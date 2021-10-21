@@ -252,7 +252,9 @@ class EncoderGrid2(nn.Module):
         temp = self.block3(temp)
         features = self.block4(temp)
 
-        temp = torch.flatten(features, start_dim=1)
+        print(features.shape)
+        print(features.view(features.size(0), -1).shape)
+        temp = features.view(features.size(0), -1)
         latent_code = self.fc4(self.fc3(self.fc2(self.fc1(temp))))
 
         return latent_code
@@ -265,30 +267,30 @@ class EncoderFace(nn.Module):
         features_encoder = 64
 
         # front
-        self.blockFront1 = conv_block2D([3,features_encoder], [features_encoder,features_encoder], [(3,3),(3,3)], [1,1], 2)
-        self.blockFront2 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(3,3),(3,3)], [1,1], 2)
-        self.blockFront3 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(3,3),(3,3)], [1,1], 2)
-        self.blockFront4 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(3,3),(3,3)], [1,1], 2)
+        self.blockFront1 = conv_block2D([3,features_encoder], [features_encoder,features_encoder], [3,3], [1,1], 2)
+        self.blockFront2 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [3,3], [1,1], 2)
+        self.blockFront3 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [3,3], [1,1], 2)
+        self.blockFront4 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [3,3], [1,1], 2)
 
-        self.blockLeft1 = conv_block2D([3,features_encoder], [features_encoder,features_encoder], [(5,3),(5,3)], [(2,1),(2,1)], 2)
-        self.blockLeft2 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(5,3),(5,3)], [(2,1),(2,1)], 2)
-        self.blockLeft3 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(5,3),(5,3)], [(2,1),(2,1)], 2)
-        self.blockLeft4 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(5,3),(5,3)], [(2,1),(2,1)], 2)
+        self.blockLeft1 = conv_block2D([3,features_encoder], [features_encoder,features_encoder], [3,3], [1,1], 2)
+        self.blockLeft2 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [3,3], [1,1], 2)
+        self.blockLeft3 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [3,3], [1,1], 2)
+        self.blockLeft4 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [3,3], [1,1], 2)
 
-        self.blockBack1 = conv_block2D([3,features_encoder], [features_encoder,features_encoder], [(3,3),(3,3)], [1,1], 2)
-        self.blockBack2 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(3,3),(3,3)], [1,1], 2)
-        self.blockBack3 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(3,3),(3,3)], [1,1], 2)
-        self.blockBack4 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(3,3),(3,3)], [1,1], 2)
+        self.blockBack1 = conv_block2D([3,features_encoder], [features_encoder,features_encoder], [3,3], [1,1], 2)
+        self.blockBack2 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [3,3], [1,1], 2)
+        self.blockBack3 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [3,3], [1,1], 2)
+        self.blockBack4 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [3,3], [1,1], 2)
 
-        self.blockRight1 = conv_block2D([3,features_encoder], [features_encoder,features_encoder], [(5,3),(5,3)], [(2,1),(2,1)], 2)
-        self.blockRight2 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(5,3),(5,3)], [(2,1),(2,1)], 2)
-        self.blockRight3 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(5,3),(5,3)], [(2,1),(2,1)], 2)
-        self.blockRight4 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(5,3),(5,3)], [(2,1),(2,1)], 2)
+        self.blockRight1 = conv_block2D([3,features_encoder], [features_encoder,features_encoder], [3,3], [1,1], 2)
+        self.blockRight2 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [3,3], [1,1], 2)
+        self.blockRight3 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [3,3], [1,1], 2)
+        self.blockRight4 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [3,3], [1,1], 2)
 
-        self.blockTop1 = conv_block2D([3,features_encoder], [features_encoder,features_encoder], [(3,5),(3,5)], [(1,2),(1,2)], 2)
-        self.blockTop2 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(3,5),(3,5)], [(1,2),(1,2)], 2)
-        self.blockTop3 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(3,5),(3,5)], [(1,2),(1,2)], 2)
-        self.blockTop4 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(3,5),(3,5)], [(1,2),(1,2)], 2)
+        self.blockTop1 = conv_block2D([3,features_encoder], [features_encoder,features_encoder], [3,3], [1,1], 2)
+        self.blockTop2 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [3,3], [1,1], 2)
+        self.blockTop3 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [3,3], [1,1], 2)
+        self.blockTop4 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [3,3], [1,1], 2)
 
 
         self.ln1 = fc_layer((2*4*4 + 3*4*8) * features_encoder, features_encoder)
@@ -347,9 +349,11 @@ pytorch_total_params = sum(p.numel() for p in encoder.parameters())
 print("Encoder grid parameter: {}".format(pytorch_total_params))
 
 
+grid2 = torch.empty(10,3,64,32,32)
+
 encoder = EncoderGrid2(16)
 
-encoder(grid)
+encoder(grid2)
 pytorch_total_params = sum(p.numel() for p in encoder.parameters())
 print("Encoder grid 2 parameter: {}".format(pytorch_total_params))
 
