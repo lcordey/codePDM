@@ -14,7 +14,7 @@ import random
 import time
 
 from networks import DecoderSDF, EncoderSDF, EncoderGrid, EncoderGrid2, EncoderFace
-from dataLoader import DatasetGrid
+from dataLoader import DatasetGrid, DatasetFace
 from marching_cubes_rgb import *
 
 ###### parameter #####
@@ -40,13 +40,12 @@ height_input_image = 300
 width_input_image = 450
 
 num_slices = 50
-width_input_network = 25
-height_input_network = 25
 
-
-# width_input_network = 68
-# height_input_network = 68
-# depth_input_network = 120
+# width_input_network = 25
+# height_input_network = 25
+width_input_network = 64
+height_input_network = 64
+depth_input_network = 128
 
 def init_weights(m):
     if isinstance(m, (nn.Linear, nn.Conv2d)):
@@ -94,8 +93,23 @@ training_set_grid = DatasetGrid(list_scene,
                        num_slices,
                        width_input_network,
                        height_input_network)
+
 training_generator_grid = torch.utils.data.DataLoader(training_set_grid, **params)
 
+
+training_set_face = DatasetFace(list_scene,
+                       dict_scene_2_code,
+                       target_vecs.cpu(),
+                       annotations,
+                       0,
+                       num_image_per_scene,
+                       width_input_image,
+                       height_input_image,
+                       width_input_network,
+                       height_input_network,
+                       depth_input_network)
+
+training_generator_face = torch.utils.data.DataLoader(training_set_face, **params)
 
 # encoder
 # encoder = EncoderSDF(latent_size).cuda()
@@ -134,11 +148,11 @@ for epoch in range(num_epoch):
     count_model = 0
 
     for batch_input_im, batch_target_code in training_generator_grid:
-    # for batch_front, batch_left, batch_back, batch_right, batch_top, batch_target_code in training_generator_grid:
+    # for batch_front, batch_left, batch_back, batch_right, batch_top, batch_target_code in training_generator_face:
 
 
-        # print(f"total time: {time.time() - start_time}")
-        # start_time = time.time()
+        print(f"total time: {time.time() - start_time}")
+        start_time = time.time()
 
         optimizer.zero_grad()
 
@@ -147,7 +161,7 @@ for epoch in range(num_epoch):
 
         pred_vecs = encoder(input_im)
         # pred_vecs = encoder(front, left, back, right, top)
-
+# 
         loss_pred = loss(pred_vecs, target_code)
         log_loss.append(loss_pred.detach().cpu())
 
@@ -159,7 +173,7 @@ for epoch in range(num_epoch):
         print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}".format(epoch, count_model, torch.Tensor(log_loss[-10:]).mean(), \
         abs(pred_vecs - target_code).mean(), abs(pred_vecs).mean(), abs(target_code).mean(), optimizer.param_groups[0]['lr']  ))
 
-        # print(f"network time: {time.time() - start_time}")
+        print(f"network time: {time.time() - start_time}")
 
     
     scheduler.step()

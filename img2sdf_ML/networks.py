@@ -235,13 +235,14 @@ class EncoderGrid2(nn.Module):
 
         features_encoder = 64
 
-        self.block1 = conv_block3D([3,features_encoder], [features_encoder,features_encoder], [(5,3,3),(5,3,3)], [1,1], 2)
-        self.block2 = conv_block3D([features_encoder,features_encoder], [features_encoder,features_encoder], [(5,3,3),(5,3,3)], [1,1], 2)
-        self.block3 = conv_block3D([features_encoder,2 * features_encoder], [2 * features_encoder, 2 * features_encoder], [(3,3,3),(3,3,3)], [1,1], 2)
+        self.block1 = conv_block3D([3,features_encoder], [features_encoder,features_encoder], [(3,3,3),(3,3,3)], [(1,1,1),(1,1,1)], 2)
+        self.block2 = conv_block3D([features_encoder,features_encoder], [features_encoder,features_encoder], [(3,3,3),(3,3,3)], [(1,1,1),(1,1,1)], 2)
+        self.block3 = conv_block3D([features_encoder,2 * features_encoder], [2 * features_encoder, 2 * features_encoder], [(3,3,3),(3,3,3)], [(1,1,1),(1,1,1)], 2)
 
-        self.fc1 = fc_layer(4*3*3*features_encoder * 2, features_encoder)
+        self.fc1 = fc_layer(6*3*3*features_encoder * 2, features_encoder)
         self.fc2 = fc_layer(features_encoder, features_encoder)
-        self.fc3 = fc_layer(features_encoder, latent_size)
+        self.fc3 = fc_layer(features_encoder, features_encoder)
+        self.fc4 = fc_layer(features_encoder, latent_size)
 
     def forward(self, image):
 
@@ -250,7 +251,7 @@ class EncoderGrid2(nn.Module):
         features = self.block3(temp)
 
         temp = torch.flatten(features, start_dim=1)
-        latent_code = self.fc3(self.fc2(self.fc1(temp)))
+        latent_code = self.fc4(self.fc3(self.fc2(self.fc1(temp))))
 
         return latent_code
 
@@ -265,110 +266,53 @@ class EncoderFace(nn.Module):
         self.blockFront1 = conv_block2D([3,features_encoder], [features_encoder,features_encoder], [(3,3),(3,3)], [1,1], 2)
         self.blockFront2 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(3,3),(3,3)], [1,1], 2)
         self.blockFront3 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(3,3),(3,3)], [1,1], 2)
-        self.blockFront4 = conv_block2D([features_encoder, 2 * features_encoder], [2 * features_encoder, 2 * features_encoder], [(3,3),(3,3)], [1,1], 2)
+        self.blockFront4 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(3,3),(3,3)], [1,1], 2)
 
         self.blockLeft1 = conv_block2D([3,features_encoder], [features_encoder,features_encoder], [(5,3),(5,3)], [(2,1),(2,1)], 2)
         self.blockLeft2 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(5,3),(5,3)], [(2,1),(2,1)], 2)
         self.blockLeft3 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(5,3),(5,3)], [(2,1),(2,1)], 2)
-        self.blockLeft4 = conv_block2D([features_encoder, 2 * features_encoder], [2 * features_encoder, 2 * features_encoder], [(5,3),(5,3)], [(2,1),(2,1)], 2)
+        self.blockLeft4 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(5,3),(5,3)], [(2,1),(2,1)], 2)
 
         self.blockBack1 = conv_block2D([3,features_encoder], [features_encoder,features_encoder], [(3,3),(3,3)], [1,1], 2)
         self.blockBack2 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(3,3),(3,3)], [1,1], 2)
         self.blockBack3 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(3,3),(3,3)], [1,1], 2)
-        self.blockBack4 = conv_block2D([features_encoder, 2 * features_encoder], [2 * features_encoder, 2 * features_encoder], [(3,3),(3,3)], [1,1], 2)
+        self.blockBack4 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(3,3),(3,3)], [1,1], 2)
 
         self.blockRight1 = conv_block2D([3,features_encoder], [features_encoder,features_encoder], [(5,3),(5,3)], [(2,1),(2,1)], 2)
         self.blockRight2 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(5,3),(5,3)], [(2,1),(2,1)], 2)
         self.blockRight3 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(5,3),(5,3)], [(2,1),(2,1)], 2)
-        self.blockRight4 = conv_block2D([features_encoder, 2 * features_encoder], [2 * features_encoder, 2 * features_encoder], [(5,3),(5,3)], [(2,1),(2,1)], 2)
+        self.blockRight4 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(5,3),(5,3)], [(2,1),(2,1)], 2)
 
         self.blockTop1 = conv_block2D([3,features_encoder], [features_encoder,features_encoder], [(3,5),(3,5)], [(1,2),(1,2)], 2)
         self.blockTop2 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(3,5),(3,5)], [(1,2),(1,2)], 2)
         self.blockTop3 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(3,5),(3,5)], [(1,2),(1,2)], 2)
-        self.blockTop4 = conv_block2D([features_encoder, 2 * features_encoder], [2 * features_encoder, 2 * features_encoder], [(3,5),(3,5)], [(1,2),(1,2)], 2)
+        self.blockTop4 = conv_block2D([features_encoder, features_encoder], [features_encoder, features_encoder], [(3,5),(3,5)], [(1,2),(1,2)], 2)
 
 
-        self.ln1 = fc_layer((3*4*4 + 2*4*8) * features_encoder, features_encoder)
-        self.ln1 = fc_layer(features_encoder, features_encoder)
-        self.ln1 = fc_layer(features_encoder, latent_size)
-
-        # front
-        # self.convFront1 = nn.Conv2d(3, features_encoder, kernel_size=(3,3))
-        # self.convFront2 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3,3))
-        # self.convFront3 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3,3))
-        # self.convFront4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3,3))
-        # self.convFront4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3,3))
-        # self.convFront4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3,3))
-
-
-        # self.lnFront1 = nn.Linear(5*5 * features_encoder, features_encoder)
-        # self.lnFront2 = nn.Linear(features_encoder, features_encoder)
-        # self.lnFront3 = nn.Linear(features_encoder, latent_size)
-
-        # left
-        # self.convLeft1 = nn.Conv2d(3, features_encoder, kernel_size=(5,3))
-        # self.convLeft2 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(5,3))
-        # self.convLeft3 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(5,3))
-        # self.convLeft4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(5,3))
-        # self.convLeft4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(5,3))
-        # self.convLeft4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(5,3))
-
-        # self.lnLeft1 = nn.Linear(8*5 * features_encoder, features_encoder)
-        # self.lnLeft1 = nn.Linear(features_encoder, features_encoder)
-        # self.lnLeft3 = nn.Linear(features_encoder, latent_size)
-
-        # # back
-        # self.convBack1 = nn.Conv2d(3, features_encoder, kernel_size=(3,3))
-        # self.convBack2 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3,3))
-        # self.convBack3 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3,3))
-        # self.convBack4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3,3))
-        # self.convBack4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3,3))
-        # self.convBack4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(3,3))
-
-        # self.lnBack1 = nn.Linear(5*5 * features_encoder, features_encoder)
-        # self.lnBack1 = nn.Linear(features_encoder, features_encoder)
-        # self.lnBack3 = nn.Linear(features_encoder, latent_size)
-
-        # # right
-        # self.convRight1 = nn.Conv2d(3, features_encoder, kernel_size=(5,3))
-        # self.convRight2 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(5,3))
-        # self.convRight3 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(5,3))
-        # self.convRight4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(5,3))
-        # self.convRight4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(5,3))
-        # self.convRight4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(5,3))
-
-        # self.lnRight1 = nn.Linear(8*5 * features_encoder, features_encoder)
-        # self.lnRight1 = nn.Linear(features_encoder, features_encoder)
-        # self.lnRight3 = nn.Linear(features_encoder, latent_size)
-
-        # # top
-        # self.convTop1 = nn.Conv2d(3, features_encoder, kernel_size=(5,3))
-        # self.convTop2 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(5,3))
-        # self.convTop3 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(5,3))
-        # self.convTop4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(5,3))
-        # self.convTop4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(5,3))
-        # self.convTop4 = nn.Conv2d(features_encoder, features_encoder, kernel_size=(5,3))
-
-        # self.lnTop1 = nn.Linear(8*5 * features_encoder, features_encoder)
-        # self.lnTop1 = nn.Linear(features_encoder, features_encoder)
-        # self.lnTop3 = nn.Linear(features_encoder, latent_size)
-
-
-        self.mp = nn.MaxPool2d(2)
-        self.relu = nn.ReLU()
+        self.ln1 = fc_layer((2*4*4 + 3*4*8) * features_encoder, features_encoder)
+        self.ln2 = fc_layer(features_encoder, features_encoder)
+        self.ln3 = fc_layer(features_encoder, latent_size)
 
     def forward(self, front, left, back, right, top):
 
         latent_code = None
 
         features_front = self.blockFront4(self.blockFront3(self.blockFront2(self.blockFront1(front))))
-        features_left = self.blockLeft4(self.blockLeft3(self.blockLeft2(self.blockLeft1(front))))
-        features_back = self.blockBack4(self.blockBack3(self.blockBack2(self.blockBack1(front))))
-        features_right = self.blockRight4(self.blockRight3(self.blockRight2(self.blockRight1(front))))
-        features_top = self.blockTop4(self.blockTop3(self.blockTop2(self.blockTop1(front))))
+        features_left = self.blockLeft4(self.blockLeft3(self.blockLeft2(self.blockLeft1(left))))
+        features_back = self.blockBack4(self.blockBack3(self.blockBack2(self.blockBack1(back))))
+        features_right = self.blockRight4(self.blockRight3(self.blockRight2(self.blockRight1(right))))
+        features_top = self.blockTop4(self.blockTop3(self.blockTop2(self.blockTop1(top))))
 
-        # print(features_front.view(0,-1).shape)
+        features_front = torch.flatten(features_front, start_dim=1)
+        features_left = torch.flatten(features_left, start_dim=1)
+        features_back = torch.flatten(features_back, start_dim=1)
+        features_right = torch.flatten(features_right, start_dim=1)
+        features_top = torch.flatten(features_top, start_dim=1)
 
+
+        features = torch.cat([features_front, features_left, features_back, features_right, features_top], dim=1)
+
+        latent_code = self.ln3(self.ln2(self.ln1(features)))
 
         return latent_code    
 

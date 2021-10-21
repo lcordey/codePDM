@@ -109,7 +109,7 @@ class DatasetGrid(torch.utils.data.Dataset):
         return input_grid, target_code
 
 
-class DatasetFaces(torch.utils.data.Dataset):
+class DatasetFace(torch.utils.data.Dataset):
     'Characterizes a dataset for PyTorch'
     def __init__(self, list_IDs, dict_labels, target_code, annotations,
                  start_validation_id, end_validation_id,
