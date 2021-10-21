@@ -9,7 +9,7 @@ def conv_layer3D(chann_in, chann_out, k_size, p_size):
     layer = nn.Sequential(
         nn.Conv3d(chann_in, chann_out, kernel_size=k_size, padding=p_size),
         # nn.BatchNorm3d(chann_out),
-        # nn.ReLU()
+        nn.ReLU()
     )
     return layer
 
@@ -24,7 +24,7 @@ def conv_layer2D(chann_in, chann_out, k_size, p_size):
     layer = nn.Sequential(
         nn.Conv2d(chann_in, chann_out, kernel_size=k_size, padding=p_size),
         # nn.BatchNorm2d(chann_out),
-        # nn.ReLU()
+        nn.ReLU()
     )
     return layer
 
