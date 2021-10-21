@@ -99,8 +99,8 @@ training_generator_grid = torch.utils.data.DataLoader(training_set_grid, **param
 
 # encoder
 # encoder = EncoderSDF(latent_size).cuda()
-# encoder = EncoderGrid(latent_size).cuda()
-encoder = EncoderGrid2(latent_size).cuda()
+encoder = EncoderGrid(latent_size).cuda()
+# encoder = EncoderGrid2(latent_size).cuda()
 # encoder = EncoderFace(latent_size).cuda()
 
 encoder.apply(init_weights)
