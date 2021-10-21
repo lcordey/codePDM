@@ -37,7 +37,7 @@ def conv_block2D(in_list, out_list, k_list, p_list, pooling_k):
 def fc_layer(size_in, size_out):
     layer = nn.Sequential(
         nn.Linear(size_in, size_out),
-        nn.BatchNorm1d(size_out),
+        # nn.BatchNorm1d(size_out),
         nn.ReLU()
     )
     return layer
@@ -245,8 +245,8 @@ class EncoderGrid2(nn.Module):
         # self.fc1 = fc_layer(6*3*3*features_encoder * 2, features_encoder)
         self.fc1 = fc_layer(6*3*3*features_encoder, features_encoder)
         self.fc2 = fc_layer(features_encoder, features_encoder)
-        self.fc3 = fc_layer(features_encoder, features_encoder)
-        self.fc4 = fc_layer(features_encoder, latent_size)
+        self.fc3 = fc_layer(features_encoder, (int)(features_encoder/2))
+        self.fc4 = fc_layer((int)(features_encoder/2), latent_size)
 
     def forward(self, image):
 
