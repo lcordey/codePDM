@@ -73,7 +73,7 @@ num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
 num_scene, latent_size = target_vecs.shape
 assert(num_scene == len(annotations.keys()))
 
-total_model_to_show = num_scene * num_image_per_scene * epoch
+total_model_to_show = num_scene * num_image_per_scene * num_epoch
 
 params = {'batch_size': batch_size,
           'shuffle': True,
