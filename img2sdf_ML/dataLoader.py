@@ -114,7 +114,7 @@ class DatasetFace(torch.utils.data.Dataset):
     'Characterizes a dataset for PyTorch'
     def __init__(self, list_IDs, dict_labels, target_code, annotations,
                  start_validation_id, end_validation_id,
-                 width_input, height_input,
+                 width_input_image, height_input_image,
                  width_input_network, height_input_network, depth_input_network):
         'Initialization'
         self.dict = dict_labels
@@ -122,8 +122,8 @@ class DatasetFace(torch.utils.data.Dataset):
         self.annotations = annotations
         self.start_id = start_validation_id
         self.end_id = end_validation_id
-        self.width_input = width_input
-        self.height_input = height_input
+        self.width_input_image = width_input_image
+        self.height_input_image = height_input_image
         self.width_input_network = width_input_network
         self.height_input_network = height_input_network
         self.depth_input_network = depth_input_network
@@ -151,8 +151,8 @@ class DatasetFace(torch.utils.data.Dataset):
 
         ###### y coordinate is inverted + rescaling #####
         loc_2d[:,1] = 1 - loc_2d[:,1]
-        loc_2d[:,0] = loc_2d[:,0] * self.width_input
-        loc_2d[:,1] = loc_2d[:,1] * self.height_input
+        loc_2d[:,0] = loc_2d[:,0] * self.width_input_image
+        loc_2d[:,1] = loc_2d[:,1] * self.height_input_image
 
 
         # front

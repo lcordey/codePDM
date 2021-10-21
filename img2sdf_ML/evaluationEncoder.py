@@ -1,3 +1,4 @@
+from operator import le
 import pickle
 import glob
 import imageio
@@ -10,10 +11,11 @@ import IPython
 DEFAULT_RESOLUTION = 100
 DEFAULT_NUM_IMAGE = 3
 DEFAUT_OUTPUT_IMAGES = False
-DEFAULT_TYPE = "validation"
+DEFAULT_TYPE = "grid"
 
 DECODER_PATH = "models_pth/decoderSDF.pth"
-ENCODER_PATH = "models_pth/encoderSDF.pth"
+ENCODER_GRID_PATH = "models_pth/encoderGrid.pth"
+ENCODER_FACE_PATH = "models_pth/encoderFace.pth"
 LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred.pth"
 MATRIX_PATH = "../../image2sdf/input_images/matrix_w2c.pkl"
 ANNOTATIONS_PATH = "../../image2sdf/input_images_validation/annotations.pkl"
@@ -24,10 +26,13 @@ latent_size = 16
 height_input_image = 300
 width_input_image = 450
 
-num_slices = 50
-width_input_network = 25
-height_input_network = 25
-# depth_input_network = 128
+num_slices = 64
+width_input_network_grid = 32
+height_input_network_grid = 32
+
+width_input_network_face = 64
+height_input_network_face = 64
+depth_input_network = 128
 
 
 def convert_w2c(matrix_world_to_camera, frame, point):
@@ -60,6 +65,9 @@ def load_grid(annotations, argument_num_image):
     num_scene = len(annotations.keys())
     num_image_per_scene = min(num_image_per_scene, argument_num_image)
 
+    width_input_network = width_input_network_grid
+    height_input_network = height_input_network_grid
+
     
     all_grid = torch.empty([num_scene, num_image_per_scene, 3, num_slices, width_input_network, height_input_network], dtype=torch.float)
 
@@ -70,7 +78,6 @@ def load_grid(annotations, argument_num_image):
             image_pth = IMAGES_PATH + scene + '/' + str(image_id) + '.png'
             input_im = imageio.imread(image_pth)
 
-            # loc_2d = self.annotations[scene_id][rand_image_id]['2d'].copy()
             loc_3d = annotations[scene][image_id]['3d'].copy()
             frame = annotations[scene][image_id]['frame'].copy()
 
@@ -115,9 +122,101 @@ def load_grid(annotations, argument_num_image):
     return all_grid
 
 
-def get_vecs(grid):
 
-    encoder = torch.load(ENCODER_PATH).cuda()
+def load_face(annotations, argument_num_image):
+
+    num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
+    num_scene = len(annotations.keys())
+    num_image_per_scene = min(num_image_per_scene, argument_num_image)
+
+    width_input_network = width_input_network_face
+    height_input_network = height_input_network_face
+
+    
+    all_front = torch.empty([num_scene, num_image_per_scene, 3, width_input_network, height_input_network], dtype=torch.float)
+    all_left = torch.empty([num_scene, num_image_per_scene, 3, width_input_network, depth_input_network], dtype=torch.float)
+    all_back = torch.empty([num_scene, num_image_per_scene, 3, width_input_network, height_input_network], dtype=torch.float)
+    all_right = torch.empty([num_scene, num_image_per_scene, 3, width_input_network, depth_input_network], dtype=torch.float)
+    all_top = torch.empty([num_scene, num_image_per_scene, 3, depth_input_network, width_input_network], dtype=torch.float)
+
+    for scene, scene_id in zip(annotations.keys(), range(num_scene)):
+        for image, image_id in zip(glob.glob(IMAGES_PATH + scene + '/*'), range(num_image_per_scene)):
+
+            # Load data and get label
+            image_pth = IMAGES_PATH + scene + '/' + str(image_id) + '.png'
+            input_im = imageio.imread(image_pth)
+
+            loc_2d = annotations[scene_id][image_id]['2d'].copy()
+
+            ###### y coordinate is inverted + rescaling #####
+            loc_2d[:,1] = 1 - loc_2d[:,1]
+            loc_2d[:,0] = loc_2d[:,0] * width_input_image
+            loc_2d[:,1] = loc_2d[:,1] * height_input_image
+
+            
+            # front
+            src = np.array([loc_2d[0,:2],loc_2d[1,:2],loc_2d[2,:2],loc_2d[3,:2]]).copy()
+            dst = np.array([[0,height_input_network],[width_input_network,height_input_network],[width_input_network,0],[0,0]])
+            h, mask = cv2.findHomography(src, dst)
+            front = cv2.warpPerspective(input_im, h, (width_input_network,height_input_network))
+
+            # left
+            src = np.array([loc_2d[1,:2],loc_2d[5,:2],loc_2d[6,:2],loc_2d[2,:2]]).copy()
+            dst = np.array([[0,height_input_network],[depth_input_network,height_input_network],[depth_input_network,0],[0,0]])
+            h, mask = cv2.findHomography(src, dst)
+            left = cv2.warpPerspective(input_im, h, (depth_input_network,height_input_network))
+
+            # back
+            src = np.array([loc_2d[5,:2],loc_2d[4,:2],loc_2d[7,:2],loc_2d[6,:2]]).copy()
+            dst = np.array([[0,height_input_network],[width_input_network,height_input_network],[width_input_network,0],[0,0]])
+            h, mask = cv2.findHomography(src, dst)
+            back = cv2.warpPerspective(input_im, h, (width_input_network,height_input_network))
+
+            # right
+            src = np.array([loc_2d[4,:2],loc_2d[0,:2],loc_2d[3,:2],loc_2d[7,:2]]).copy()
+            dst = np.array([[0,height_input_network],[depth_input_network,height_input_network],[depth_input_network,0],[0,0]])
+            h, mask = cv2.findHomography(src, dst)
+            right = cv2.warpPerspective(input_im, h, (depth_input_network,height_input_network))
+
+            # top
+            src = np.array([loc_2d[3,:2],loc_2d[2,:2],loc_2d[6,:2],loc_2d[7,:2]]).copy()
+            dst = np.array([[0,depth_input_network],[width_input_network,depth_input_network],[width_input_network,0],[0,0]])
+            h, mask = cv2.findHomography(src, dst)
+            top = cv2.warpPerspective(input_im, h, (width_input_network,depth_input_network))
+
+            # rearange, normalize and convert to tensor
+            front = np.transpose(front, [2,1,0])
+            front = front/255 - 0.5
+            front = torch.tensor(front, dtype = torch.float)
+
+            left = np.transpose(left, [2,1,0])
+            left = left/255 - 0.5
+            left = torch.tensor(left, dtype = torch.float)
+
+            back = np.transpose(back, [2,1,0])
+            back = back/255 - 0.5
+            back = torch.tensor(back, dtype = torch.float)
+
+            right = np.transpose(right, [2,1,0])
+            right = right/255 - 0.5
+            right = torch.tensor(right, dtype = torch.float)
+
+            top = np.transpose(top, [2,1,0])
+            top = top/255 - 0.5
+            top = torch.tensor(top, dtype = torch.float)
+
+
+            all_front[scene_id, image_id, :, :, :] = front
+            all_left[scene_id, image_id, :, :, :] = left
+            all_back[scene_id, image_id, :, :, :] = back
+            all_right[scene_id, image_id, :, :, :] = right
+            all_top[scene_id, image_id, :, :, :] = top
+
+    return all_front, all_left, all_back, all_right, all_top
+
+def get_vecs_grid(grid):
+
+    encoder = torch.load(ENCODER_GRID_PATH).cuda()
     encoder.eval()
 
     num_scene = grid.shape[0]
@@ -128,6 +227,28 @@ def get_vecs(grid):
         print(f"encoding scene n°: {scene_id}")
         for image_id in range(num_image_per_scene):
             lat_vecs[scene_id,image_id,:] = encoder(grid[scene_id, image_id, :, :, :, :].unsqueeze(0).cuda()).detach()
+
+    return lat_vecs
+
+def get_vecs_face(front, left, back, right, top):
+
+    encoder = torch.load(ENCODER_FACE_PATH).cuda()
+    encoder.eval()
+
+    num_scene = front.shape[0]
+    num_image_per_scene = front.shape[1]
+
+    lat_vecs = torch.empty([num_scene, num_image_per_scene, latent_size]).cuda()
+    for scene_id in range(num_scene):
+        print(f"encoding scene n°: {scene_id}")
+        for image_id in range(num_image_per_scene):
+            input_front = front[scene_id, image_id, :, :, :, :].unsqueeze(0).cuda()
+            input_left = left[scene_id, image_id, :, :, :, :].unsqueeze(0).cuda()
+            input_back = back[scene_id, image_id, :, :, :, :].unsqueeze(0).cuda()
+            input_right = right[scene_id, image_id, :, :, :, :].unsqueeze(0).cuda()
+            input_top = top[scene_id, image_id, :, :, :, :].unsqueeze(0).cuda()
+
+            lat_vecs[scene_id,image_id,:] = encoder(input_front, input_left, input_back, input_right, input_top).detach()
 
     return lat_vecs
 
@@ -148,12 +269,13 @@ def cosine_distance(a,b):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Peform marching cubes.')
+    parser.add_argument('--type', type=str, help='grid or face', default= DEFAULT_TYPE)
+    parser.add_argument('--output_images', type=bool, help='num max images per scene', default= DEFAUT_OUTPUT_IMAGES)
     parser.add_argument('--resolution', type=int, help='resolution', default= DEFAULT_RESOLUTION)
     parser.add_argument('--num_image', type=int, help='num max images per scene', default= DEFAULT_NUM_IMAGE)
-    parser.add_argument('--output_images', type=bool, help='num max images per scene', default= DEFAUT_OUTPUT_IMAGES)
     args = parser.parse_args()
 
-
+    assert(args.type == 'grid' or args.type == 'resolution'), "please give type: either grid or face"
 
     resolution = args.resolution
     num_samples_per_scene = resolution * resolution * resolution
@@ -161,8 +283,13 @@ if __name__ == '__main__':
     annotations_file = open(ANNOTATIONS_PATH, "rb")
     annotations = pickle.load(annotations_file)
 
-    grid = load_grid(annotations, args.num_image)
-    lat_vecs = get_vecs(grid)
+    if args.type == 'grid':
+        grid = load_grid(annotations, args.num_image)
+        lat_vecs = get_vecs_grid(grid)
+    else: 
+        front, left, back, right, top = load_face(annotations, args.num_image)
+        lat_vecs = get_vecs_face(front, left, back, right, top)
+
 
     num_scene = lat_vecs.shape[0]
     num_image_per_scene = lat_vecs.shape[1]

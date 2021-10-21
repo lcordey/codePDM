@@ -21,7 +21,8 @@ from marching_cubes_rgb import *
 ###### parameter #####
 
 DECODER_PATH = "models_pth/decoderSDF.pth"
-ENCODER_PATH = "models_pth/encoderSDF.pth"
+ENCODER_GRID_PATH = "models_pth/encoderGrid.pth"
+ENCODER_FACE_PATH = "models_pth/encoderFace.pth"
 LATENT_VECS_TARGET_PATH = "models_pth/latent_vecs_target.pth"
 LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred.pth"
 
@@ -224,7 +225,10 @@ print(f"time for training: {(int)((time.time() - time_start)/60)}")
 
 #save model
 # torch.save(pred_vecs.detach().cpu(), LATENT_VECS_PRED_PATH)
-torch.save(encoder, ENCODER_PATH)
+if NEWTORK == 'grid':
+    torch.save(encoder, ENCODER_GRID_PATH)
+else:
+    torch.save(encoder, ENCODER_FACE_PATH)
 
 #save logs plot
 avrg_loss = []
