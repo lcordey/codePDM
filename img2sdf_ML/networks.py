@@ -305,13 +305,13 @@ class EncoderFace(nn.Module):
         features_right = self.blockRight4(self.blockRight3(self.blockRight2(self.blockRight1(right))))
         features_top = self.blockTop4(self.blockTop3(self.blockTop2(self.blockTop1(top))))
 
-        features_front = features_front.view(features_front.size(0), -1)
-        features_left = features_left.view(features_left.size(0), -1)
-        features_back = features_back.view(features_back.size(0), -1)
-        features_right = features_right.view(features_right.size(0), -1)
-        features_top = features_top.view(features_top.size(0), -1)
+        # features_front = features_front.view(features_front.size(0), -1)
+        # features_left = features_left.view(features_left.size(0), -1)
+        # features_back = features_back.view(features_back.size(0), -1)
+        # features_right = features_right.view(features_right.size(0), -1)
+        # features_top = features_top.view(features_top.size(0), -1)
 
-        features = torch.cat([features_front, features_left, features_back, features_right, features_top], dim=1)
+        features = torch.cat([features_front.view(features_front.size(0), -1), features_left.view(features_left.size(0), -1), features_back.view(features_back.size(0), -1), features_right.view(features_right.size(0), -1), features_top.view(features_top.size(0), -1)], dim=1)
 
         latent_code = self.ln4(self.ln3(self.ln2(self.ln1(features))))
 
