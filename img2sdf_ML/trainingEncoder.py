@@ -29,7 +29,7 @@ IMAGES_PATH = "../../image2sdf/input_images/images/"
 
 
 num_epoch = 10
-batch_size = 25
+batch_size = 20
 
 eta_encoder = 1e-4
 gammaLR = 0.90
@@ -75,7 +75,7 @@ assert(num_scene == len(annotations.keys()))
 
 params = {'batch_size': batch_size,
           'shuffle': True,
-          'num_workers': 16,
+          'num_workers': 8,
           'pin_memory': False
           }
 
