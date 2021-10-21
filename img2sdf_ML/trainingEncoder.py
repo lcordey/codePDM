@@ -29,7 +29,7 @@ IMAGES_PATH = "../../image2sdf/input_images/images/"
 
 
 num_epoch = 2
-batch_size = 10
+batch_size = 100
 
 eta_encoder = 1e-4
 gammaLR = 0.50
@@ -154,8 +154,8 @@ for epoch in range(num_epoch):
     for batch_front, batch_left, batch_back, batch_right, batch_top, batch_target_code in training_generator_face:
 
 
-        print(f"total time: {time.time() - time_start}")
-        time_start = time.time()
+        # print(f"total time: {time.time() - time_start}")
+        # time_start = time.time()
 
         optimizer.zero_grad()
 
@@ -172,7 +172,7 @@ for epoch in range(num_epoch):
         loss_pred.backward()
         optimizer.step()
 
-        print(f"network time: {time.time() - time_start}")
+        # print(f"network time: {time.time() - time_start}")
 
         time_passed = time.time() - time_start
         model_seen = len(log_loss) * batch_size
