@@ -11,7 +11,7 @@ import IPython
 DEFAULT_RESOLUTION = 100
 DEFAULT_NUM_IMAGE = 3
 DEFAUT_OUTPUT_IMAGES = False
-DEFAULT_TYPE = "face"
+DEFAULT_TYPE = "grid"
 
 DECODER_PATH = "models_pth/decoderSDF.pth"
 ENCODER_GRID_PATH = "models_pth/encoderGrid.pth"

@@ -29,14 +29,14 @@ LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred.pth"
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
 
-NEWTORK = 'grid'
-# NEWTORK = 'face'
+# NEWTORK = 'grid'
+NEWTORK = 'face'
 
-num_epoch = 3
+num_epoch = 20
 batch_size = 10
 
 eta_encoder = 1e-4
-gammaLR = 1
+gammaLR = 0.95
 
 
 height_input_image = 300
