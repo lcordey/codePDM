@@ -196,7 +196,7 @@ for epoch in range(num_epoch):
 #     abs(pred_vecs - target_vecs.unsqueeze(1).repeat(1, num_validation_image_per_scene, 1)).mean(), abs(pred_vecs).mean(), abs(target_vecs[batch_scene_idx]).mean()))
 
 
-print(f"time for training: {time.time() - start_time}")
+print(f"time for training: {time.time() - time_start}")
 
 
 #save model
