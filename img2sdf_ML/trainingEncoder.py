@@ -1,3 +1,4 @@
+from typing import NewType
 import h5py
 import math
 import numpy as np
@@ -27,24 +28,26 @@ LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred.pth"
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
 
+NEWTORK = 'grid'
+# NEWTORK = 'face'
 
-num_epoch = 2
+num_epoch = 3
 batch_size = 100
 
 eta_encoder = 1e-4
 gammaLR = 0.50
 
-# ratio_image_used = 0.5
 
 height_input_image = 300
 width_input_image = 450
 
 num_slices = 64
 
-# width_input_network = 32
-# height_input_network = 32
-width_input_network = 64
-height_input_network = 64
+width_input_network_grid = 32
+height_input_network_grid = 32
+
+width_input_network_face = 64
+height_input_network_face = 64
 
 depth_input_network = 128
 
@@ -94,8 +97,8 @@ training_set_grid = DatasetGrid(list_scene,
                        width_input_image,
                        height_input_image,
                        num_slices,
-                       width_input_network,
-                       height_input_network)
+                       width_input_network_grid,
+                       height_input_network_grid)
 
 training_generator_grid = torch.utils.data.DataLoader(training_set_grid, **params)
 
@@ -108,8 +111,8 @@ training_set_face = DatasetFace(list_scene,
                        num_image_per_scene,
                        width_input_image,
                        height_input_image,
-                       width_input_network,
-                       height_input_network,
+                       width_input_network_face,
+                       height_input_network_face,
                        depth_input_network)
 
 training_generator_face = torch.utils.data.DataLoader(training_set_face, **params)
@@ -117,8 +120,11 @@ training_generator_face = torch.utils.data.DataLoader(training_set_face, **param
 # encoder
 # encoder = EncoderSDF(latent_size).cuda()
 # encoder = EncoderGrid(latent_size).cuda()
-# encoder = EncoderGrid2(latent_size).cuda()
-encoder = EncoderFace(latent_size).cuda()
+
+if NEWTORK == 'grid':
+    encoder = EncoderGrid2(latent_size).cuda()
+elif NEWTORK == 'face':
+    encoder = EncoderFace(latent_size).cuda()
 
 encoder.apply(init_weights)
 
@@ -146,45 +152,62 @@ time_start = time.time()
 
 
 encoder.train()
-for epoch in range(num_epoch):
 
-    count_model = 0
+if NEWTORK == 'grid':
+    for epoch in range(num_epoch):
+        count_model = 0
+        for batch_input_im, batch_target_code in training_generator_grid:
+            optimizer.zero_grad()
 
-    # for batch_input_im, batch_target_code in training_generator_grid:
-    for batch_front, batch_left, batch_back, batch_right, batch_top, batch_target_code in training_generator_face:
+            input_im, target_code = batch_input_im.cuda(), batch_target_code.cuda()
+            pred_vecs = encoder(input_im)
 
+            loss_pred = loss(pred_vecs, target_code)
+            log_loss.append(loss_pred.detach().cpu())
 
-        # print(f"total time: {time.time() - time_start}")
-        # time_start = time.time()
+            #update weights
+            loss_pred.backward()
+            optimizer.step()
 
-        optimizer.zero_grad()
+            # print(f"network time: {time.time() - time_start}")
 
-        # input_im, target_code = batch_input_im.cuda(), batch_target_code.cuda()
-        front, left, back, right, top, target_code = batch_front.cuda(), batch_left.cuda(), batch_back.cuda(), batch_right.cuda(), batch_top.cuda(), batch_target_code.cuda()
+            time_passed = time.time() - time_start
+            model_seen = len(log_loss) * batch_size
+            time_per_model = time_passed/(model_seen)
+            time_left = time_per_model * (total_model_to_show - model_seen)
+            count_model += batch_size
+            print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(epoch, count_model, torch.Tensor(log_loss[-10:]).mean(), \
+            abs(pred_vecs - target_code).mean(), abs(pred_vecs).mean(), abs(target_code).mean(), optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
 
-        # pred_vecs = encoder(input_im)
-        pred_vecs = encoder(front, left, back, right, top)
-# 
-        loss_pred = loss(pred_vecs, target_code)
-        log_loss.append(loss_pred.detach().cpu())
-
-        #update weights
-        loss_pred.backward()
-        optimizer.step()
-
-        # print(f"network time: {time.time() - time_start}")
-
-        time_passed = time.time() - time_start
-        model_seen = len(log_loss) * batch_size
-        time_per_model = time_passed/(model_seen)
-        time_left = time_per_model * (total_model_to_show - model_seen)
-        count_model += batch_size
-        print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(epoch, count_model, torch.Tensor(log_loss[-10:]).mean(), \
-        abs(pred_vecs - target_code).mean(), abs(pred_vecs).mean(), abs(target_code).mean(), optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
+        scheduler.step()
 
 
-    
-    scheduler.step()
+elif NEWTORK == 'face':
+    for epoch in range(num_epoch):
+        count_model = 0
+        for batch_front, batch_left, batch_back, batch_right, batch_top, batch_target_code in training_generator_face:
+            optimizer.zero_grad()
+
+            front, left, back, right, top, target_code = batch_front.cuda(), batch_left.cuda(), batch_back.cuda(), batch_right.cuda(), batch_top.cuda(), batch_target_code.cuda()
+            pred_vecs = encoder(front, left, back, right, top)
+
+            loss_pred = loss(pred_vecs, target_code)
+            log_loss.append(loss_pred.detach().cpu())
+
+            #update weights
+            loss_pred.backward()
+            optimizer.step()
+
+            time_passed = time.time() - time_start
+            model_seen = len(log_loss) * batch_size
+            time_per_model = time_passed/(model_seen)
+            time_left = time_per_model * (total_model_to_show - model_seen)
+            count_model += batch_size
+            print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(epoch, count_model, torch.Tensor(log_loss[-10:]).mean(), \
+            abs(pred_vecs - target_code).mean(), abs(pred_vecs).mean(), abs(target_code).mean(), optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
+
+        scheduler.step()
+
 
 
 ####################### Evaluation ##########################
