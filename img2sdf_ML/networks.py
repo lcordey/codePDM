@@ -37,7 +37,7 @@ def conv_block2D(in_list, out_list, k_list, p_list, pooling_k):
 def fc_layer(size_in, size_out):
     layer = nn.Sequential(
         nn.Linear(size_in, size_out),
-        # nn.BatchNorm1d(size_out),
+        nn.BatchNorm1d(size_out),
         nn.ReLU()
     )
     return layer
