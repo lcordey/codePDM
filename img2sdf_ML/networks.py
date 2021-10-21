@@ -246,7 +246,7 @@ class EncoderGrid2(nn.Module):
         # self.fc1 = fc_layer(6*3*3*features_encoder, features_encoder)
         self.fc2 = fc_layer(features_encoder, features_encoder)
         self.fc3 = fc_layer(features_encoder, features_encoder)
-        self.fc4 = nn.Linear(features_encoder, features_encoder)
+        self.fc4 = nn.Linear(features_encoder, latent_size)
 
     def forward(self, image):
 
