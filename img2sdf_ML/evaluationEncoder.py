@@ -207,13 +207,13 @@ if __name__ == '__main__':
     similarity_different_model = []
 
     for scene_id_1 in range(num_scene):
-        for vec1 in range(num_image_per_scene-1):
-            for scene_id_2 in range(scene_id_1, num_scene):
-                if scene_id_1 == scene_id_2:
-                  print(f"cosine distance for scene {scene_id_1}")
-                for vec2 in range(vec1 + 1, num_image_per_scene):
+        for scene_id_2 in range(scene_id_1, num_scene):
+            if scene_id_1 == scene_id_2:
+                print(f"cosine distance for scene {scene_id_1}")
+            for vec1 in range(num_image_per_scene):
+                for vec2 in range(num_image_per_scene):
                     dist = cosine_distance(lat_vecs[scene_id_1,vec1,:], lat_vecs[scene_id_2,vec2,:])
-                    if scene_id_1 == scene_id_2:
+                    if scene_id_1 == scene_id_2 and vec2 > vec1:
                         similarity_same_model.append(dist)
                         print(f"cosine distance between vec {vec1} and {vec2}: {dist}")
                     else:
