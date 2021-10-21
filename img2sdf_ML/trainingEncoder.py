@@ -45,7 +45,8 @@ width_input_network = 25
 height_input_network = 25
 # width_input_network = 64
 # height_input_network = 64
-# depth_input_network = 128
+
+depth_input_network = 128
 
 def init_weights(m):
     if isinstance(m, (nn.Linear, nn.Conv2d)):
