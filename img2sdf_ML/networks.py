@@ -8,7 +8,7 @@ import IPython
 def conv_layer3D(chann_in, chann_out, k_size, p_size):
     layer = nn.Sequential(
         nn.Conv3d(chann_in, chann_out, kernel_size=k_size, padding=p_size),
-        nn.BatchNorm3d(chann_out),
+        # nn.BatchNorm3d(chann_out),
         nn.ReLU()
     )
     return layer
@@ -37,7 +37,7 @@ def conv_block2D(in_list, out_list, k_list, p_list, pooling_k):
 def fc_layer(size_in, size_out):
     layer = nn.Sequential(
         nn.Linear(size_in, size_out),
-        nn.BatchNorm1d(size_out),
+        # nn.BatchNorm1d(size_out),
         nn.ReLU()
     )
     return layer
