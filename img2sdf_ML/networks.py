@@ -8,8 +8,8 @@ import IPython
 def conv_layer3D(chann_in, chann_out, k_size, p_size):
     layer = nn.Sequential(
         nn.Conv3d(chann_in, chann_out, kernel_size=k_size, padding=p_size),
-        # nn.BatchNorm3d(chann_out),
-        # nn.ReLU()
+        nn.BatchNorm3d(chann_out),
+        nn.ReLU()
     )
     return layer
 
@@ -37,7 +37,7 @@ def conv_block2D(in_list, out_list, k_list, p_list, pooling_k):
 def fc_layer(size_in, size_out):
     layer = nn.Sequential(
         nn.Linear(size_in, size_out),
-        # nn.BatchNorm1d(size_out),
+        nn.BatchNorm1d(size_out),
         nn.ReLU()
     )
     return layer
@@ -235,15 +235,15 @@ class EncoderGrid2(nn.Module):
 
         features_encoder = 64
 
-        # self.block1 = conv_block3D([3,features_encoder], [features_encoder,features_encoder], [(3,3,3),(3,3,3)], [(1,1,1),(1,1,1)], 2)
-        # self.block2 = conv_block3D([features_encoder,features_encoder], [features_encoder,features_encoder], [(3,3,3),(3,3,3)], [(1,1,1),(1,1,1)], 2)
-        # self.block3 = conv_block3D([features_encoder,2 * features_encoder], [2 * features_encoder, 2 * features_encoder], [(3,3,3),(3,3,3)], [(1,1,1),(1,1,1)], 2)
+        self.block1 = conv_block3D([3,features_encoder], [features_encoder,features_encoder], [(3,3,3),(3,3,3)], [(1,1,1),(1,1,1)], 2)
+        self.block2 = conv_block3D([features_encoder,features_encoder], [features_encoder,features_encoder], [(3,3,3),(3,3,3)], [(1,1,1),(1,1,1)], 2)
+        self.block3 = conv_block3D([features_encoder,2 * features_encoder], [2 * features_encoder, 2 * features_encoder], [(3,3,3),(3,3,3)], [(1,1,1),(1,1,1)], 2)
 
-        self.block1 = conv_block3D([3,features_encoder], [features_encoder,features_encoder], [(5,3,3),(5,3,3)], [0,0], 2)
-        self.block3 = conv_block3D([features_encoder, features_encoder], [features_encoder, features_encoder], [(5,3,3),(5,3,3)], [0,0], 2)
+        # self.block1 = conv_block3D([3,features_encoder], [features_encoder,features_encoder], [(5,3,3),(5,3,3)], [0,0], 2)
+        # self.block3 = conv_block3D([features_encoder, features_encoder], [features_encoder, features_encoder], [(5,3,3),(5,3,3)], [0,0], 2)
 
-        # self.fc1 = fc_layer(6*3*3*features_encoder * 2, features_encoder)
-        self.fc1 = fc_layer(6*3*3*features_encoder, features_encoder)
+        self.fc1 = fc_layer(6*3*3*features_encoder * 2, features_encoder)
+        # self.fc1 = fc_layer(6*3*3*features_encoder, features_encoder)
         self.fc2 = fc_layer(features_encoder, features_encoder)
         self.fc3 = fc_layer(features_encoder, features_encoder)
         self.fc4 = nn.Linear(features_encoder, features_encoder)
@@ -251,7 +251,7 @@ class EncoderGrid2(nn.Module):
     def forward(self, image):
 
         temp = self.block1(image)
-        # temp = self.block2(temp)
+        temp = self.block2(temp)
         features = self.block3(temp)
 
         temp = torch.flatten(features, start_dim=1)

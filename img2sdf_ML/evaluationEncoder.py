@@ -27,7 +27,7 @@ width_input_image = 450
 num_slices = 50
 width_input_network = 25
 height_input_network = 25
-# depth_input_network = 120
+# depth_input_network = 128
 
 
 def convert_w2c(matrix_world_to_camera, frame, point):
