@@ -29,7 +29,7 @@ IMAGES_PATH = "../../image2sdf/input_images/images/"
 
 
 num_epoch = 10
-batch_size = 10
+batch_size = 25
 
 eta_encoder = 1e-4
 gammaLR = 0.90
@@ -99,8 +99,8 @@ training_generator_grid = torch.utils.data.DataLoader(training_set_grid, **param
 
 # encoder
 # encoder = EncoderSDF(latent_size).cuda()
-encoder = EncoderGrid(latent_size).cuda()
-# encoder = EncoderGrid2(latent_size).cuda()
+# encoder = EncoderGrid(latent_size).cuda()
+encoder = EncoderGrid2(latent_size).cuda()
 # encoder = EncoderFace(latent_size).cuda()
 
 encoder.apply(init_weights)
