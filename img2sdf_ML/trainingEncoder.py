@@ -31,11 +31,11 @@ IMAGES_PATH = "../../image2sdf/input_images/images/"
 NEWTORK = 'grid'
 # NEWTORK = 'face'
 
-num_epoch = 3
-batch_size = 100
+num_epoch = 1
+batch_size = 10
 
-eta_encoder = 1e-4
-gammaLR = 0.50
+eta_encoder = 5e-4
+gammaLR = 1
 
 
 height_input_image = 300
