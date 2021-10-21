@@ -8,8 +8,8 @@ import IPython
 def conv_layer3D(chann_in, chann_out, k_size, p_size):
     layer = nn.Sequential(
         nn.Conv3d(chann_in, chann_out, kernel_size=k_size, padding=p_size),
-        nn.BatchNorm3d(chann_out),
-        nn.ReLU()
+        # nn.BatchNorm3d(chann_out),
+        # nn.ReLU()
     )
     return layer
 
