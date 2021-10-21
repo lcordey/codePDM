@@ -41,13 +41,13 @@ gammaLR = 1
 height_input_image = 300
 width_input_image = 450
 
-num_slices = 64
+num_slices = 48
 
 width_input_network_grid = 24
 height_input_network_grid = 24
 
-width_input_network_face = 48
-height_input_network_face = 48
+width_input_network_face = 64
+height_input_network_face = 64
 
 depth_input_network = 128
 

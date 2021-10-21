@@ -336,34 +336,34 @@ print("Decoder parameters: {}".format(pytorch_total_params))
 
 
 
-grid = torch.empty(10,3,50,25,25)
+# grid = torch.empty(10,3,50,25,25)
 
-encoder = EncoderGrid(16)
+# encoder = EncoderGrid(16)
 
-encoder(grid)
-pytorch_total_params = sum(p.numel() for p in encoder.parameters())
-print("Encoder grid parameter: {}".format(pytorch_total_params))
-
-
-grid2 = torch.empty(10,3,48,24,24)
-
-encoder = EncoderGrid2(16)
-
-encoder(grid2)
-pytorch_total_params = sum(p.numel() for p in encoder.parameters())
-print("Encoder grid 2 parameter: {}".format(pytorch_total_params))
+# encoder(grid)
+# pytorch_total_params = sum(p.numel() for p in encoder.parameters())
+# print("Encoder grid parameter: {}".format(pytorch_total_params))
 
 
-width, height, depth = 64, 64, 128
+# grid2 = torch.empty(10,3,48,24,24)
 
-front = torch.empty(10,3,width,height)
-left = torch.empty(10,3,depth,height)
-back = torch.empty(10,3,width,height)
-right = torch.empty(10,3,depth,height)
-top = torch.empty(10,3,width,depth)
+# encoder = EncoderGrid2(16)
 
-encoder = EncoderFace(16)
+# encoder(grid2)
+# pytorch_total_params = sum(p.numel() for p in encoder.parameters())
+# print("Encoder grid 2 parameter: {}".format(pytorch_total_params))
 
-encoder(front, left, back, right, top)
-pytorch_total_params = sum(p.numel() for p in encoder.parameters())
-print("Encoder face parameters: {}".format(pytorch_total_params))
+
+# width, height, depth = 64, 64, 128
+
+# front = torch.empty(10,3,width,height)
+# left = torch.empty(10,3,depth,height)
+# back = torch.empty(10,3,width,height)
+# right = torch.empty(10,3,depth,height)
+# top = torch.empty(10,3,width,depth)
+
+# encoder = EncoderFace(16)
+
+# encoder(front, left, back, right, top)
+# pytorch_total_params = sum(p.numel() for p in encoder.parameters())
+# print("Encoder face parameters: {}".format(pytorch_total_params))
