@@ -29,10 +29,10 @@ IMAGES_PATH = "../../image2sdf/input_images/images/"
 
 
 num_epoch = 10
-batch_size = 10
+batch_size = 25
 
-eta_encoder = 5e-4
-gammaLR = 0.95
+eta_encoder = 1e-4
+gammaLR = 0.99
 
 # ratio_image_used = 0.5
 
@@ -132,7 +132,7 @@ encoder.train()
 for epoch in range(num_epoch):
 
 
-    for batch_input_im, batch_target_code in training_generator_grid:
+    for batch_input_im, batch_target_code, i in zip(training_generator_grid, range(len(training_generator_grid))):
     # for batch_front, batch_left, batch_back, batch_right, batch_top, batch_target_code in training_generator_grid:
 
 
@@ -154,7 +154,7 @@ for epoch in range(num_epoch):
         loss_pred.backward()
         optimizer.step()
 
-        print("epoch: {}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}".format(epoch, torch.Tensor(log_loss[-10:]).mean(), \
+        print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}".format(epoch, torch.Tensor(log_loss[-10:]).mean(), \
         abs(pred_vecs - target_code).mean(), abs(pred_vecs).mean(), abs(target_code).mean(), optimizer.param_groups[0]['lr']  ))
 
         # print(f"network time: {time.time() - start_time}")
