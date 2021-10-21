@@ -239,7 +239,7 @@ class EncoderGrid2(nn.Module):
         self.block2 = conv_block3D([features_encoder,features_encoder], [features_encoder,features_encoder], [3,3], [1,1], 2)
         self.block3 = conv_block3D([features_encoder,2 * features_encoder], [2 * features_encoder, 2 * features_encoder], [3,3], [1,1], 2)
 
-        self.fc1 = fc_layer(8*4*4*features_encoder * 2, features_encoder)
+        self.fc1 = fc_layer(6*3*3*features_encoder * 2, features_encoder)
         self.fc2 = fc_layer(features_encoder, features_encoder)
         self.fc3 = fc_layer(features_encoder, features_encoder)
         self.fc4 = nn.Linear(features_encoder, latent_size)
