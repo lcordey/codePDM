@@ -32,7 +32,7 @@ num_epoch = 10
 batch_size = 25
 
 eta_encoder = 1e-4
-gammaLR = 0.99
+gammaLR = 0.90
 
 # ratio_image_used = 0.5
 
@@ -132,7 +132,7 @@ encoder.train()
 for epoch in range(num_epoch):
 
 
-    for batch_input_im, batch_target_code, i in zip(training_generator_grid, range(len(training_generator_grid))):
+    for [batch_input_im, batch_target_code], i in zip(training_generator_grid, range(len(training_generator_grid))):
     # for batch_front, batch_left, batch_back, batch_right, batch_top, batch_target_code in training_generator_grid:
 
 
