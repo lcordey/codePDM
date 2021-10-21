@@ -13,7 +13,7 @@ import imageio
 import random
 import time
 
-from networks import DecoderSDF, EncoderSDF, EncoderGrid
+from networks import DecoderSDF, EncoderSDF, EncoderGrid, EncoderGrid2, EncoderFace
 from dataLoader import DatasetGrid
 from marching_cubes_rgb import *
 
@@ -28,11 +28,11 @@ ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
 
 
-num_epoch = 100
+num_epoch = 10
 batch_size = 10
 
-eta_encoder = 1e-4
-gammaLR = 0.99
+eta_encoder = 5e-4
+gammaLR = 0.95
 
 # ratio_image_used = 0.5
 
@@ -81,7 +81,7 @@ params = {'batch_size': batch_size,
 
 list_scene, dict_scene_2_code = initialize_dataset()
 
-list_scene = np.repeat(list_scene, 100)
+list_scene = np.repeat(list_scene, num_image_per_scene)
 
 training_set_grid = DatasetGrid(list_scene,
                        dict_scene_2_code,
@@ -99,7 +99,8 @@ training_generator_grid = torch.utils.data.DataLoader(training_set_grid, **param
 
 # encoder
 # encoder = EncoderSDF(latent_size).cuda()
-encoder = EncoderGrid(latent_size).cuda()
+# encoder = EncoderGrid(latent_size).cuda()
+encoder = EncoderGrid2(latent_size).cuda()
 # encoder = EncoderFace(latent_size).cuda()
 
 encoder.apply(init_weights)

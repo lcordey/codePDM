@@ -5,6 +5,28 @@ import torch.nn.functional as F
 import time
 import IPython
 
+def conv_layer3D(chann_in, chann_out, k_size, p_size):
+    layer = nn.Sequential(
+        nn.Conv3d(chann_in, chann_out, kernel_size=k_size, padding=p_size),
+        nn.BatchNorm3d(chann_out),
+        nn.ReLU()
+    )
+    return layer
+
+def conv_block3D(in_list, out_list, k_list, p_list, pooling_k):
+
+    layers = [ conv_layer3D(in_list[i], out_list[i], k_list[i], p_list[i]) for i in range(len(in_list)) ]
+    layers += [ nn.MaxPool3d(kernel_size = pooling_k)]
+    return nn.Sequential(*layers)
+
+def fc_layer(size_in, size_out):
+    layer = nn.Sequential(
+        nn.Linear(size_in, size_out),
+        nn.BatchNorm1d(size_out),
+        nn.ReLU()
+    )
+    return layer
+
 
 class DecoderSDF(nn.Module):
     def __init__(self, latent_size):
@@ -190,6 +212,34 @@ class EncoderGrid(nn.Module):
 
         return latent_code
 
+
+
+class EncoderGrid2(nn.Module):
+    def __init__(self,latent_size):
+        super(EncoderGrid2, self).__init__()
+
+        features_encoder = 64
+
+        self.block1 = conv_block3D([3,features_encoder], [features_encoder,features_encoder], [(5,3,3),(5,3,3)], [1,1], 2)
+        self.block2 = conv_block3D([features_encoder,features_encoder], [features_encoder,features_encoder], [(5,3,3),(5,3,3)], [1,1], 2)
+        self.block3 = conv_block3D([features_encoder,2 * features_encoder], [2 * features_encoder, 2 * features_encoder], [(3,3,3),(3,3,3)], [1,1], 2)
+
+        self.fc1 = fc_layer(4*3*3*features_encoder * 2, features_encoder)
+        self.fc2 = fc_layer(features_encoder, features_encoder)
+        self.fc3 = fc_layer(features_encoder, latent_size)
+
+    def forward(self, image):
+
+        temp = self.block1(image)
+        temp = self.block2(temp)
+        features = self.block3(temp)
+
+        temp = torch.flatten(features, start_dim=1)
+        latent_code = self.fc3(self.fc2(self.fc1(temp)))
+
+        return latent_code
+
+
 class EncoderFace(nn.Module):
     def __init__(self,latent_size):
         super(EncoderFace, self).__init__()
@@ -305,6 +355,13 @@ encoder = EncoderGrid(16)
 encoder(grid)
 pytorch_total_params = sum(p.numel() for p in encoder.parameters())
 print("Encoder grid paramter: {}".format(pytorch_total_params))
+
+
+encoder = EncoderGrid2(16)
+
+encoder(grid)
+pytorch_total_params = sum(p.numel() for p in encoder.parameters())
+print("Encoder grid 2 paramter: {}".format(pytorch_total_params))
 
 
 # width, height, depth = 100, 50, 50
