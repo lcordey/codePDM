@@ -39,10 +39,10 @@ gammaLR = 0.90
 height_input_image = 300
 width_input_image = 450
 
-num_slices = 50
+num_slices = 64
 
-width_input_network = 25
-height_input_network = 25
+width_input_network = 32
+height_input_network = 32
 # width_input_network = 64
 # height_input_network = 64
 

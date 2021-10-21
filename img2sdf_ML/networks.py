@@ -235,15 +235,12 @@ class EncoderGrid2(nn.Module):
 
         features_encoder = 64
 
-        self.block1 = conv_block3D([3,features_encoder], [features_encoder,features_encoder], [(3,3,3),(3,3,3)], [(1,1,1),(1,1,1)], 2)
-        self.block2 = conv_block3D([features_encoder,features_encoder], [features_encoder,features_encoder], [(3,3,3),(3,3,3)], [(1,1,1),(1,1,1)], 2)
-        self.block3 = conv_block3D([features_encoder,2 * features_encoder], [2 * features_encoder, 2 * features_encoder], [(3,3,3),(3,3,3)], [(1,1,1),(1,1,1)], 2)
+        self.block1 = conv_block3D([3,features_encoder], [features_encoder,features_encoder], [3,3], [1,1], 2)
+        self.block2 = conv_block3D([features_encoder,features_encoder], [features_encoder,features_encoder], [3,3], [1,1], 2)
+        self.block3 = conv_block3D([features_encoder,features_encoder], [features_encoder,features_encoder], [3,3], [1,1], 2)
+        self.block4 = conv_block3D([features_encoder,2 * features_encoder], [2 * features_encoder, 2 * features_encoder], [3,3], [1,1], 2)
 
-        # self.block1 = conv_block3D([3,features_encoder], [features_encoder,features_encoder], [(5,3,3),(5,3,3)], [0,0], 2)
-        # self.block3 = conv_block3D([features_encoder, features_encoder], [features_encoder, features_encoder], [(5,3,3),(5,3,3)], [0,0], 2)
-
-        self.fc1 = fc_layer(6*3*3*features_encoder * 2, features_encoder)
-        # self.fc1 = fc_layer(6*3*3*features_encoder, features_encoder)
+        self.fc1 = fc_layer(4*2*2*features_encoder * 2, features_encoder)
         self.fc2 = fc_layer(features_encoder, features_encoder)
         self.fc3 = fc_layer(features_encoder, features_encoder)
         self.fc4 = nn.Linear(features_encoder, latent_size)
@@ -252,7 +249,8 @@ class EncoderGrid2(nn.Module):
 
         temp = self.block1(image)
         temp = self.block2(temp)
-        features = self.block3(temp)
+        temp = self.block3(temp)
+        features = self.block4(temp)
 
         temp = torch.flatten(features, start_dim=1)
         latent_code = self.fc4(self.fc3(self.fc2(self.fc1(temp))))
