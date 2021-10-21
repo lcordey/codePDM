@@ -235,11 +235,15 @@ class EncoderGrid2(nn.Module):
 
         features_encoder = 64
 
-        self.block1 = conv_block3D([3,features_encoder], [features_encoder,features_encoder], [(3,3,3),(3,3,3)], [(1,1,1),(1,1,1)], 2)
-        self.block2 = conv_block3D([features_encoder,features_encoder], [features_encoder,features_encoder], [(3,3,3),(3,3,3)], [(1,1,1),(1,1,1)], 2)
-        self.block3 = conv_block3D([features_encoder,2 * features_encoder], [2 * features_encoder, 2 * features_encoder], [(3,3,3),(3,3,3)], [(1,1,1),(1,1,1)], 2)
+        # self.block1 = conv_block3D([3,features_encoder], [features_encoder,features_encoder], [(3,3,3),(3,3,3)], [(1,1,1),(1,1,1)], 2)
+        # self.block2 = conv_block3D([features_encoder,features_encoder], [features_encoder,features_encoder], [(3,3,3),(3,3,3)], [(1,1,1),(1,1,1)], 2)
+        # self.block3 = conv_block3D([features_encoder,2 * features_encoder], [2 * features_encoder, 2 * features_encoder], [(3,3,3),(3,3,3)], [(1,1,1),(1,1,1)], 2)
 
-        self.fc1 = fc_layer(6*3*3*features_encoder * 2, features_encoder)
+        self.block1 = conv_block3D([3,features_encoder], [features_encoder,features_encoder], [(5,3,3),(5,3,3)], [0,0], 2)
+        self.block3 = conv_block3D([features_encoder, features_encoder], [features_encoder, features_encoder], [(5,3,3),(5,3,3)], [0,0], 2)
+
+        # self.fc1 = fc_layer(6*3*3*features_encoder * 2, features_encoder)
+        self.fc1 = fc_layer(6*3*3*features_encoder, features_encoder)
         self.fc2 = fc_layer(features_encoder, features_encoder)
         self.fc3 = fc_layer(features_encoder, features_encoder)
         self.fc4 = fc_layer(features_encoder, latent_size)
@@ -247,7 +251,7 @@ class EncoderGrid2(nn.Module):
     def forward(self, image):
 
         temp = self.block1(image)
-        temp = self.block2(temp)
+        # temp = self.block2(temp)
         features = self.block3(temp)
 
         temp = torch.flatten(features, start_dim=1)
@@ -308,7 +312,6 @@ class EncoderFace(nn.Module):
         features_back = torch.flatten(features_back, start_dim=1)
         features_right = torch.flatten(features_right, start_dim=1)
         features_top = torch.flatten(features_top, start_dim=1)
-
 
         features = torch.cat([features_front, features_left, features_back, features_right, features_top], dim=1)
 

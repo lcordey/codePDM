@@ -1,3 +1,4 @@
+import IPython
 import torch
 import imageio
 import random
@@ -166,6 +167,8 @@ class DatasetFace(torch.utils.data.Dataset):
         h, mask = cv2.findHomography(src, dst)
         left = cv2.warpPerspective(input_im, h, (self.depth_input_network,self.height_input_network))
 
+        print(left.shape)
+
         # back
         src = np.array([loc_2d[5,:2],loc_2d[4,:2],loc_2d[7,:2],loc_2d[6,:2]]).copy()
         dst = np.array([[0,self.height_input_network],[self.width_input_network,self.height_input_network],[self.width_input_network,0],[0,0]])
@@ -184,26 +187,25 @@ class DatasetFace(torch.utils.data.Dataset):
         h, mask = cv2.findHomography(src, dst)
         top = cv2.warpPerspective(input_im, h, (self.width_input_network,self.depth_input_network))
 
-        
 
         # rearange, normalize and convert to tensor
-        front = np.transpose(front, [3,0,1,2])
+        front = np.transpose(front, [2,0,1])
         front = front/255 - 0.5
         front = torch.tensor(front, dtype = torch.float)
 
-        left = np.transpose(left, [3,0,1,2])
+        left = np.transpose(front, [2,0,1])
         left = left/255 - 0.5
         left = torch.tensor(left, dtype = torch.float)
 
-        back = np.transpose(back, [3,0,1,2])
+        back = np.transpose(front, [2,0,1])
         back = back/255 - 0.5
         back = torch.tensor(back, dtype = torch.float)
 
-        right = np.transpose(right, [3,0,1,2])
+        right = np.transpose(front, [2,0,1])
         right = right/255 - 0.5
         right = torch.tensor(right, dtype = torch.float)
 
-        top = np.transpose(top, [3,0,1,2])
+        top = np.transpose(front, [2,0,1])
         top = top/255 - 0.5
         top = torch.tensor(top, dtype = torch.float)
 

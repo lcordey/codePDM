@@ -53,7 +53,7 @@ def init_weights(m):
         torch.nn.init.xavier_uniform(m.weight)
         m.bias.data.fill_(0.01)
 
-def initialize_dataset():
+def initialize_dataset(annotations):
     list_scene = list(annotations.keys())
     dict_scene_2_code = dict()
 
@@ -79,7 +79,7 @@ params = {'batch_size': batch_size,
           'pin_memory': False
           }
 
-list_scene, dict_scene_2_code = initialize_dataset()
+list_scene, dict_scene_2_code = initialize_dataset(annotations)
 
 list_scene = np.repeat(list_scene, num_image_per_scene)
 
