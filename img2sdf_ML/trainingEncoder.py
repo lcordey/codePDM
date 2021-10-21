@@ -133,7 +133,7 @@ for epoch in range(num_epoch):
 
     count_model = 0
 
-    for batch_input_im, batch_target_code in training_generator_grid, range(len(training_generator_grid)):
+    for batch_input_im, batch_target_code in training_generator_grid:
     # for batch_front, batch_left, batch_back, batch_right, batch_top, batch_target_code in training_generator_grid:
 
 
