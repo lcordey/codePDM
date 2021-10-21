@@ -31,7 +31,7 @@ IMAGES_PATH = "../../image2sdf/input_images/images/"
 NEWTORK = 'face'
 # NEWTORK = 'face'
 
-num_epoch = 3
+num_epoch = 2
 batch_size = 10
 
 eta_encoder = 1e-4
