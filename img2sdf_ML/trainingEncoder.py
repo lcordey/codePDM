@@ -34,7 +34,7 @@ NEWTORK = 'grid'
 num_epoch = 1
 batch_size = 10
 
-eta_encoder = 5e-4
+eta_encoder = 1e-4
 gammaLR = 1
 
 
@@ -219,7 +219,7 @@ elif NEWTORK == 'face':
 #     abs(pred_vecs - target_vecs.unsqueeze(1).repeat(1, num_validation_image_per_scene, 1)).mean(), abs(pred_vecs).mean(), abs(target_vecs[batch_scene_idx]).mean()))
 
 
-print(f"time for training: {time.time() - time_start}")
+print(f"time for training: {(int)((time.time() - time_start)/60)}")
 
 
 #save model
