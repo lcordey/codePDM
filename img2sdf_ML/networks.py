@@ -252,10 +252,7 @@ class EncoderGrid2(nn.Module):
         temp = self.block3(temp)
         features = self.block4(temp)
 
-        print(features.shape)
-        print(features.view(features.size(0), -1).shape)
-        temp = features.view(features.size(0), -1)
-        latent_code = self.fc4(self.fc3(self.fc2(self.fc1(temp))))
+        latent_code = self.fc4(self.fc3(self.fc2(self.fc1(features.view(features.size(0), -1)))))
 
         return latent_code
 
@@ -295,7 +292,8 @@ class EncoderFace(nn.Module):
 
         self.ln1 = fc_layer((2*4*4 + 3*4*8) * features_encoder, features_encoder)
         self.ln2 = fc_layer(features_encoder, features_encoder)
-        self.ln3 = fc_layer(features_encoder, latent_size)
+        self.ln3 = fc_layer(features_encoder, features_encoder)
+        self.ln4 = nn.Linear(features_encoder, latent_size)
 
     def forward(self, front, left, back, right, top):
 
@@ -307,15 +305,15 @@ class EncoderFace(nn.Module):
         features_right = self.blockRight4(self.blockRight3(self.blockRight2(self.blockRight1(right))))
         features_top = self.blockTop4(self.blockTop3(self.blockTop2(self.blockTop1(top))))
 
-        features_front = torch.flatten(features_front, start_dim=1)
-        features_left = torch.flatten(features_left, start_dim=1)
-        features_back = torch.flatten(features_back, start_dim=1)
-        features_right = torch.flatten(features_right, start_dim=1)
-        features_top = torch.flatten(features_top, start_dim=1)
+        features_front = features_front.view(features_front.size(0), -1)
+        features_left = features_left.view(features_left.size(0), -1)
+        features_back = features_back.view(features_back.size(0), -1)
+        features_right = features_right.view(features_right.size(0), -1)
+        features_top = features_top.view(features_top.size(0), -1)
 
         features = torch.cat([features_front, features_left, features_back, features_right, features_top], dim=1)
 
-        latent_code = self.ln3(self.ln2(self.ln1(features)))
+        latent_code = self.ln4(self.ln3(self.ln2(self.ln1(features))))
 
         return latent_code    
 

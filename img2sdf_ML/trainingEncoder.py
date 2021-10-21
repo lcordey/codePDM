@@ -32,7 +32,7 @@ num_epoch = 2
 batch_size = 10
 
 eta_encoder = 1e-4
-gammaLR = 0.90
+gammaLR = 0.50
 
 # ratio_image_used = 0.5
 
@@ -41,10 +41,10 @@ width_input_image = 450
 
 num_slices = 64
 
-width_input_network = 32
-height_input_network = 32
-# width_input_network = 64
-# height_input_network = 64
+# width_input_network = 32
+# height_input_network = 32
+width_input_network = 64
+height_input_network = 64
 
 depth_input_network = 128
 
@@ -117,8 +117,8 @@ training_generator_face = torch.utils.data.DataLoader(training_set_face, **param
 # encoder
 # encoder = EncoderSDF(latent_size).cuda()
 # encoder = EncoderGrid(latent_size).cuda()
-encoder = EncoderGrid2(latent_size).cuda()
-# encoder = EncoderFace(latent_size).cuda()
+# encoder = EncoderGrid2(latent_size).cuda()
+encoder = EncoderFace(latent_size).cuda()
 
 encoder.apply(init_weights)
 
@@ -150,20 +150,20 @@ for epoch in range(num_epoch):
 
     count_model = 0
 
-    for batch_input_im, batch_target_code in training_generator_grid:
-    # for batch_front, batch_left, batch_back, batch_right, batch_top, batch_target_code in training_generator_face:
+    # for batch_input_im, batch_target_code in training_generator_grid:
+    for batch_front, batch_left, batch_back, batch_right, batch_top, batch_target_code in training_generator_face:
 
 
-        # print(f"total time: {time.time() - time_start}")
-        # time_start = time.time()
+        print(f"total time: {time.time() - time_start}")
+        time_start = time.time()
 
         optimizer.zero_grad()
 
-        input_im, target_code = batch_input_im.cuda(), batch_target_code.cuda()
-        # front, left, back, right, top, target_code = batch_front.cuda(), batch_left.cuda(), batch_back.cuda(), batch_right.cuda(), batch_top.cuda(), batch_target_code.cuda()
+        # input_im, target_code = batch_input_im.cuda(), batch_target_code.cuda()
+        front, left, back, right, top, target_code = batch_front.cuda(), batch_left.cuda(), batch_back.cuda(), batch_right.cuda(), batch_top.cuda(), batch_target_code.cuda()
 
-        pred_vecs = encoder(input_im)
-        # pred_vecs = encoder(front, left, back, right, top)
+        # pred_vecs = encoder(input_im)
+        pred_vecs = encoder(front, left, back, right, top)
 # 
         loss_pred = loss(pred_vecs, target_code)
         log_loss.append(loss_pred.detach().cpu())
@@ -172,7 +172,7 @@ for epoch in range(num_epoch):
         loss_pred.backward()
         optimizer.step()
 
-        # print(f"network time: {time.time() - time_start}")
+        print(f"network time: {time.time() - time_start}")
 
         time_passed = time.time() - time_start
         model_seen = len(log_loss) * batch_size
