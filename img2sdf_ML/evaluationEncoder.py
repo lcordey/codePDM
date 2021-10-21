@@ -9,6 +9,7 @@ import IPython
 
 DEFAULT_RESOLUTION = 100
 DEFAULT_NUM_IMAGE = 3
+DEFAUT_OUTPUT_IMAGES = False
 DEFAULT_TYPE = "validation"
 
 DECODER_PATH = "models_pth/decoderSDF.pth"
@@ -141,12 +142,15 @@ def init_xyz(resolution):
 
     return xyz
 
+def cosine_distance(a,b):
+    return a.dot(b)/(a.norm() * b.norm())
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Peform marching cubes.')
     parser.add_argument('--resolution', type=int, help='resolution', default= DEFAULT_RESOLUTION)
     parser.add_argument('--num_image', type=int, help='num max images per scene', default= DEFAULT_NUM_IMAGE)
+    parser.add_argument('--output_images', type=bool, help='num max images per scene', default= DEFAUT_OUTPUT_IMAGES)
     args = parser.parse_args()
 
 
@@ -157,44 +161,62 @@ if __name__ == '__main__':
     annotations_file = open(ANNOTATIONS_PATH, "rb")
     annotations = pickle.load(annotations_file)
 
-    output_dir = "output_encoder_grid"
-
     grid = load_grid(annotations, args.num_image)
     lat_vecs = get_vecs(grid)
 
     num_scene = lat_vecs.shape[0]
     num_image_per_scene = lat_vecs.shape[1]
-    idx = torch.arange(num_scene).cuda()
-    xyz = init_xyz(resolution)
+
+    if args.output_images:
+        output_dir = "output_encoder_grid"
+        idx = torch.arange(num_scene).cuda()
+        xyz = init_xyz(resolution)
+
+        decoder = torch.load(DECODER_PATH).cuda()
+        decoder.eval()
+
+        for scene, scene_id in zip(annotations.keys(), range(num_scene)):
+            for j in range(num_image_per_scene):
+            
+                # decode
+                sdf_result = np.empty([resolution, resolution, resolution, 4])
+
+                for x in range(resolution):
+
+                    sdf_pred = decoder(lat_vecs[scene_id,j,:].repeat(resolution * resolution, 1),xyz[x * resolution * resolution: (x+1) * resolution * resolution]).detach()
+
+                    sdf_pred[:,0] = sdf_pred[:,0] * resolution
+                    sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
+                    sdf_pred[:,1:] = sdf_pred[:,1:] * 255
+
+                    sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:].detach().cpu(), [resolution, resolution, 4])
 
 
-    decoder = torch.load(DECODER_PATH).cuda()
-    decoder.eval()
+                print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result[:,:,:,0]), np.max(sdf_result[:,:,:,0])))
+                if(np.min(sdf_result[:,:,:,0]) < 0 and np.max(sdf_result[:,:,:,0]) > 0):
+                    vertices, faces = marching_cubes(sdf_result[:,:,:,0])
+                    colors_v = exctract_colors_v(vertices, sdf_result)
+                    colors_f = exctract_colors_f(colors_v, faces)
+                    off_file = '../../image2sdf/%s/%s_%d.off' %(output_dir, scene, j)
+                    write_off(off_file, vertices, faces, colors_f)
+                    print('Wrote %s.' % off_file)
+                else:
+                    print("surface level: 0, should be comprise in between the minimum and maximum value")
 
-    for scene, scene_id in zip(annotations.keys(), range(num_scene)):
-        for j in range(num_image_per_scene):
-        
-            # decode
-            sdf_result = np.empty([resolution, resolution, resolution, 4])
+    similarity_same_model = []
+    similarity_different_model = []
 
-            for x in range(resolution):
+    for scene_id_1 in range(num_scene):
+        for scene_id_2 in range(scene_id_1, num_scene):
+            if scene_id_1 == scene_id_2:
+                print(f"cosine distance for scene {scene_id_1}")
+            for vec1 in range(num_image_per_scene-1):
+                for vec2 in range(vec1 + 1, num_image_per_scene):
+                    dist = cosine_distance(lat_vecs[scene_id_1,vec1,:], lat_vecs[scene_id_1,vec2,:])
+                    if scene_id_1 == scene_id_2:
+                        similarity_same_model.append(dist)
+                        print(f"cosine distance between vec {vec1} and {vec2}: {dist}")
+                    else:
+                        similarity_different_model.append(dist)
 
-                sdf_pred = decoder(lat_vecs[scene_id,j,:].repeat(resolution * resolution, 1),xyz[x * resolution * resolution: (x+1) * resolution * resolution]).detach()
-
-                sdf_pred[:,0] = sdf_pred[:,0] * resolution
-                sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
-                sdf_pred[:,1:] = sdf_pred[:,1:] * 255
-
-                sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:].detach().cpu(), [resolution, resolution, 4])
-
-
-            print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result[:,:,:,0]), np.max(sdf_result[:,:,:,0])))
-            if(np.min(sdf_result[:,:,:,0]) < 0 and np.max(sdf_result[:,:,:,0]) > 0):
-                vertices, faces = marching_cubes(sdf_result[:,:,:,0])
-                colors_v = exctract_colors_v(vertices, sdf_result)
-                colors_f = exctract_colors_f(colors_v, faces)
-                off_file = '../../image2sdf/%s/%s_%d.off' %(output_dir, scene, j)
-                write_off(off_file, vertices, faces, colors_f)
-                print('Wrote %s.' % off_file)
-            else:
-                print("surface level: 0, should be comprise in between the minimum and maximum value")
+    print("average similarity between same models: {}")
