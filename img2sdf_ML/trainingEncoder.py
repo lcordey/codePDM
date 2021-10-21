@@ -154,7 +154,7 @@ for epoch in range(num_epoch):
         loss_pred.backward()
         optimizer.step()
 
-        print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}".format(epoch, torch.Tensor(log_loss[-10:]).mean(), \
+        print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}".format(epoch, i * batch_size, torch.Tensor(log_loss[-10:]).mean(), \
         abs(pred_vecs - target_code).mean(), abs(pred_vecs).mean(), abs(target_code).mean(), optimizer.param_groups[0]['lr']  ))
 
         # print(f"network time: {time.time() - start_time}")
