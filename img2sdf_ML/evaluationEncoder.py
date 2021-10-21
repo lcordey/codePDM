@@ -11,7 +11,7 @@ import IPython
 DEFAULT_RESOLUTION = 100
 DEFAULT_NUM_IMAGE = 3
 DEFAUT_OUTPUT_IMAGES = False
-DEFAULT_TYPE = "grid"
+DEFAULT_TYPE = "face"
 
 DECODER_PATH = "models_pth/decoderSDF.pth"
 ENCODER_GRID_PATH = "models_pth/encoderGrid.pth"
@@ -146,7 +146,7 @@ def load_face(annotations, argument_num_image):
             image_pth = IMAGES_PATH + scene + '/' + str(image_id) + '.png'
             input_im = imageio.imread(image_pth)
 
-            loc_2d = annotations[scene_id][image_id]['2d'].copy()
+            loc_2d = annotations[scene][image_id]['2d'].copy()
 
             ###### y coordinate is inverted + rescaling #####
             loc_2d[:,1] = 1 - loc_2d[:,1]
@@ -185,23 +185,23 @@ def load_face(annotations, argument_num_image):
             top = cv2.warpPerspective(input_im, h, (width_input_network,depth_input_network))
 
             # rearange, normalize and convert to tensor
-            front = np.transpose(front, [2,1,0])
+            front = np.transpose(front, [2,0,1])
             front = front/255 - 0.5
             front = torch.tensor(front, dtype = torch.float)
 
-            left = np.transpose(left, [2,1,0])
+            left = np.transpose(left, [2,0,1])
             left = left/255 - 0.5
             left = torch.tensor(left, dtype = torch.float)
 
-            back = np.transpose(back, [2,1,0])
+            back = np.transpose(back, [2,0,1])
             back = back/255 - 0.5
             back = torch.tensor(back, dtype = torch.float)
 
-            right = np.transpose(right, [2,1,0])
+            right = np.transpose(right, [2,0,1])
             right = right/255 - 0.5
             right = torch.tensor(right, dtype = torch.float)
 
-            top = np.transpose(top, [2,1,0])
+            top = np.transpose(top, [2,0,1])
             top = top/255 - 0.5
             top = torch.tensor(top, dtype = torch.float)
 
@@ -242,11 +242,11 @@ def get_vecs_face(front, left, back, right, top):
     for scene_id in range(num_scene):
         print(f"encoding scene n°: {scene_id}")
         for image_id in range(num_image_per_scene):
-            input_front = front[scene_id, image_id, :, :, :, :].unsqueeze(0).cuda()
-            input_left = left[scene_id, image_id, :, :, :, :].unsqueeze(0).cuda()
-            input_back = back[scene_id, image_id, :, :, :, :].unsqueeze(0).cuda()
-            input_right = right[scene_id, image_id, :, :, :, :].unsqueeze(0).cuda()
-            input_top = top[scene_id, image_id, :, :, :, :].unsqueeze(0).cuda()
+            input_front = front[scene_id, image_id, :, :, :].unsqueeze(0).cuda()
+            input_left = left[scene_id, image_id, :, :, :].unsqueeze(0).cuda()
+            input_back = back[scene_id, image_id, :, :, :].unsqueeze(0).cuda()
+            input_right = right[scene_id, image_id, :, :, :].unsqueeze(0).cuda()
+            input_top = top[scene_id, image_id, :, :, :].unsqueeze(0).cuda()
 
             lat_vecs[scene_id,image_id,:] = encoder(input_front, input_left, input_back, input_right, input_top).detach()
 
@@ -275,7 +275,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_image', type=int, help='num max images per scene', default= DEFAULT_NUM_IMAGE)
     args = parser.parse_args()
 
-    assert(args.type == 'grid' or args.type == 'resolution'), "please give type: either grid or face"
+    assert(args.type == 'grid' or args.type == 'face'), "please give type: either grid or face"
 
     resolution = args.resolution
     num_samples_per_scene = resolution * resolution * resolution
