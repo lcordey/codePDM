@@ -345,7 +345,7 @@ pytorch_total_params = sum(p.numel() for p in encoder.parameters())
 print("Encoder grid parameter: {}".format(pytorch_total_params))
 
 
-grid2 = torch.empty(10,3,64,32,32)
+grid2 = torch.empty(10,3,48,24,24)
 
 encoder = EncoderGrid2(16)
 
