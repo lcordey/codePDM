@@ -286,16 +286,18 @@ if __name__ == '__main__':
     if args.type == 'grid':
         grid = load_grid(annotations, args.num_image)
         lat_vecs = get_vecs_grid(grid)
+        output_dir = "output_encoder_grid"
     else: 
         front, left, back, right, top = load_face(annotations, args.num_image)
         lat_vecs = get_vecs_face(front, left, back, right, top)
+        output_dir = "output_encoder_face"
 
 
     num_scene = lat_vecs.shape[0]
     num_image_per_scene = lat_vecs.shape[1]
 
     if args.output_images:
-        output_dir = "output_encoder_grid"
+        
         idx = torch.arange(num_scene).cuda()
         xyz = init_xyz(resolution)
 
