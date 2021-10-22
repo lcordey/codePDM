@@ -123,7 +123,6 @@ training_generator_face = torch.utils.data.DataLoader(training_set_face, **param
 # encoder = EncoderGrid(latent_size).cuda()
 
 if NEWTORK == 'grid':
-    # encoder = EncoderGrid(latent_size).cuda()
     encoder = EncoderGrid2(latent_size).cuda()
 elif NEWTORK == 'face':
     encoder = EncoderFace(latent_size).cuda()
