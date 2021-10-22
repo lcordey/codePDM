@@ -29,8 +29,8 @@ LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred.pth"
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
 
-# NEWTORK = 'grid'
-NEWTORK = 'face'
+NEWTORK = 'grid'
+# NEWTORK = 'face'
 
 num_epoch = 1
 batch_size = 10
@@ -38,6 +38,7 @@ batch_size = 10
 eta_encoder = 1e-4
 gammaLR = 0.95
 
+num_scene_validation = 15
 
 height_input_image = 300
 width_input_image = 450
@@ -77,7 +78,8 @@ num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
 num_scene, latent_size = target_vecs.shape
 assert(num_scene == len(annotations.keys()))
 
-total_model_to_show = num_scene * num_image_per_scene * num_epoch
+num_scene_training = num_scene -num_scene_validation
+total_model_to_show = num_scene_training * num_image_per_scene * num_epoch
 
 params = {'batch_size': batch_size,
           'shuffle': True,
@@ -87,9 +89,12 @@ params = {'batch_size': batch_size,
 
 list_scene, dict_scene_2_code = initialize_dataset(annotations)
 
-list_scene = np.repeat(list_scene, num_image_per_scene)
+list_scene_training = list_scene[:-num_scene_validation]
+list_scene_validation = list_scene[-num_scene_validation:]
 
-training_set_grid = DatasetGrid(list_scene,
+list_scene_training = np.repeat(list_scene_training, num_image_per_scene)
+
+training_set_grid = DatasetGrid(list_scene_training,
                        dict_scene_2_code,
                        target_vecs.cpu(),
                        annotations,
@@ -104,7 +109,7 @@ training_set_grid = DatasetGrid(list_scene,
 training_generator_grid = torch.utils.data.DataLoader(training_set_grid, **params)
 
 
-training_set_face = DatasetFace(list_scene,
+training_set_face = DatasetFace(list_scene_training,
                        dict_scene_2_code,
                        target_vecs.cpu(),
                        annotations,
@@ -117,6 +122,36 @@ training_set_face = DatasetFace(list_scene,
                        depth_input_network)
 
 training_generator_face = torch.utils.data.DataLoader(training_set_face, **params)
+
+
+validation_set_grid = DatasetGrid(list_scene_validation,
+                       dict_scene_2_code,
+                       target_vecs.cpu(),
+                       annotations,
+                       0,
+                       num_image_per_scene,
+                       width_input_image,
+                       height_input_image,
+                       num_slices,
+                       width_input_network_grid,
+                       height_input_network_grid)
+
+validation_generator_grid = torch.utils.data.DataLoader(validation_set_grid, **params)
+
+
+validation_set_face = DatasetFace(list_scene_validation,
+                       dict_scene_2_code,
+                       target_vecs.cpu(),
+                       annotations,
+                       0,
+                       num_image_per_scene,
+                       width_input_image,
+                       height_input_image,
+                       width_input_network_face,
+                       height_input_network_face,
+                       depth_input_network)
+
+validation_generator_face = torch.utils.data.DataLoader(validation_set_face, **params)
 
 # encoder
 # encoder = EncoderSDF(latent_size).cuda()
@@ -147,7 +182,7 @@ scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=gammaLR)
 
 ####################### Training loop ##########################
 log_loss = []
-
+log_loss_validation = []
 
 time_start = time.time()
 
@@ -177,8 +212,26 @@ if NEWTORK == 'grid':
             time_per_model = time_passed/(model_seen)
             time_left = time_per_model * (total_model_to_show - model_seen)
             count_model += batch_size
-            print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(epoch, count_model, torch.Tensor(log_loss[-10:]).mean(), \
+            # print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(epoch, count_model, torch.Tensor(log_loss[-10:]).mean(), \
             abs(pred_vecs - target_code).mean(), abs(pred_vecs).mean(), abs(target_code).mean(), optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
+
+            if count_model%100 == 0:
+                encoder.eval()
+                loss_pred_validation = []
+                for batch_input_im_validation, batch_target_code_validation in validation_generator_grid:
+                    input_im_validation, target_code_validation = batch_input_im_validation.cuda(), batch_target_code_validation.cuda()
+                    pred_vecs_validation = encoder(input_im_validation)
+
+                    loss_pred_validation.append(loss(pred_vecs_validation, target_code_validation).detach().cpu())
+                
+                loss_validation = torch.tensor(loss_pred_validation).mean()
+                print("\n********** VALIDATION **********")
+                print(f"validation loss: {loss_validation}\n")
+                log_loss_validation.append(loss_validation)
+
+                encoder.train()
+                
+
 
         scheduler.step()
 
