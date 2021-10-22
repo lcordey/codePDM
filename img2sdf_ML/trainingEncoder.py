@@ -29,8 +29,8 @@ LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred.pth"
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
 
-NEWTORK = 'grid'
-# NEWTORK = 'face'
+# NEWTORK = 'grid'
+NEWTORK = 'face'
 
 num_epoch = 2
 batch_size = 10
@@ -123,8 +123,8 @@ training_generator_face = torch.utils.data.DataLoader(training_set_face, **param
 # encoder = EncoderGrid(latent_size).cuda()
 
 if NEWTORK == 'grid':
-    encoder = EncoderGrid(latent_size).cuda()
-    # encoder = EncoderGrid2(latent_size).cuda()
+    # encoder = EncoderGrid(latent_size).cuda()
+    encoder = EncoderGrid2(latent_size).cuda()
 elif NEWTORK == 'face':
     encoder = EncoderFace(latent_size).cuda()
 

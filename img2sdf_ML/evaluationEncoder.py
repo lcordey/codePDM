@@ -10,7 +10,7 @@ import IPython
 
 DEFAULT_RESOLUTION = 100
 DEFAULT_NUM_IMAGE = 3
-DEFAUT_OUTPUT_IMAGES = True
+DEFAUT_OUTPUT_IMAGES = False
 DEFAULT_TYPE = "grid"
 
 DECODER_PATH = "models_pth/decoderSDF.pth"
@@ -26,9 +26,9 @@ latent_size = 16
 height_input_image = 300
 width_input_image = 450
 
-num_slices = 64
-width_input_network_grid = 32
-height_input_network_grid = 32
+num_slices = 48
+width_input_network_grid = 24
+height_input_network_grid = 24
 
 width_input_network_face = 64
 height_input_network_face = 64
