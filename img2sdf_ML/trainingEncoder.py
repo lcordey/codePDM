@@ -32,11 +32,11 @@ IMAGES_PATH = "../../image2sdf/input_images/images/"
 NEWTORK = 'grid'
 # NEWTORK = 'face'
 
-num_epoch = 1
+num_epoch = 10
 batch_size = 10
 
 eta_encoder = 1e-4
-gammaLR = 0.95
+gammaLR = 0.75
 
 num_scene_validation = 15
 
@@ -221,7 +221,6 @@ if NEWTORK == 'grid':
                 abs(pred_vecs - target_code).mean(), abs(pred_vecs).mean(), abs(target_code).mean(), optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
 
             if count_model%(total_model_to_show/num_epoch/10) == 0:
-            
                 encoder.eval()
                 loss_pred_validation = []
                 for batch_input_im_validation, batch_target_code_validation in validation_generator_grid:
@@ -237,8 +236,6 @@ if NEWTORK == 'grid':
 
                 encoder.train()
                 
-
-
         scheduler.step()
 
 
@@ -332,7 +329,7 @@ plt.title("Total loss Validation")
 plt.xlabel("Number of images shown")
 plt.ylabel("L2 loss")
 plt.semilogy(np.arange(len(log_loss_validation)) * (total_model_to_show/num_epoch/10), log_loss_validation[:], label = "validation loss")
-plt.savefig("../../image2sdf/logs/log_total")
+plt.savefig("../../image2sdf/logs/log_total_validation")
 
 with open("../../image2sdf/logs/log.txt", "wb") as fp:
     pickle.dump(avrg_loss, fp)
