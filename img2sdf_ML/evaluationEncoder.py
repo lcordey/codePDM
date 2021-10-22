@@ -228,6 +228,8 @@ def get_vecs_grid(grid):
         for image_id in range(num_image_per_scene):
             lat_vecs[scene_id,image_id,:] = encoder(grid[scene_id, image_id, :, :, :, :].unsqueeze(0).cuda()).detach()
 
+    # print(lat_vecs)
+
     return lat_vecs
 
 def get_vecs_face(front, left, back, right, top):

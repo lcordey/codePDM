@@ -32,7 +32,7 @@ IMAGES_PATH = "../../image2sdf/input_images/images/"
 NEWTORK = 'grid'
 # NEWTORK = 'face'
 
-num_epoch = 1
+num_epoch = 2
 batch_size = 10
 
 eta_encoder = 1e-4
@@ -123,7 +123,8 @@ training_generator_face = torch.utils.data.DataLoader(training_set_face, **param
 # encoder = EncoderGrid(latent_size).cuda()
 
 if NEWTORK == 'grid':
-    encoder = EncoderGrid2(latent_size).cuda()
+    encoder = EncoderGrid(latent_size).cuda()
+    # encoder = EncoderGrid2(latent_size).cuda()
 elif NEWTORK == 'face':
     encoder = EncoderFace(latent_size).cuda()
 
