@@ -188,6 +188,7 @@ time_start = time.time()
 
 
 encoder.train()
+print("Start trainging...")
 
 if NEWTORK == 'grid':
     for epoch in range(num_epoch):
@@ -215,10 +216,12 @@ if NEWTORK == 'grid':
             # print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(epoch, count_model, torch.Tensor(log_loss[-10:]).mean(), \
             # abs(pred_vecs - target_code).mean(), abs(pred_vecs).mean(), abs(target_code).mean(), optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
 
-            if count_model%(total_model_to_show/num_epoch/10) == 0:
+            if count_model%(total_model_to_show/num_epoch/100) == 0:
                 print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(epoch, count_model, torch.Tensor(log_loss[-10:]).mean(), \
                 abs(pred_vecs - target_code).mean(), abs(pred_vecs).mean(), abs(target_code).mean(), optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
 
+            if count_model%(total_model_to_show/num_epoch/10) == 0:
+            
                 encoder.eval()
                 loss_pred_validation = []
                 for batch_input_im_validation, batch_target_code_validation in validation_generator_grid:
@@ -229,7 +232,7 @@ if NEWTORK == 'grid':
                 
                 loss_validation = torch.tensor(loss_pred_validation).mean()
                 print("\n********** VALIDATION **********")
-                print(f"validation loss: {loss_validation}\n")
+                print(f"validation L2 loss: {loss_validation}\n")
                 log_loss_validation.append(loss_validation)
 
                 encoder.train()
@@ -260,8 +263,31 @@ elif NEWTORK == 'face':
             time_per_model = time_passed/(model_seen)
             time_left = time_per_model * (total_model_to_show - model_seen)
             count_model += batch_size
-            print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(epoch, count_model, torch.Tensor(log_loss[-10:]).mean(), \
-            abs(pred_vecs - target_code).mean(), abs(pred_vecs).mean(), abs(target_code).mean(), optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
+            # print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(epoch, count_model, torch.Tensor(log_loss[-10:]).mean(), \
+            # abs(pred_vecs - target_code).mean(), abs(pred_vecs).mean(), abs(target_code).mean(), optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
+
+
+            if count_model%(total_model_to_show/num_epoch/100) == 0:
+                print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(epoch, count_model, torch.Tensor(log_loss[-10:]).mean(), \
+                abs(pred_vecs - target_code).mean(), abs(pred_vecs).mean(), abs(target_code).mean(), optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
+
+            if count_model%(total_model_to_show/num_epoch/10) == 0:
+            
+                encoder.eval()
+                loss_pred_validation = []
+                for batch_front, batch_left, batch_back, batch_right, batch_top, batch_target_code in training_generator_face:
+                    front, left, back, right, top, target_code = batch_front.cuda(), batch_left.cuda(), batch_back.cuda(), batch_right.cuda(), batch_top.cuda(), batch_target_code.cuda()
+                    pred_vecs = encoder(front, left, back, right, top)
+
+                    loss_pred_validation.append(loss(pred_vecs, target_code).detach().cpu())
+                
+                loss_validation = torch.tensor(loss_pred_validation).mean()
+                print("\n********** VALIDATION **********")
+                print(f"validation L2 loss: {loss_validation}\n")
+                log_loss_validation.append(loss_validation)
+
+                encoder.train()
+
 
         scheduler.step()
 
@@ -290,6 +316,7 @@ else:
 avrg_loss = []
 for i in range(0,len(log_loss)):
     avrg_loss.append(torch.Tensor(log_loss[i-20:i]).mean())
+
     
 
 from matplotlib import pyplot as plt
@@ -297,7 +324,14 @@ plt.figure()
 plt.title("Total loss")
 plt.xlabel("Number of images shown")
 plt.ylabel("L2 loss")
-plt.semilogy(np.arange(len(avrg_loss)) * batch_size, avrg_loss[:])
+plt.semilogy(np.arange(len(avrg_loss)) * batch_size, avrg_loss[:], label = "training loss")
+plt.savefig("../../image2sdf/logs/log_total")
+
+plt.figure()
+plt.title("Total loss Validation")
+plt.xlabel("Number of images shown")
+plt.ylabel("L2 loss")
+plt.semilogy(np.arange(len(log_loss_validation)) * (total_model_to_show/num_epoch/10), log_loss_validation[:], label = "validation loss")
 plt.savefig("../../image2sdf/logs/log_total")
 
 with open("../../image2sdf/logs/log.txt", "wb") as fp:
