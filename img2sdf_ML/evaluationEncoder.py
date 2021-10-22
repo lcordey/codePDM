@@ -14,7 +14,7 @@ import IPython
 DEFAULT_RESOLUTION = 100
 DEFAULT_NUM_IMAGE = 3
 DEFAUT_OUTPUT_IMAGES = False
-DEFAULT_TYPE = "grid"
+DEFAULT_TYPE = "face"
 
 DECODER_PATH = "models_pth/decoderSDF.pth"
 ENCODER_GRID_PATH = "models_pth/encoderGrid.pth"
@@ -405,7 +405,7 @@ if __name__ == '__main__':
     else:
         plt.savefig("../../image2sdf/logs/encoder_face/cosine_distance.png")
 
-
+ 
     clustered_cosine_dist, idx = cluster_corr(matrix)
     plt.figure()
     plt.imshow(clustered_cosine_dist, cmap = 'RdBu')

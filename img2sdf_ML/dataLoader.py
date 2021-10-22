@@ -187,23 +187,23 @@ class DatasetFace(torch.utils.data.Dataset):
 
 
         # rearange, normalize and convert to tensor
-        front = np.transpose(front, [2,1,0])
+        front = np.transpose(front, [2,0,1])
         front = front/255 - 0.5
         front = torch.tensor(front, dtype = torch.float)
 
-        left = np.transpose(left, [2,1,0])
+        left = np.transpose(left, [2,0,1])
         left = left/255 - 0.5
         left = torch.tensor(left, dtype = torch.float)
 
-        back = np.transpose(back, [2,1,0])
+        back = np.transpose(back, [2,0,1])
         back = back/255 - 0.5
         back = torch.tensor(back, dtype = torch.float)
 
-        right = np.transpose(right, [2,1,0])
+        right = np.transpose(right, [2,0,1])
         right = right/255 - 0.5
         right = torch.tensor(right, dtype = torch.float)
 
-        top = np.transpose(top, [2,1,0])
+        top = np.transpose(top, [2,0,1])
         top = top/255 - 0.5
         top = torch.tensor(top, dtype = torch.float)
 
