@@ -164,11 +164,11 @@ def load_face(annotations, argument_num_image):
     height_input_network = height_input_network_face
 
     
-    all_front = torch.empty([num_scene, num_image_per_scene, 3, height_input_network, width_input_network], dtype=torch.float)
-    all_left = torch.empty([num_scene, num_image_per_scene, 3, depth_input_network, width_input_network], dtype=torch.float)
-    all_back = torch.empty([num_scene, num_image_per_scene, 3, height_input_network, width_input_network], dtype=torch.float)
-    all_right = torch.empty([num_scene, num_image_per_scene, 3, depth_input_network, width_input_network], dtype=torch.float)
-    all_top = torch.empty([num_scene, num_image_per_scene, 3, width_input_network, depth_input_network], dtype=torch.float)
+    all_front = torch.empty([num_scene, num_image_per_scene, 3, width_input_network, height_input_network], dtype=torch.float)
+    all_left = torch.empty([num_scene, num_image_per_scene, 3, width_input_network, depth_input_network], dtype=torch.float)
+    all_back = torch.empty([num_scene, num_image_per_scene, 3, width_input_network, height_input_network], dtype=torch.float)
+    all_right = torch.empty([num_scene, num_image_per_scene, 3, width_input_network, depth_input_network], dtype=torch.float)
+    all_top = torch.empty([num_scene, num_image_per_scene, 3, depth_input_network, width_input_network], dtype=torch.float)
 
     for scene, scene_id in zip(annotations.keys(), range(num_scene)):
         for image, image_id in zip(glob.glob(IMAGES_PATH + scene + '/*'), range(num_image_per_scene)):
