@@ -4,6 +4,9 @@ import glob
 import imageio
 import torch
 import cv2
+import matplotlib.pyplot as plt
+import pandas as pd
+import scipy.cluster.hierarchy as sch
 from marching_cubes_rgb import *
 
 import IPython
@@ -34,6 +37,34 @@ width_input_network_face = 64
 height_input_network_face = 64
 depth_input_network = 128
 
+def cluster_corr(corr_array, inplace=False):
+    """
+    Rearranges the correlation matrix, corr_array, so that groups of highly 
+    correlated variables are next to eachother 
+    
+    Parameters
+    ----------
+    corr_array : pandas.DataFrame or numpy.ndarray
+        a NxN correlation matrix 
+        
+    Returns
+    -------
+    pandas.DataFrame or numpy.ndarray
+        a NxN correlation matrix with the columns and rows rearranged
+    """
+    pairwise_distances = sch.distance.pdist(corr_array)
+    linkage = sch.linkage(pairwise_distances, method='complete')
+    cluster_distance_threshold = pairwise_distances.max()/2
+    idx_to_cluster_array = sch.fcluster(linkage, cluster_distance_threshold, 
+                                        criterion='distance')
+    idx = np.argsort(idx_to_cluster_array)
+    
+    if not inplace:
+        corr_array = corr_array.copy()
+    
+    if isinstance(corr_array, pd.DataFrame):
+        return corr_array.iloc[idx, :].T.iloc[idx, :]
+    return corr_array[idx, :][:, idx], idx
 
 def convert_w2c(matrix_world_to_camera, frame, point):
 
@@ -347,9 +378,40 @@ if __name__ == '__main__':
                     if scene_id_1 == scene_id_2 and vec2 > vec1:
                         similarity_same_model.append(dist)
                         print(f"cosine distance between vec {vec1} and {vec2}: {dist}")
-                    else:
+                    elif (vec1 != vec2):
                         similarity_different_model.append(dist)
 
 
     print(f"average similarity between same models: {torch.tensor(similarity_same_model).mean()}")
     print(f"average similarity between differents models: {torch.tensor(similarity_different_model).mean()}")
+
+
+    matrix = np.empty([num_scene * num_image_per_scene, num_scene * num_image_per_scene])
+
+    for scene_id_1 in range(num_scene):
+        for scene_id_2 in range(num_scene):
+            for vec1 in range(num_image_per_scene):
+                for vec2 in range(num_image_per_scene):
+                    dist = cosine_distance(lat_vecs[scene_id_1,vec1,:], lat_vecs[scene_id_2,vec2,:])
+                    matrix[scene_id_1 * num_image_per_scene + vec1, scene_id_2 * num_image_per_scene + vec2] = dist
+
+    plt.figure()
+    plt.imshow(matrix, cmap='RdBu')
+    plt.title("cosine distance")
+    plt.colorbar()
+
+    if args.type == 'grid':
+        plt.savefig("../../image2sdf/logs/encoder_grid/cosine_distance.png")
+    else:
+        plt.savefig("../../image2sdf/logs/encoder_face/cosine_distance.png")
+
+
+    clustered_cosine_dist, idx = cluster_corr(matrix)
+    plt.figure()
+    plt.imshow(clustered_cosine_dist, cmap = 'RdBu')
+    plt.title("cosine distance")
+    plt.colorbar()
+    if args.type == 'grid':
+        plt.savefig("../../image2sdf/logs/encoder_grid/cosine_distance_clustered.png")
+    else:
+        plt.savefig("../../image2sdf/logs/encoder_face/cosine_distance_clustered.png")
