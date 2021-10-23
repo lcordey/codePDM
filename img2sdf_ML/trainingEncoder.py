@@ -272,7 +272,7 @@ elif NEWTORK == 'face':
             
                 encoder.eval()
                 loss_pred_validation = []
-                for batch_front, batch_left, batch_back, batch_right, batch_top, batch_target_code in training_generator_face:
+                for batch_front, batch_left, batch_back, batch_right, batch_top, batch_target_code in validation_generator_face:
                     front, left, back, right, top, target_code = batch_front.cuda(), batch_left.cuda(), batch_back.cuda(), batch_right.cuda(), batch_top.cuda(), batch_target_code.cuda()
                     pred_vecs = encoder(front, left, back, right, top)
 
