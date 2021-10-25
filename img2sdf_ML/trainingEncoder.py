@@ -244,11 +244,11 @@ if NEWTORK == 'grid':
                 loss_rgb_validation = []
                 for batch_input_im_validation, batch_target_code_validation in validation_generator_grid:
                     input_im_validation, target_code_validation = batch_input_im_validation.cuda(), batch_target_code_validation.cuda()
-                    pred_vecs_validation = encoder(input_im_validation).unsqueeze(0)
-                    loss_pred_validation.append(loss(pred_vecs_validation, target_code_validation).detach().cpu()).unsqueeze(0)
+                    pred_vecs_validation = encoder(input_im_validation)
+                    loss_pred_validation.append(loss(pred_vecs_validation, target_code_validation).detach().cpu())
 
-                    sdf_validation = decoder(pred_vecs_validation.repeat_interleave(resolution * resolution * resolution, dim=0),xyz)
-                    sdf_target= decoder(target_code_validation.repeat_interleave(resolution * resolution * resolution, dim=0),xyz)
+                    sdf_validation = decoder(pred_vecs_validation.unsqueeze(0).repeat_interleave(resolution * resolution * resolution, dim=0),xyz)
+                    sdf_target= decoder(target_code_validation.unsqueeze(0).repeat_interleave(resolution * resolution * resolution, dim=0),xyz)
 
                     # assign weight of 0 for easy samples that are well trained
                     threshold_precision = 1/resolution
