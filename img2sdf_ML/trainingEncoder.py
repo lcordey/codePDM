@@ -230,7 +230,7 @@ if NEWTORK == 'grid':
 
             time_passed = time.time() - time_start
             # model_seen = len(log_loss) * batch_size
-            model_seen = count_model
+            model_seen = len(log_loss)
             time_per_model = time_passed/(model_seen)
             time_left = time_per_model * (total_model_to_show - model_seen)
             # print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(epoch, count_model, torch.Tensor(log_loss[-10:]).mean(), \

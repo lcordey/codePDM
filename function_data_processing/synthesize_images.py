@@ -213,7 +213,7 @@ annotations = dict()
 time_start = time.time()
 
 # bpy.data.objects['Camera'].location.x = 0
-bpy.data.objects['Camera'].location.y = -5
+bpy.data.objects['Camera'].location.y = -3
 
 print(f"camera location: {bpy.data.objects['Camera'].location}")
 print(f"camera orientation: {bpy.data.objects['Camera'].rotation_euler}")
