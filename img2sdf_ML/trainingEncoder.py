@@ -240,8 +240,8 @@ if NEWTORK == 'grid':
                     pred_vecs_validation = encoder(input_im_validation)
                     loss_pred_validation.append(loss(pred_vecs_validation, target_code_validation).detach().cpu())
 
-                    sdf_validation = decoder(pred_vecs_validation,xyz)
-                    sdf_target= decoder(target_code_validation,xyz)
+                    sdf_validation = decoder(pred_vecs_validation.repeat_interleave(resolution * resolution * resolution),xyz.repeat(batch_size))
+                    sdf_target= decoder(target_code_validation.repeat_interleave(resolution * resolution * resolution),xyz.repeat(batch_size))
 
                     # assign weight of 0 for easy samples that are well trained
                     threshold_precision = 1/resolution
