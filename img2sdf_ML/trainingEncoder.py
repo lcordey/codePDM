@@ -69,6 +69,7 @@ def initialize_dataset(annotations):
 
 
 decoder = torch.load(DECODER_PATH).cuda()
+decoder.eval()
 target_vecs = torch.load(LATENT_VECS_TARGET_PATH).cuda()
 
 annotations_file = open(ANNOTATIONS_PATH, "rb")
