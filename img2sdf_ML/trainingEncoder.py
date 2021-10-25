@@ -82,7 +82,8 @@ assert(num_scene == len(annotations.keys()))
 num_scene_training = num_scene -num_scene_validation
 total_model_to_show = num_scene_training * num_image_per_scene * num_epoch
 
-params = {'batch_size': batch_size,
+# params = {'batch_size': batch_size,
+params = {'batch_size': 1,
           'shuffle': True,
           'num_workers': 8,
           'pin_memory': False
@@ -234,62 +235,97 @@ if NEWTORK == 'grid':
             # print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(epoch, count_model, torch.Tensor(log_loss[-10:]).mean(), \
             # abs(pred_vecs - target_code).mean(), abs(pred_vecs).mean(), abs(target_code).mean(), optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
 
-            if count_model%(total_model_to_show/num_epoch/100) == 0:
+            # count_model += batch_size
+            count_model += 1
+
+            if count_model%(total_model_to_show/num_epoch/1000) == 0:
                 print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(epoch, count_model, torch.Tensor(log_loss[-10:]).mean(), \
                 abs(pred_vecs - target_code).mean(), abs(pred_vecs).mean(), abs(target_code).mean(), optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
 
-            if count_model%(total_model_to_show/num_epoch/10) == 0:
-                encoder.eval()
-                loss_pred_validation = []
-                loss_sdf_validation = []
-                loss_rgb_validation = []
-                for batch_input_im_validation, batch_target_code_validation in validation_generator_grid:
-                    input_im_validation, target_code_validation = batch_input_im_validation.cuda(), batch_target_code_validation.cuda()
-                    pred_vecs_validation = encoder(input_im_validation)
-                    loss_pred_validation.append(loss(pred_vecs_validation, target_code_validation).detach().cpu())
+                sdf_validation = decoder(pred_vecs.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
+                sdf_target= decoder(target_code.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
 
-                    sdf_validation = decoder(pred_vecs_validation.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
-                    sdf_target= decoder(target_code_validation.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
-
-                    # assign weight of 0 for easy samples that are well trained
-                    threshold_precision = 1/resolution
-                    weight_sdf = ~((sdf_validation[:,0] > threshold_precision).squeeze() * (sdf_target[:,0] > threshold_precision).squeeze()) \
-                        * ~((sdf_validation[:,0] < -threshold_precision).squeeze() * (sdf_target[:,0] < -threshold_precision).squeeze())
+                # assign weight of 0 for easy samples that are well trained
+                threshold_precision = 1/resolution
+                weight_sdf = ~((sdf_validation[:,0] > threshold_precision).squeeze() * (sdf_target[:,0] > threshold_precision).squeeze()) \
+                    * ~((sdf_validation[:,0] < -threshold_precision).squeeze() * (sdf_target[:,0] < -threshold_precision).squeeze())
 
 
-                    #L1 loss, only for hard samples
-                    loss_sdf = torch.nn.MSELoss(reduction='none')(sdf_validation[:,0].squeeze(), sdf_target[:,0])
-                    loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
+                #L1 loss, only for hard samples
+                loss_sdf = torch.nn.MSELoss(reduction='none')(sdf_validation[:,0].squeeze(), sdf_target[:,0])
+                loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
 
 
-                    # IPython.embed()
+                # IPython.embed()
+            
+                # loss rgb
+                lambda_rgb = 1/100
                 
-                    # loss rgb
-                    lambda_rgb = 1/100
-                    
-                    rgb_gt_normalized = sdf_target[:,1:]/255
-                    loss_rgb = torch.nn.MSELoss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
-                    loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean() * weight_sdf.numel()/weight_sdf.count_nonzero() * lambda_rgb
-        
-                    loss_sdf_validation.append(loss_sdf)
-                    loss_rgb_validation.append(loss_rgb)
-                
-                loss_pred_validation = torch.tensor(loss_pred_validation).mean()
-                loss_sdf_validation = torch.tensor(loss_sdf_validation).mean()
-                loss_rgb_validation = torch.tensor(loss_rgb_validation).mean()
+                rgb_gt_normalized = sdf_target[:,1:]/255
+                loss_rgb = torch.nn.MSELoss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
+                loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean() * weight_sdf.numel()/weight_sdf.count_nonzero() * lambda_rgb
+    
                 print("\n********** VALIDATION **********")
-                print(f"validation L2 loss: {loss_pred_validation}")
-                print(f"validation sdf loss: {loss_sdf_validation}")
-                print(f"validation rgb loss: {loss_rgb_validation}")
+                print(f"validation latent code l2 loss: {(pred_vecs-target_code).norm()}")
+                print(f"validation sdf loss: {loss_sdf}")
+                print(f"validation rgb loss: {loss_rgb}")
                 print("\n")
-                log_loss_validation.append(loss_pred_validation)
-                log_loss_sdf_validation.append(loss_sdf_validation)
-                log_loss_rgb_validation.append(loss_rgb_validation)
+                log_loss_validation.append(loss_pred)
+                log_loss_sdf_validation.append(loss_sdf)
+                log_loss_rgb_validation.append(loss_rgb)
+
+
+            # if count_model%(total_model_to_show/num_epoch/10) == 0 or count_model == batch_size:
+            #     encoder.eval()
+            #     loss_pred_validation = []
+            #     loss_sdf_validation = []
+            #     loss_rgb_validation = []
+            #     for batch_input_im_validation, batch_target_code_validation in validation_generator_grid:
+            #         input_im_validation, target_code_validation = batch_input_im_validation.cuda(), batch_target_code_validation.cuda()
+            #         pred_vecs_validation = encoder(input_im_validation)
+            #         loss_pred_validation.append(loss(pred_vecs_validation, target_code_validation).detach().cpu())
+
+            #         sdf_validation = decoder(pred_vecs_validation.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
+            #         sdf_target= decoder(target_code_validation.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
+
+            #         # assign weight of 0 for easy samples that are well trained
+            #         threshold_precision = 1/resolution
+            #         weight_sdf = ~((sdf_validation[:,0] > threshold_precision).squeeze() * (sdf_target[:,0] > threshold_precision).squeeze()) \
+            #             * ~((sdf_validation[:,0] < -threshold_precision).squeeze() * (sdf_target[:,0] < -threshold_precision).squeeze())
+
+
+            #         #L1 loss, only for hard samples
+            #         loss_sdf = torch.nn.MSELoss(reduction='none')(sdf_validation[:,0].squeeze(), sdf_target[:,0])
+            #         loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
+
+
+            #         # IPython.embed()
+                
+            #         # loss rgb
+            #         lambda_rgb = 1/100
+                    
+            #         rgb_gt_normalized = sdf_target[:,1:]/255
+            #         loss_rgb = torch.nn.MSELoss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
+            #         loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean() * weight_sdf.numel()/weight_sdf.count_nonzero() * lambda_rgb
+        
+            #         loss_sdf_validation.append(loss_sdf)
+            #         loss_rgb_validation.append(loss_rgb)
+                
+                # loss_pred_validation = torch.tensor(loss_pred_validation).mean()
+                # loss_sdf_validation = torch.tensor(loss_sdf_validation).mean()
+                # loss_rgb_validation = torch.tensor(loss_rgb_validation).mean()
+                # print("\n********** VALIDATION **********")
+                # print(f"validation L2 loss: {loss_pred_validation}")
+                # print(f"validation sdf loss: {loss_sdf_validation}")
+                # print(f"validation rgb loss: {loss_rgb_validation}")
+                # print("\n")
+                # log_loss_validation.append(loss_pred_validation)
+                # log_loss_sdf_validation.append(loss_sdf_validation)
+                # log_loss_rgb_validation.append(loss_rgb_validation)
 
                 encoder.train()
 
 
-            count_model += batch_size
                 
         scheduler.step()
 

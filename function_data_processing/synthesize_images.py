@@ -137,7 +137,8 @@ def randomize_vehicle_placement(temp_filepath: str):
 
 def set_fixed_vehicle_placement(temp_filepath: str):
     obj = bpy.data.objects['model']
-    r_scale = 6
+    r_scale = 3
+    # r_scale = 6
     r_rot = 0.5
 
     obj.location = (0, 0, 0)
@@ -210,6 +211,12 @@ vehicle_pool = get_shape_dirs(args.shapenet_path, whitelisted_vehicles)
 annotations = dict()
 
 time_start = time.time()
+
+# bpy.data.objects['Camera'].location.x = 0
+bpy.data.objects['Camera'].location.y = -5
+
+print(f"camera location: {bpy.data.objects['Camera'].location}")
+print(f"camera orientation: {bpy.data.objects['Camera'].rotation_euler}")
 
 for i in range(len(vehicle_pool)):
 
