@@ -247,12 +247,8 @@ if NEWTORK == 'grid':
                     pred_vecs_validation = encoder(input_im_validation)
                     loss_pred_validation.append(loss(pred_vecs_validation, target_code_validation).detach().cpu())
 
-                    IPython.embed()
-
                     sdf_validation = decoder(pred_vecs_validation.repeat_interleave(resolution * resolution * resolution, dim=0),xyz)
                     sdf_target= decoder(target_code_validation.repeat_interleave(resolution * resolution * resolution, dim=0),xyz)
-
-                    IPython.embed()
 
                     # assign weight of 0 for easy samples that are well trained
                     threshold_precision = 1/resolution
@@ -261,14 +257,17 @@ if NEWTORK == 'grid':
 
 
                     #L1 loss, only for hard samples
-                    loss_sdf = loss(sdf_validation[:,0].squeeze(), sdf_target[:,0])
+                    loss_sdf = torch.nn.MSELoss(reduction='none')(sdf_validation[:,0].squeeze(), sdf_target[:,0])
                     loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
 
+
+                    # IPython.embed()
+                
                     # loss rgb
                     lambda_rgb = 1/100
                     
                     rgb_gt_normalized = sdf_target[:,1:]/255
-                    loss_rgb = loss(sdf_validation[:,1:], rgb_gt_normalized)
+                    loss_rgb = torch.nn.MSELoss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
                     loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean() * weight_sdf.numel()/weight_sdf.count_nonzero() * lambda_rgb
         
                     loss_sdf_validation.append(loss_sdf)
