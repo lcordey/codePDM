@@ -267,6 +267,7 @@ if NEWTORK == 'grid':
     
                 print("\n********** VALIDATION **********")
                 print(f"validation latent code l2 loss: {(pred_vecs-target_code).norm()}")
+                print(f"validation latent code l2 loss: {loss(pred_vecs, target_code)}")
                 print(f"validation sdf loss: {loss_sdf}")
                 print(f"validation rgb loss: {loss_rgb}")
                 print("\n")
