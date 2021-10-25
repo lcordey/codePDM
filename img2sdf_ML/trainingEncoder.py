@@ -87,6 +87,13 @@ params = {'batch_size': batch_size,
           'pin_memory': False
           }
 
+
+params_validation = {'batch_size': 1,
+          'shuffle': True,
+          'num_workers': 8,
+          'pin_memory': False
+          }
+
 list_scene, dict_scene_2_code = initialize_dataset(annotations)
 
 list_scene_training = list_scene[:-num_scene_validation]
@@ -136,7 +143,7 @@ validation_set_grid = DatasetGrid(list_scene_validation,
                        width_input_network_grid,
                        height_input_network_grid)
 
-validation_generator_grid = torch.utils.data.DataLoader(validation_set_grid, **params)
+validation_generator_grid = torch.utils.data.DataLoader(validation_set_grid, **params_validation)
 
 
 validation_set_face = DatasetFace(list_scene_validation,
@@ -151,7 +158,7 @@ validation_set_face = DatasetFace(list_scene_validation,
                        height_input_network_face,
                        depth_input_network)
 
-validation_generator_face = torch.utils.data.DataLoader(validation_set_face, **params)
+validation_generator_face = torch.utils.data.DataLoader(validation_set_face, **params_validation)
 
 # encoder
 # encoder = EncoderSDF(latent_size).cuda()
@@ -239,8 +246,6 @@ if NEWTORK == 'grid':
                     input_im_validation, target_code_validation = batch_input_im_validation.cuda(), batch_target_code_validation.cuda()
                     pred_vecs_validation = encoder(input_im_validation)
                     loss_pred_validation.append(loss(pred_vecs_validation, target_code_validation).detach().cpu())
-
-                    IPython.embed()
 
                     sdf_validation = decoder(pred_vecs_validation.repeat_interleave(resolution * resolution * resolution, dim=0),xyz.repeat(batch_size,1))
                     sdf_target= decoder(target_code_validation.repeat_interleave(resolution * resolution * resolution, dim=0),xyz.repeat(batch_size,1))
