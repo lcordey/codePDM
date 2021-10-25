@@ -278,9 +278,10 @@ if NEWTORK == 'grid':
                 loss_sdf_validation = torch.tensor(loss_sdf_validation).mean()
                 loss_rgb_validation = torch.tensor(loss_rgb_validation).mean()
                 print("\n********** VALIDATION **********")
-                print(f"validation L2 loss: {loss_pred_validation}\n")
-                print(f"validation sdf loss: {loss_sdf_validation}\n")
-                print(f"validation rgb loss: {loss_rgb_validation}\n")
+                print(f"validation L2 loss: {loss_pred_validation}")
+                print(f"validation sdf loss: {loss_sdf_validation}")
+                print(f"validation rgb loss: {loss_rgb_validation}")
+                print("\n")
                 log_loss_validation.append(loss_pred_validation)
                 log_loss_sdf_validation.append(loss_sdf_validation)
                 log_loss_rgb_validation.append(loss_rgb_validation)
@@ -288,7 +289,7 @@ if NEWTORK == 'grid':
                 encoder.train()
 
 
-                count_model += batch_size
+            count_model += batch_size
                 
         scheduler.step()
 
