@@ -186,6 +186,15 @@ log_loss_validation = []
 log_loss_sdf_validation = []
 log_loss_rgb_validation = []
 
+resolution = 64
+
+xyz = torch.empty(resolution * resolution * resolution, 3).cuda()
+for x in range(resolution):
+    for y in range(resolution):
+        for z in range(resolution):
+            xyz[x * resolution * resolution + y * resolution + z, :] = torch.Tensor([x/(resolution-1)-0.5,y/(resolution-1)-0.5,z/(resolution-1)-0.5])
+
+
 time_start = time.time()
 
 
@@ -235,7 +244,7 @@ if NEWTORK == 'grid':
                     sdf_target= decoder(target_code_validation)
 
                     # assign weight of 0 for easy samples that are well trained
-                    threshold_precision = 1/64
+                    threshold_precision = 1/resolution
                     weight_sdf = ~((sdf_validation[:,0] > threshold_precision).squeeze() * (sdf_target[:,0] > threshold_precision).squeeze()) \
                         * ~((sdf_validation[:,0] < -threshold_precision).squeeze() * (sdf_target[:,0] < -threshold_precision).squeeze())
 
