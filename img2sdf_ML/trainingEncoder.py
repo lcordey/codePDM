@@ -88,7 +88,7 @@ params = {'batch_size': batch_size,
           }
 
 
-params_validation = {'batch_size': 1,
+params_validation = {'batch_size': 2,
           'shuffle': True,
           'num_workers': 8,
           'pin_memory': False
@@ -247,8 +247,8 @@ if NEWTORK == 'grid':
                     pred_vecs_validation = encoder(input_im_validation)
                     loss_pred_validation.append(loss(pred_vecs_validation, target_code_validation).detach().cpu())
 
-                    sdf_validation = decoder(pred_vecs_validation.repeat_interleave(resolution * resolution * resolution, dim=0),xyz)
-                    sdf_target= decoder(target_code_validation.repeat_interleave(resolution * resolution * resolution, dim=0),xyz)
+                    sdf_validation = decoder(pred_vecs_validation.repeat_interleave(resolution * resolution * resolution, dim=0),xyz.repeat(2,1))
+                    sdf_target= decoder(target_code_validation.repeat_interleave(resolution * resolution * resolution, dim=0),xyz.repeat(2,1))
 
                     # assign weight of 0 for easy samples that are well trained
                     threshold_precision = 1/resolution
@@ -386,14 +386,14 @@ plt.title("Loss sdf")
 plt.xlabel("Number of images shown")
 plt.ylabel("L2 loss")
 plt.semilogy(np.arange(len(log_loss_sdf_validation)) * (total_model_to_show/num_epoch/10), log_loss_sdf_validation[:], label = "validation loss sdf")
-plt.savefig("../../image2sdf/logs/log_total_validation")
+plt.savefig("../../image2sdf/logs/log_sdf_validation")
 
 plt.figure()
 plt.title("Loss rgb")
 plt.xlabel("Number of images shown")
 plt.ylabel("L2 loss")
 plt.semilogy(np.arange(len(log_loss_rgb_validation)) * (total_model_to_show/num_epoch/10), log_loss_rgb_validation[:], label = "validation loss rgb")
-plt.savefig("../../image2sdf/logs/log_total_validation")
+plt.savefig("../../image2sdf/logs/log_rgb_validation")
 
 with open("../../image2sdf/logs/log.txt", "wb") as fp:
     pickle.dump(avrg_loss, fp)
