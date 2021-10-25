@@ -265,10 +265,7 @@ if NEWTORK == 'grid':
                 loss_rgb = torch.nn.MSELoss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
                 loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean() * weight_sdf.numel()/weight_sdf.count_nonzero() * lambda_rgb
     
-                IPython.embed()
-
                 print("\n********** VALIDATION **********")
-                print(f"validation latent code l2 loss: {(pred_vecs-target_code).norm()}")
                 print(f"validation latent code l2 loss: {loss(pred_vecs, target_code)}")
                 print(f"validation sdf loss: {loss_sdf}")
                 print(f"validation rgb loss: {loss_rgb}")
