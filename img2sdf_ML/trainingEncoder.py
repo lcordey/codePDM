@@ -29,10 +29,10 @@ LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred.pth"
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
 
-# NEWTORK = 'grid'
-NEWTORK = 'face'
+NEWTORK = 'grid'
+# NEWTORK = 'face'
 
-num_epoch = 20
+num_epoch = 1
 batch_size = 10
 
 eta_encoder = 1e-4
@@ -183,6 +183,8 @@ scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=gammaLR)
 ####################### Training loop ##########################
 log_loss = []
 log_loss_validation = []
+log_loss_sdf_validation = []
+log_loss_rgb_validation = []
 
 time_start = time.time()
 
@@ -223,16 +225,46 @@ if NEWTORK == 'grid':
             if count_model%(total_model_to_show/num_epoch/10) == 0:
                 encoder.eval()
                 loss_pred_validation = []
+                loss_sdf_validation = []
+                loss_rgb_validation = []
                 for batch_input_im_validation, batch_target_code_validation in validation_generator_grid:
                     input_im_validation, target_code_validation = batch_input_im_validation.cuda(), batch_target_code_validation.cuda()
                     pred_vecs_validation = encoder(input_im_validation)
-
                     loss_pred_validation.append(loss(pred_vecs_validation, target_code_validation).detach().cpu())
+
+                    sdf_validation = decoder(pred_vecs_validation)
+                    sdf_target= decoder(target_code_validation)
+
+                    # assign weight of 0 for easy samples that are well trained
+                    threshold_precision = 1/64
+                    weight_sdf = ~((sdf_validation[:,0] > threshold_precision).squeeze() * (sdf_target[:,0] > threshold_precision).squeeze()) \
+                        * ~((sdf_validation[:,0] < -threshold_precision).squeeze() * (sdf_target[:,0] < -threshold_precision).squeeze())
+
+
+                    #L1 loss, only for hard samples
+                    loss_sdf = loss(sdf_validation[:,0].squeeze(), sdf_target[:,0])
+                    loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
+
+                    # loss rgb
+                    lambda_rgb = 1/100
+                    
+                    rgb_gt_normalized = sdf_target[:,1:]/255
+                    loss_rgb = loss(sdf_validation[:,1:], rgb_gt_normalized)
+                    loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean() * weight_sdf.numel()/weight_sdf.count_nonzero() * lambda_rgb
+        
+                    loss_sdf_validation.append(loss_sdf)
+                    loss_rgb_validation.append(loss_rgb)
                 
-                loss_validation = torch.tensor(loss_pred_validation).mean()
+                loss_pred_validation = torch.tensor(loss_pred_validation).mean()
+                loss_sdf_validation = torch.tensor(loss_sdf_validation).mean()
+                loss_rgb_validation = torch.tensor(loss_rgb_validation).mean()
                 print("\n********** VALIDATION **********")
-                print(f"validation L2 loss: {loss_validation}\n")
-                log_loss_validation.append(loss_validation)
+                print(f"validation L2 loss: {loss_pred_validation}\n")
+                print(f"validation sdf loss: {loss_sdf_validation}\n")
+                print(f"validation rgb loss: {loss_rgb_validation}\n")
+                log_loss_validation.append(loss_pred_validation)
+                log_loss_sdf_validation.append(loss_sdf_validation)
+                log_loss_rgb_validation.append(loss_rgb_validation)
 
                 encoder.train()
                 
@@ -318,17 +350,31 @@ for i in range(0,len(log_loss)):
 
 from matplotlib import pyplot as plt
 plt.figure()
-plt.title("Total loss")
+plt.title("Training loss")
 plt.xlabel("Number of images shown")
 plt.ylabel("L2 loss")
 plt.semilogy(np.arange(len(avrg_loss)) * batch_size, avrg_loss[:], label = "training loss")
 plt.savefig("../../image2sdf/logs/log_total")
 
 plt.figure()
-plt.title("Total loss Validation")
+plt.title("Latent code loss Validation")
 plt.xlabel("Number of images shown")
 plt.ylabel("L2 loss")
 plt.semilogy(np.arange(len(log_loss_validation)) * (total_model_to_show/num_epoch/10), log_loss_validation[:], label = "validation loss")
+plt.savefig("../../image2sdf/logs/log_total_validation")
+
+plt.figure()
+plt.title("Loss sdf")
+plt.xlabel("Number of images shown")
+plt.ylabel("L2 loss")
+plt.semilogy(np.arange(len(log_loss_sdf_validation)) * (total_model_to_show/num_epoch/10), log_loss_sdf_validation[:], label = "validation loss sdf")
+plt.savefig("../../image2sdf/logs/log_total_validation")
+
+plt.figure()
+plt.title("Loss rgb")
+plt.xlabel("Number of images shown")
+plt.ylabel("L2 loss")
+plt.semilogy(np.arange(len(log_loss_rgb_validation)) * (total_model_to_show/num_epoch/10), log_loss_rgb_validation[:], label = "validation loss rgb")
 plt.savefig("../../image2sdf/logs/log_total_validation")
 
 with open("../../image2sdf/logs/log.txt", "wb") as fp:

@@ -42,6 +42,7 @@ sys.path.append(args.venv_path)
 
 import IPython
 import mathutils
+from mathutils import *
 print(f'\nPath to bpy: {bpy.__file__}\n')
 from PIL import Image
 
@@ -224,7 +225,15 @@ for i in range(len(vehicle_pool)):
 
     for j in range(num_scenes_per_vehicule):
         
-        obj.rotation_euler.rotate_axis("Y", math.radians(2 * random() * 180))
+        # obj.rotation_euler.rotate_axis("X", math.radians(2 * random() * 180))
+        # obj.rotation_euler.rotate_axis("Y", math.radians(2 * random() * 180)) 
+
+        obj.rotation_euler = mathutils.Euler((math.radians(2 * 0.25 * 180), math.radians(2 * 0.0 * random() * 180), math.radians(2 * random() * 180)), 'XYZ')
+
+        obj.rotation_euler = (mathutils.Matrix.Rotation(math.pi/4, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+
+        # obj.matrix_world @= Matrix.Rotation((math.pi/2.), 4, 'Z')
+
         rendered_image_path = f'images/{model_id}/{j}.png'
         render_to_file(f'{output_path}/{rendered_image_path}')
 
