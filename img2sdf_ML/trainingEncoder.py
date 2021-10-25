@@ -214,7 +214,6 @@ if NEWTORK == 'grid':
             model_seen = len(log_loss) * batch_size
             time_per_model = time_passed/(model_seen)
             time_left = time_per_model * (total_model_to_show - model_seen)
-            count_model += batch_size
             # print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(epoch, count_model, torch.Tensor(log_loss[-10:]).mean(), \
             # abs(pred_vecs - target_code).mean(), abs(pred_vecs).mean(), abs(target_code).mean(), optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
 
@@ -267,6 +266,9 @@ if NEWTORK == 'grid':
                 log_loss_rgb_validation.append(loss_rgb_validation)
 
                 encoder.train()
+
+
+                count_model += batch_size
                 
         scheduler.step()
 
