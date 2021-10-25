@@ -229,7 +229,8 @@ if NEWTORK == 'grid':
             # print(f"network time: {time.time() - time_start}")
 
             time_passed = time.time() - time_start
-            model_seen = len(log_loss) * batch_size
+            # model_seen = len(log_loss) * batch_size
+            model_seen = count_model
             time_per_model = time_passed/(model_seen)
             time_left = time_per_model * (total_model_to_show - model_seen)
             # print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(epoch, count_model, torch.Tensor(log_loss[-10:]).mean(), \
@@ -405,6 +406,16 @@ avrg_loss = []
 for i in range(0,len(log_loss)):
     avrg_loss.append(torch.Tensor(log_loss[i-20:i]).mean())
 
+
+avrg_loss_sdf = []
+for i in range(0,len(avrg_loss_sdf)):
+    avrg_loss_sdf.append(torch.Tensor(log_loss_sdf_validation[i-10:i]).mean())
+
+
+avrg_loss_rgb = []
+for i in range(0,len(avrg_loss_rgb)):
+    avrg_loss_rgb.append(torch.Tensor(log_loss_rgb_validation[i-10:i]).mean())
+
     
 
 from matplotlib import pyplot as plt
@@ -419,21 +430,21 @@ plt.figure()
 plt.title("Latent code loss Validation")
 plt.xlabel("Number of images shown")
 plt.ylabel("L2 loss")
-plt.semilogy(np.arange(len(log_loss_validation)) * (total_model_to_show/num_epoch/10), log_loss_validation[:], label = "validation loss")
+plt.semilogy(np.arange(len(log_loss_validation)) * (total_model_to_show/num_epoch/1000), log_loss_validation[:], label = "validation loss")
 plt.savefig("../../image2sdf/logs/log_total_validation")
 
 plt.figure()
 plt.title("Loss sdf")
 plt.xlabel("Number of images shown")
 plt.ylabel("L2 loss")
-plt.semilogy(np.arange(len(log_loss_sdf_validation)) * (total_model_to_show/num_epoch/10), log_loss_sdf_validation[:], label = "validation loss sdf")
+plt.semilogy(np.arange(len(avrg_loss_sdf)) * (total_model_to_show/num_epoch/1000), avrg_loss_sdf[:], label = "validation loss sdf")
 plt.savefig("../../image2sdf/logs/log_sdf_validation")
 
 plt.figure()
 plt.title("Loss rgb")
 plt.xlabel("Number of images shown")
 plt.ylabel("L2 loss")
-plt.semilogy(np.arange(len(log_loss_rgb_validation)) * (total_model_to_show/num_epoch/10), log_loss_rgb_validation[:], label = "validation loss rgb")
+plt.semilogy(np.arange(len(avrg_loss_rgb)) * (total_model_to_show/num_epoch/1000), avrg_loss_rgb[:], label = "validation loss rgb")
 plt.savefig("../../image2sdf/logs/log_rgb_validation")
 
 with open("../../image2sdf/logs/log.txt", "wb") as fp:
