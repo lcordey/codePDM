@@ -470,6 +470,7 @@ plt.xlabel("Number of images shown")
 plt.ylabel("cosine distance")
 plt.plot(np.arange(len(log_same_model_cos)) * (total_model_to_show/num_epoch/100), log_same_model_cos[:], label = "same models")
 plt.plot(np.arange(len(log_diff_model_cos)) * (total_model_to_show/num_epoch/100), log_diff_model_cos[:], label = "differents models")
+plt.legend()
 plt.savefig("../../image2sdf/logs/log_cosine_distance_validation")
 
 
@@ -479,6 +480,7 @@ plt.xlabel("Number of images shown")
 plt.ylabel("l2 distance")
 plt.plot(np.arange(len(log_same_model_l2)) * (total_model_to_show/num_epoch/100), log_same_model_l2[:], label = "same models")
 plt.plot(np.arange(len(log_diff_model_l2)) * (total_model_to_show/num_epoch/100), log_diff_model_l2[:], label = "differents models")
+plt.legend()
 plt.savefig("../../image2sdf/logs/log_l2_distance_validation")
 
 # plt.figure()
@@ -504,6 +506,12 @@ plt.savefig("../../image2sdf/logs/log_l2_distance_validation")
 
 with open("../../image2sdf/logs/log.txt", "wb") as fp:
     pickle.dump(avrg_loss, fp)
+
+with open("../../image2sdf/logs/log_cos.txt", "wb") as fp:
+    pickle.dump(log_same_model_cos, fp)
+
+with open("../../image2sdf/logs/log_l2.txt", "wb") as fp:
+    pickle.dump(log_same_model_l2, fp)
 
 
 # IPython.embed()
