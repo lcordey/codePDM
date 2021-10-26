@@ -299,7 +299,7 @@ if NEWTORK == 'grid':
                         input_im_validation, target_code_validation = batch_input_im_validation.cuda(), batch_target_code_validation.cuda()
                         pred_vecs_validation = encoder(input_im_validation)
                         pred_vecs_matrix[scene_id, epoch_validation, :] = pred_vecs_validation
-                        loss_pred_validation.append(loss(pred_vecs_validation, target_code_validation).detach().cpu())
+                        loss_pred_validation.append(loss(pred_vecs_validation.squeeze(), target_code_validation.squeeze()).detach().cpu())
                         cosine_distance_validation.append(cosine_distance(pred_vecs_validation, target_code_validation).detach().cpu())
 
                         if scene_id == 0:
