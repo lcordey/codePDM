@@ -42,7 +42,7 @@ gammaLR = 0.9
 num_scene_validation = 15
 
 height_input_image = 300
-width_input_image = 450
+width_input_image = 300
 
 num_slices = 48
 
@@ -220,7 +220,7 @@ if NEWTORK == 'grid':
     for epoch in range(num_epoch):
         count_model = 0
         for batch_input_im, batch_target_code in training_generator_grid:
-            if count_model > total_model_to_show/num_epoch/20:
+            if count_model > total_model_to_show/num_epoch/3:
                 break
 
             optimizer.zero_grad()

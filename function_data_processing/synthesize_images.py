@@ -32,7 +32,7 @@ parser.add_argument('--shapenet_path', dest='shapenet_path', default='/home/loic
                     help='path to the dataset')
 parser.add_argument('--directory_path', dest='directory_path', default='/home/loic/MasterPDM/image2sdf/', help='path to the folder directory')
 parser.add_argument('--height', type=int, dest='height', default=300)
-parser.add_argument('--width', type=int, dest='width', default=450)
+parser.add_argument('--width', type=int, dest='width', default=300)
 # parser.add_argument('--num_images', type=int, dest='num_images', default=100, help='number of output images')
 # parser.add_argument('--image_name', dest='image_name', default='synth_image', help='name of the output images')
 
@@ -52,7 +52,7 @@ def init_blender():
 
     bpy.context.scene.render.film_transparent = True
 
-    scene.render.resolution_x = 450
+    scene.render.resolution_x = 300
     scene.render.resolution_y = 300
     scene.render.resolution_percentage = 100
 
@@ -171,7 +171,7 @@ def generate_white_background(w: int, h: int) -> Image:
     return Image.new('RGB', (w, h), (255, 255, 255))
 
 
-def update_camera(camera, focus_point=mathutils.Vector((0.0, 0.0, 0.0)), distance=2.75):
+def update_camera(camera, focus_point=mathutils.Vector((0.0, 0.0, 0.0)), distance=2.0):
     """
     Focus the camera to a focus point and place the camera at a specific distance from that
     focus point. The camera stays in a direct line with the focus point.
