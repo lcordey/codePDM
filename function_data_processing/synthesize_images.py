@@ -171,6 +171,26 @@ def generate_white_background(w: int, h: int) -> Image:
     return Image.new('RGB', (w, h), (255, 255, 255))
 
 
+def update_camera(camera, focus_point=mathutils.Vector((0.0, 0.0, 0.0)), distance=2.5):
+    """
+    Focus the camera to a focus point and place the camera at a specific distance from that
+    focus point. The camera stays in a direct line with the focus point.
+
+    :param camera: the camera object
+    :type camera: bpy.types.object
+    :param focus_point: the point to focus on (default=``mathutils.Vector((0.0, 0.0, 0.0))``)
+    :type focus_point: mathutils.Vector
+    :param distance: the distance to keep to the focus point (default=``10.0``)
+    :type distance: float
+    """
+    looking_direction = camera.location - focus_point
+    rot_quat = looking_direction.to_track_quat('Z', 'Y')
+
+    camera.rotation_euler = rot_quat.to_euler()
+    # Use * instead of @ for Blender <2.8
+    camera.location = rot_quat @ mathutils.Vector((0.0, 0.0, distance))
+
+
 assert(args.mode == 'training' or args.mode == 'validation'), "please give either training or validation as mode"
 
 #create folder and annotation file
@@ -195,6 +215,20 @@ w, h = args.width, args.height
 
 init_blender()
 
+with open(whitelist_path) as f:
+    whitelisted_vehicles = f.read().splitlines()
+
+whitelisted_vehicles = set(whitelisted_vehicles)
+vehicle_pool = get_shape_dirs(args.shapenet_path, whitelisted_vehicles)
+
+
+# update camera location
+bpy.data.objects['Camera'].location.x = 1
+bpy.data.objects['Camera'].location.y = 0
+bpy.data.objects['Camera'].location.z = 1
+# update camera orientation and distance
+update_camera(bpy.data.objects['Camera'])
+
 #temporary files used to save the blender scene
 init_temp_file = tempfile.NamedTemporaryFile()
 temp_file = tempfile.NamedTemporaryFile()
@@ -202,46 +236,10 @@ temp_file = tempfile.NamedTemporaryFile()
 #save initial scene
 bpy.ops.wm.save_as_mainfile(filepath=init_temp_file.name)
 
-with open(whitelist_path) as f:
-    whitelisted_vehicles = f.read().splitlines()
-
-whitelisted_vehicles = set(whitelisted_vehicles)
-vehicle_pool = get_shape_dirs(args.shapenet_path, whitelisted_vehicles)
 
 annotations = dict()
 
 time_start = time.time()
-
-ry = 0.25
-pi = 3.1415
-
-bpy.data.objects['Camera'].location.x = 1
-bpy.data.objects['Camera'].location.y = 0
-bpy.data.objects['Camera'].location.z = 1
-
-def update_camera(camera, focus_point=mathutils.Vector((0.0, 0.0, 0.0)), distance=2.0):
-    """
-    Focus the camera to a focus point and place the camera at a specific distance from that
-    focus point. The camera stays in a direct line with the focus point.
-
-    :param camera: the camera object
-    :type camera: bpy.types.object
-    :param focus_point: the point to focus on (default=``mathutils.Vector((0.0, 0.0, 0.0))``)
-    :type focus_point: mathutils.Vector
-    :param distance: the distance to keep to the focus point (default=``10.0``)
-    :type distance: float
-    """
-    looking_direction = camera.location - focus_point
-    rot_quat = looking_direction.to_track_quat('Z', 'Y')
-
-    camera.rotation_euler = rot_quat.to_euler()
-    # Use * instead of @ for Blender <2.8
-    camera.location = rot_quat @ mathutils.Vector((0.0, 0.0, distance))
-
-update_camera(bpy.data.objects['Camera'])
-
-print(f"camera location: {bpy.data.objects['Camera'].location}")
-print(f"camera orientation: {bpy.data.objects['Camera'].rotation_euler}")
 
 for i in range(len(vehicle_pool)):
 
@@ -263,14 +261,17 @@ for i in range(len(vehicle_pool)):
 
         # obj.rotation_euler = mathutils.Euler((math.radians(2 * 0.25 * 180), math.radians(2 * 0.0 * 180), math.radians(2 * random() * 180)), 'XYZ')
 
-        # obj.rotation_euler = (mathutils.Matrix.Rotation(math.pi/4, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+        obj.rotation_euler = (mathutils.Matrix.Rotation(- math.pi/4 + math.pi/2 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
 
         # obj.matrix_world @= mathutils.Matrix.Rotation((math.pi/4), 4, 'Z')
 
         rendered_image_path = f'images/{model_id}/{j}.png'
         render_to_file(f'{output_path}/{rendered_image_path}')
-
         points_2d, points_3d = get_bounding_box()
+
+        # obj.matrix_world @= mathutils.Matrix.Rotation(-(math.pi/4), 4, 'Z')
+
+
         annotations[model_id][j] = dict()
         annotations[model_id][j]['2d'] = np.array(points_2d)
         annotations[model_id][j]['3d'] = np.array(points_3d)
@@ -281,6 +282,9 @@ for i in range(len(vehicle_pool)):
         background_image_crop = generate_white_background(w, h)
         background_image_crop.paste(img, (0, 0), img)
         background_image_crop.save(f'{output_path}/{rendered_image_path}', "PNG")
+
+
+        obj.rotation_euler = (mathutils.Matrix.Rotation(math.pi/4 - math.pi/2 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
 
     # reload the scene to reduce the memory leak issue
     bpy.ops.wm.read_factory_settings(use_empty=True)
