@@ -330,9 +330,9 @@ if NEWTORK == 'grid':
                         scene_id += 1
                 
                 cosine_distance_validation = torch.tensor(cosine_distance_validation).mean()
-                loss_pred = torch.tensor(loss_pred_validation).mean()
-                loss_sdf = torch.tensor(loss_sdf_validation).mean()
-                loss_rgb = torch.tensor(loss_rgb_validation).mean()
+                loss_pred_validation = torch.tensor(loss_pred_validation).mean()
+                loss_sdf_validation = torch.tensor(loss_sdf_validation).mean()
+                loss_rgb_validation = torch.tensor(loss_rgb_validation).mean()
 
 
                 similarity_same_model_cos = []
