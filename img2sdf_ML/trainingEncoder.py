@@ -304,10 +304,10 @@ if NEWTORK == 'grid':
                 similarity_same_model_l2 = []
                 similarity_different_model_l2 = []
 
-                for scene_id_1 in range(num_scene):
-                    for scene_id_2 in range(scene_id_1, num_scene):
-                        for vec1 in range(num_image_per_scene):
-                            for vec2 in range(num_image_per_scene):
+                for scene_id_1 in range(num_scene_validation):
+                    for scene_id_2 in range(scene_id_1, num_scene_validation):
+                        for vec1 in range(num_epoch_validation):
+                            for vec2 in range(num_epoch_validation):
                                 dist = cosine_distance(pred_vecs_matrix[scene_id_1,vec1,:], pred_vecs_matrix[scene_id_2,vec2,:])
                                 l2 = torch.norm(pred_vecs_matrix[scene_id_1,vec1,:]- pred_vecs_matrix[scene_id_2,vec2,:])
                                 if scene_id_1 == scene_id_2 and vec2 > vec1:
@@ -354,7 +354,7 @@ if NEWTORK == 'grid':
                 # loss_pred_validation = torch.tensor(loss_pred_validation).mean()
                 # loss_sdf_validation = torch.tensor(loss_sdf_validation).mean()
                 # loss_rgb_validation = torch.tensor(loss_rgb_validation).mean()
-                
+
                 print("\n********** VALIDATION **********")
 
                 print(f"average cosinus distance between same models : {same_model_cos}")
