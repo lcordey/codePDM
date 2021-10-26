@@ -33,11 +33,11 @@ IMAGES_PATH = "../../image2sdf/input_images/images/"
 NEWTORK = 'grid'
 # NEWTORK = 'face'
 
-num_epoch = 1
+num_epoch = 20
 batch_size = 10
 
 eta_encoder = 1e-4
-gammaLR = 0.9
+gammaLR = 0.97
 
 num_scene_validation = 15
 
@@ -220,8 +220,8 @@ if NEWTORK == 'grid':
     for epoch in range(num_epoch):
         count_model = 0
         for batch_input_im, batch_target_code in training_generator_grid:
-            if count_model > total_model_to_show/num_epoch/3:
-                break
+            # if count_model > total_model_to_show/num_epoch/3:
+                # break
 
             optimizer.zero_grad()
 
@@ -244,48 +244,13 @@ if NEWTORK == 'grid':
           
             count_model += batch_size
 
+            # print everyl X model seen
             if count_model%(total_model_to_show/num_epoch/1000) == 0:
                 print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(epoch, count_model, torch.Tensor(log_loss[-10:]).mean(), \
                 abs(pred_vecs - target_code).mean(), abs(pred_vecs).mean(), abs(target_code).mean(), optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
 
 
-            # if count_model%(total_model_to_show/num_epoch/1000) == 0:
-            #     print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(epoch, count_model, torch.Tensor(log_loss[-10:]).mean(), \
-            #     abs(pred_vecs - target_code).mean(), abs(pred_vecs).mean(), abs(target_code).mean(), optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
-
-            #     sdf_validation = decoder(pred_vecs.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
-            #     sdf_target= decoder(target_code.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
-
-            #     # assign weight of 0 for easy samples that are well trained
-            #     threshold_precision = 1/resolution
-            #     weight_sdf = ~((sdf_validation[:,0] > threshold_precision).squeeze() * (sdf_target[:,0] > threshold_precision).squeeze()) \
-            #         * ~((sdf_validation[:,0] < -threshold_precision).squeeze() * (sdf_target[:,0] < -threshold_precision).squeeze())
-
-
-            #     #L1 loss, only for hard samples
-            #     loss_sdf = torch.nn.MSELoss(reduction='none')(sdf_validation[:,0].squeeze(), sdf_target[:,0])
-            #     loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
-
-
-            #     # IPython.embed()
-            
-            #     # loss rgb
-            #     lambda_rgb = 1/100
-                
-            #     rgb_gt_normalized = sdf_target[:,1:]
-            #     loss_rgb = torch.nn.MSELoss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
-            #     loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean() * weight_sdf.numel()/weight_sdf.count_nonzero() * lambda_rgb
-    
-            #     print("\n********** VALIDATION **********")
-            #     print(f"validation latent code l2 loss: {loss(pred_vecs, target_code)}")
-            #     print(f"validation sdf loss: {loss_sdf}")
-            #     print(f"validation rgb loss: {loss_rgb}")
-            #     print("\n")
-            #     log_loss_validation.append(loss_pred)
-            #     log_loss_sdf_validation.append(loss_sdf)
-            #     log_loss_rgb_validation.append(loss_rgb)
-
-
+            # validation 
             if count_model%(total_model_to_show/num_epoch/100) == 0 or count_model == batch_size:
                 encoder.eval()
                 num_epoch_validation = 5
@@ -338,7 +303,7 @@ if NEWTORK == 'grid':
                 loss_sdf_validation = torch.tensor(loss_sdf_validation).mean()
                 loss_rgb_validation = torch.tensor(loss_rgb_validation).mean()
 
-
+                # validation between model
                 similarity_same_model_cos = []
                 similarity_different_model_cos = []
 
@@ -365,7 +330,7 @@ if NEWTORK == 'grid':
                 same_model_l2 = torch.tensor(similarity_same_model_l2).mean()
                 diff_model_l2 = torch.tensor(similarity_different_model_l2).mean()
 
-                print("\n********** VALIDATION **********")
+                print("\n****************************** VALIDATION ******************************")
 
                 print(f"average cosinus distance between same models : {same_model_cos}")
                 print(f"average cosinus distance between differents models: {diff_model_cos}")
@@ -378,7 +343,7 @@ if NEWTORK == 'grid':
 
                 print(f"average reconstruction sdf loss: {loss_sdf_validation}")
                 print(f"average reconstruction rgb loss: {loss_rgb_validation}")
-                print("\n")
+                print("****************************** VALIDATION ******************************\n")
 
                 log_same_model_cos.append(same_model_cos)
                 log_diff_model_cos.append(diff_model_cos)
@@ -391,12 +356,7 @@ if NEWTORK == 'grid':
 
                 encoder.train()
 
-
-                
         scheduler.step()
-
-
-
 
 # elif NEWTORK == 'face':
 #     for epoch in range(num_epoch):
@@ -494,14 +454,14 @@ plt.figure()
 plt.title("Loss sdf")
 plt.xlabel("Number of images shown")
 plt.ylabel("L2 loss")
-plt.semilogy(np.arange(len(log_loss_sdf_validation)) * (total_model_to_show/num_epoch/1000), log_loss_sdf_validation[:], label = "validation loss sdf")
+plt.semilogy(np.arange(len(log_loss_sdf_validation)) * (total_model_to_show/num_epoch/100), log_loss_sdf_validation[:], label = "validation loss sdf")
 plt.savefig("../../image2sdf/logs/log_sdf_validation")
 
 plt.figure()
 plt.title("Loss rgb")
 plt.xlabel("Number of images shown")
 plt.ylabel("L2 loss")
-plt.semilogy(np.arange(len(log_loss_rgb_validation)) * (total_model_to_show/num_epoch/1000), log_loss_rgb_validation[:], label = "validation loss rgb")
+plt.semilogy(np.arange(len(log_loss_rgb_validation)) * (total_model_to_show/num_epoch/100), log_loss_rgb_validation[:], label = "validation loss rgb")
 plt.savefig("../../image2sdf/logs/log_rgb_validation")
 
 with open("../../image2sdf/logs/log.txt", "wb") as fp:

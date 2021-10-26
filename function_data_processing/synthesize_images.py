@@ -255,16 +255,16 @@ for i in range(len(vehicle_pool)):
 
     for j in range(num_scenes_per_vehicule):
         
+        # rotate the car randomly
         obj.rotation_euler.rotate_axis("Y", math.radians(2 * random() * 180)) 
 
-        rz = random()
-        obj.rotation_euler = (mathutils.Matrix.Rotation(- math.pi/4 + math.pi/2 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+        # add a random rotation to simulate different height of camera 
+        rz = (random() - 0.5) * 2
+        obj.rotation_euler = (mathutils.Matrix.Rotation(math.pi/6 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
 
         rendered_image_path = f'images/{model_id}/{j}.png'
         render_to_file(f'{output_path}/{rendered_image_path}')
         points_2d, points_3d = get_bounding_box()
-
-
 
         annotations[model_id][j] = dict()
         annotations[model_id][j]['2d'] = np.array(points_2d)
@@ -277,8 +277,8 @@ for i in range(len(vehicle_pool)):
         background_image_crop.paste(img, (0, 0), img)
         background_image_crop.save(f'{output_path}/{rendered_image_path}', "PNG")
 
-
-        obj.rotation_euler = (mathutils.Matrix.Rotation(math.pi/4 - math.pi/2 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+        # replace the camera to the original orientation
+        obj.rotation_euler = (mathutils.Matrix.Rotation(-math.pi/6 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
 
     # reload the scene to reduce the memory leak issue
     bpy.ops.wm.read_factory_settings(use_empty=True)

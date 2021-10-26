@@ -179,7 +179,7 @@ if __name__ == '__main__':
             * ~((sdf_pred[:,0] < -threshold_precision).squeeze() * (sdf_gt[batch_scenes_idx * num_samples_per_scene + batch_sample_idx] < -threshold_precision).squeeze())
 
         
-        #L1 loss, only for hard samples
+        #L2 loss, only for hard samples
         loss_sdf = loss(sdf_pred[:,0].squeeze(), sdf_gt[batch_scenes_idx * num_samples_per_scene + batch_sample_idx])
         loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
 
