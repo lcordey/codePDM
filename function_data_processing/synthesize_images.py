@@ -137,8 +137,8 @@ def randomize_vehicle_placement(temp_filepath: str):
 
 def set_fixed_vehicle_placement(temp_filepath: str):
     obj = bpy.data.objects['model']
-    # r_scale = 1
-    r_scale = 6
+    r_scale = 1
+    # r_scale = 6
     r_rot = 0.0
 
     obj.location = (0, 0, 0)
@@ -171,7 +171,7 @@ def generate_white_background(w: int, h: int) -> Image:
     return Image.new('RGB', (w, h), (255, 255, 255))
 
 
-def update_camera(camera, focus_point=mathutils.Vector((0.0, 0.0, 0.0)), distance=2.5):
+def update_camera(camera, focus_point=mathutils.Vector((0.0, 0.0, 0.0)), distance=2.75):
     """
     Focus the camera to a focus point and place the camera at a specific distance from that
     focus point. The camera stays in a direct line with the focus point.
@@ -222,12 +222,12 @@ whitelisted_vehicles = set(whitelisted_vehicles)
 vehicle_pool = get_shape_dirs(args.shapenet_path, whitelisted_vehicles)
 
 
-# # update camera location
-# bpy.data.objects['Camera'].location.x = 1
-# bpy.data.objects['Camera'].location.y = 0
-# bpy.data.objects['Camera'].location.z = 1
-# # update camera orientation and distance
-# update_camera(bpy.data.objects['Camera'])
+# update camera location
+bpy.data.objects['Camera'].location.x = 1
+bpy.data.objects['Camera'].location.y = 0
+bpy.data.objects['Camera'].location.z = 1
+# update camera orientation and distance
+update_camera(bpy.data.objects['Camera'])
 
 #temporary files used to save the blender scene
 init_temp_file = tempfile.NamedTemporaryFile()
@@ -257,8 +257,8 @@ for i in range(len(vehicle_pool)):
         
         obj.rotation_euler.rotate_axis("Y", math.radians(2 * random() * 180)) 
 
-        # rz = random()
-        # obj.rotation_euler = (mathutils.Matrix.Rotation(- math.pi/4 + math.pi/2 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+        rz = random()
+        obj.rotation_euler = (mathutils.Matrix.Rotation(- math.pi/4 + math.pi/2 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
 
         rendered_image_path = f'images/{model_id}/{j}.png'
         render_to_file(f'{output_path}/{rendered_image_path}')
@@ -278,7 +278,7 @@ for i in range(len(vehicle_pool)):
         background_image_crop.save(f'{output_path}/{rendered_image_path}', "PNG")
 
 
-        # obj.rotation_euler = (mathutils.Matrix.Rotation(math.pi/4 - math.pi/2 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+        obj.rotation_euler = (mathutils.Matrix.Rotation(math.pi/4 - math.pi/2 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
 
     # reload the scene to reduce the memory leak issue
     bpy.ops.wm.read_factory_settings(use_empty=True)
