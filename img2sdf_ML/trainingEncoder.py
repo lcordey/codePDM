@@ -297,11 +297,12 @@ if NEWTORK == 'grid':
                     scene_id = 0
                     for batch_input_im_validation, batch_target_code_validation in validation_generator_grid:
                         input_im_validation, target_code_validation = batch_input_im_validation.cuda(), batch_target_code_validation.cuda()
-                        pred_vecs_validation = encoder(input_im_validation)
+                        pred_vecs_validation = encoder(input_im_validation).detach()
 
                         pred_vecs_matrix[scene_id, epoch_validation, :] = pred_vecs_validation
-                        loss_pred_validation.append(loss(pred_vecs_validation, target_code_validation).detach().cpu())
-                        cosine_distance_validation.append(cosine_distance(pred_vecs_validation.squeeze(), target_code_validation.squeeze()).detach().cpu())
+                        # loss_pred_validation.append(loss(pred_vecs_validation, target_code_validation))
+                        loss_pred_validation.append(torch.norm(pred_vecs_validation - target_code_validation))
+                        cosine_distance_validation.append(cosine_distance(pred_vecs_validation.squeeze(), target_code_validation.squeeze()))
 
                         if scene_id == 0:
                             sdf_validation = decoder(pred_vecs_validation.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
@@ -346,6 +347,7 @@ if NEWTORK == 'grid':
                         for vec1 in range(num_epoch_validation):
                             for vec2 in range(num_epoch_validation):
                                 dist = cosine_distance(pred_vecs_matrix[scene_id_1,vec1,:], pred_vecs_matrix[scene_id_2,vec2,:])
+                                # l2 = loss(pred_vecs_matrix[scene_id_1,vec1,:], pred_vecs_matrix[scene_id_2,vec2,:])
                                 l2 = torch.norm(pred_vecs_matrix[scene_id_1,vec1,:]- pred_vecs_matrix[scene_id_2,vec2,:])
                                 if scene_id_1 == scene_id_2 and vec2 != vec1:
                                     similarity_same_model_cos.append(dist)
@@ -368,11 +370,11 @@ if NEWTORK == 'grid':
                 print(f"average l2 distance between same models: {same_model_l2}")
                 print(f"average l2 distance between differents models: {diff_model_l2}")
 
-                print(f"cosinus distance with target: {cosine_distance_validation}")
+                print(f"avarage cosinus distance with target: {cosine_distance_validation}")
                 print(f"average L2 distance with target: {loss_pred_validation}")
 
-                print(f"validation sdf loss: {loss_sdf_validation}")
-                print(f"validation rgb loss: {loss_rgb_validation}")
+                print(f"average reconstruction sdf loss: {loss_sdf_validation}")
+                print(f"average reconstruction rgb loss: {loss_rgb_validation}")
                 print("\n")
 
                 log_same_model_cos.append(same_model_cos)
@@ -390,8 +392,11 @@ if NEWTORK == 'grid':
                 
         scheduler.step()
 
-        if count_model > total_model_to_show/num_epoch/10:
+        if count_model > total_model_to_show/num_epoch/20:
             break
+        else:
+            continue
+
 
 
 # elif NEWTORK == 'face':
