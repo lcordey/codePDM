@@ -408,12 +408,12 @@ for i in range(0,len(log_loss)):
 
 
 avrg_loss_sdf = []
-for i in range(0,len(avrg_loss_sdf)):
+for i in range(0,len(log_loss_sdf_validation)):
     avrg_loss_sdf.append(torch.Tensor(log_loss_sdf_validation[i-10:i]).mean())
 
 
 avrg_loss_rgb = []
-for i in range(0,len(avrg_loss_rgb)):
+for i in range(0,len(log_loss_rgb_validation)):
     avrg_loss_rgb.append(torch.Tensor(log_loss_rgb_validation[i-10:i]).mean())
 
     

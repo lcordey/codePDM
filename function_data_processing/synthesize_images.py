@@ -137,9 +137,9 @@ def randomize_vehicle_placement(temp_filepath: str):
 
 def set_fixed_vehicle_placement(temp_filepath: str):
     obj = bpy.data.objects['model']
-    r_scale = 3
+    r_scale = 1
     # r_scale = 6
-    r_rot = 0.5
+    r_rot = 0.0
 
     obj.location = (0, 0, 0)
     obj.scale = (r_scale, r_scale, r_scale)
@@ -212,8 +212,33 @@ annotations = dict()
 
 time_start = time.time()
 
-# bpy.data.objects['Camera'].location.x = 0
-bpy.data.objects['Camera'].location.y = -3
+ry = 0.25
+pi = 3.1415
+
+bpy.data.objects['Camera'].location.x = 1
+bpy.data.objects['Camera'].location.y = 0
+bpy.data.objects['Camera'].location.z = 1
+
+def update_camera(camera, focus_point=mathutils.Vector((0.0, 0.0, 0.0)), distance=2.0):
+    """
+    Focus the camera to a focus point and place the camera at a specific distance from that
+    focus point. The camera stays in a direct line with the focus point.
+
+    :param camera: the camera object
+    :type camera: bpy.types.object
+    :param focus_point: the point to focus on (default=``mathutils.Vector((0.0, 0.0, 0.0))``)
+    :type focus_point: mathutils.Vector
+    :param distance: the distance to keep to the focus point (default=``10.0``)
+    :type distance: float
+    """
+    looking_direction = camera.location - focus_point
+    rot_quat = looking_direction.to_track_quat('Z', 'Y')
+
+    camera.rotation_euler = rot_quat.to_euler()
+    # Use * instead of @ for Blender <2.8
+    camera.location = rot_quat @ mathutils.Vector((0.0, 0.0, distance))
+
+update_camera(bpy.data.objects['Camera'])
 
 print(f"camera location: {bpy.data.objects['Camera'].location}")
 print(f"camera orientation: {bpy.data.objects['Camera'].rotation_euler}")
@@ -232,14 +257,15 @@ for i in range(len(vehicle_pool)):
 
     for j in range(num_scenes_per_vehicule):
         
-        # obj.rotation_euler.rotate_axis("X", math.radians(2 * random() * 180))
-        # obj.rotation_euler.rotate_axis("Y", math.radians(2 * random() * 180)) 
+        # obj.rotation_euler.rotate_axis("Z", math.radians(2 * random() * 180))
+        rz = random()
+        obj.rotation_euler.rotate_axis("Y", math.radians(2 * random() * 180)) 
 
-        obj.rotation_euler = mathutils.Euler((math.radians(2 * 0.25 * 180), math.radians(2 * 0.0 * random() * 180), math.radians(2 * random() * 180)), 'XYZ')
+        # obj.rotation_euler = mathutils.Euler((math.radians(2 * 0.25 * 180), math.radians(2 * 0.0 * 180), math.radians(2 * random() * 180)), 'XYZ')
 
-        obj.rotation_euler = (mathutils.Matrix.Rotation(math.pi/4, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+        # obj.rotation_euler = (mathutils.Matrix.Rotation(math.pi/4, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
 
-        # obj.matrix_world @= Matrix.Rotation((math.pi/2.), 4, 'Z')
+        # obj.matrix_world @= mathutils.Matrix.Rotation((math.pi/4), 4, 'Z')
 
         rendered_image_path = f'images/{model_id}/{j}.png'
         render_to_file(f'{output_path}/{rendered_image_path}')
