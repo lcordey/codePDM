@@ -21,8 +21,12 @@ ENCODER_GRID_PATH = "models_pth/encoderGrid.pth"
 ENCODER_FACE_PATH = "models_pth/encoderFace.pth"
 LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred.pth"
 MATRIX_PATH = "../../image2sdf/input_images/matrix_w2c.pkl"
-ANNOTATIONS_PATH = "../../image2sdf/input_images_validation/annotations.pkl"
-IMAGES_PATH = "../../image2sdf/input_images_validation/images/"
+# ANNOTATIONS_PATH = "../../image2sdf/input_images_validation/annotations.pkl"
+# IMAGES_PATH = "../../image2sdf/input_images_validation/images/"
+
+ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
+IMAGES_PATH = "../../image2sdf/input_images/images/"
+LATENT_VECS_TARGET_PATH = "models_pth/latent_vecs_target.pth"
 
 latent_size = 16
 
@@ -94,6 +98,7 @@ def load_grid(annotations, argument_num_image):
 
     num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
     num_scene = len(annotations.keys())
+    # num_scene = 1
     num_image_per_scene = min(num_image_per_scene, argument_num_image)
 
     width_input_network = width_input_network_grid
@@ -326,8 +331,14 @@ if __name__ == '__main__':
         output_dir = "output_encoder_face"
 
 
+    # print(lat_vecs)
+    target_vecs = torch.load(LATENT_VECS_TARGET_PATH).cuda()
+    # print(target_vecs)
+
     num_scene = lat_vecs.shape[0]
     num_image_per_scene = lat_vecs.shape[1]
+
+    # IPython.embed()
 
     if args.output_images:
         
@@ -347,9 +358,9 @@ if __name__ == '__main__':
 
                     sdf_pred = decoder(lat_vecs[scene_id,j,:].repeat(resolution * resolution, 1),xyz[x * resolution * resolution: (x+1) * resolution * resolution]).detach()
 
-                    sdf_pred[:,0] = sdf_pred[:,0] * resolution
-                    sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
-                    sdf_pred[:,1:] = sdf_pred[:,1:] * 255
+                    # sdf_pred[:,0] = sdf_pred[:,0] * resolution
+                    # sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
+                    # sdf_pred[:,1:] = sdf_pred[:,1:] * 255
 
                     sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:].detach().cpu(), [resolution, resolution, 4])
 
@@ -364,6 +375,62 @@ if __name__ == '__main__':
                     print('Wrote %s.' % off_file)
                 else:
                     print("surface level: 0, should be comprise in between the minimum and maximum value")
+        
+        # for scene, scene_id in zip(annotations.keys(), range(num_scene)):
+        #     for j in range(num_image_per_scene):
+            
+        #         # decode
+        #         sdf_result_target = np.empty([resolution, resolution, resolution, 4])
+
+        #         for x in range(resolution):
+
+        #             sdf_pred = decoder(target_vecs[scene_id,:].repeat(resolution * resolution, 1),xyz[x * resolution * resolution: (x+1) * resolution * resolution]).detach()
+
+        #             # sdf_pred[:,0] = sdf_pred[:,0] * resolution
+        #             # sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
+        #             # sdf_pred[:,1:] = sdf_pred[:,1:] * 255
+
+        #             sdf_result_target[x, :, :, :] = np.reshape(sdf_pred[:,:].detach().cpu(), [resolution, resolution, 4])
+
+
+        #         print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result_target[:,:,:,0]), np.max(sdf_result_target[:,:,:,0])))
+        #         if(np.min(sdf_result_target[:,:,:,0]) < 0 and np.max(sdf_result_target[:,:,:,0]) > 0):
+        #             vertices, faces = marching_cubes(sdf_result_target[:,:,:,0])
+        #             colors_v = exctract_colors_v(vertices, sdf_result_target)
+        #             colors_f = exctract_colors_f(colors_v, faces)
+        #             off_file = '../../image2sdf/%s/%s_%d_target.off' %(output_dir, scene, j)
+        #             write_off(off_file, vertices, faces, colors_f)
+        #             print('Wrote %s.' % off_file)
+        #         else:
+        #             print("surface level: 0, should be comprise in between the minimum and maximum value")
+
+
+        # sdf_validation = torch.tensor(np.reshape(sdf_result, [resolution * resolution * resolution, 4]))
+        # sdf_target = torch.tensor(np.reshape(sdf_result_target, [resolution * resolution * resolution, 4]))
+
+
+        # # assign weight of 0 for easy samples that are well trained
+        # threshold_precision = 1/resolution
+        # weight_sdf = ~((sdf_validation[:,0] > threshold_precision).squeeze() * (sdf_target[:,0] > threshold_precision).squeeze()) \
+        #     * ~((sdf_validation[:,0] < -threshold_precision).squeeze() * (sdf_target[:,0] < -threshold_precision).squeeze())
+
+
+        # #L1 loss, only for hard samples
+        # loss_sdf = torch.nn.MSELoss(reduction='none')(sdf_validation[:,0].squeeze(), sdf_target[:,0])
+        # loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
+
+
+
+        # # loss rgb
+        # lambda_rgb = 1/100
+        
+        # # rgb_gt_normalized = sdf_target[:,1:]/255
+        # rgb_gt_normalized = sdf_target[:,1:]
+        # loss_rgb = torch.nn.MSELoss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
+        # loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean() * weight_sdf.numel()/weight_sdf.count_nonzero() * lambda_rgb
+
+        # IPython.embed()
+
 
     similarity_same_model_cos = []
     similarity_different_model_cos = []
@@ -377,10 +444,10 @@ if __name__ == '__main__':
                 for vec2 in range(num_image_per_scene):
                     dist = cosine_distance(lat_vecs[scene_id_1,vec1,:], lat_vecs[scene_id_2,vec2,:])
                     l2 = torch.norm(lat_vecs[scene_id_1,vec1,:]- lat_vecs[scene_id_2,vec2,:])
-                    if scene_id_1 == scene_id_2 and vec2 > vec1:
+                    if scene_id_1 == scene_id_2 and vec2 != vec1:
                         similarity_same_model_cos.append(dist)
                         similarity_same_model_l2.append(l2)
-                    elif (vec1 != vec2):
+                    elif scene_id_1 != scene_id_2:
                         similarity_different_model_cos.append(dist)
                         similarity_different_model_l2.append(l2)
 
