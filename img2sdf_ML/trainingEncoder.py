@@ -35,7 +35,8 @@ NEWTORK = 'face'
 
 num_epoch = 1
 batch_size = 10
-num_validation_per_epoch = 10
+num_validation_per_epoch = 200
+num_epoch_validation = 3
 
 eta_encoder = 1e-4
 gammaLR = 1
@@ -87,6 +88,7 @@ assert(num_scene == len(annotations.keys()))
 num_scene_training = num_scene - num_scene_validation
 total_model_to_show = num_scene_training * num_image_per_scene * num_epoch
 num_model_seen_between_validation = total_model_to_show/num_epoch/num_validation_per_epoch
+num_model_seen_between_validation = num_model_seen_between_validation - num_model_seen_between_validation%batch_size
 
 params = {'batch_size': batch_size,
           'shuffle': True,
@@ -223,6 +225,11 @@ log_loss_sdf_validation_std = []
 log_loss_rgb_validation = []
 log_loss_rgb_validation_std = []
 
+log_norm_prediction_validation = []
+log_norm_prediction_validation_std = []
+log_norm_target_validation = []
+log_norm_target_validation_std = []
+
 encoder.train()
 print("Start trainging...")
 
@@ -230,7 +237,7 @@ if NEWTORK == 'grid':
     for epoch in range(num_epoch):
         count_model = 0
         for batch_input_im, batch_target_code in training_generator_grid:
-            # if count_model > total_model_to_show/num_epoch/5:
+            # if count_model > total_model_to_show/num_epoch/2:
             #     break
 
             optimizer.zero_grad()
@@ -261,12 +268,13 @@ if NEWTORK == 'grid':
             # validation 
             if count_model%(num_model_seen_between_validation) == 0 or count_model == batch_size:
                 encoder.eval()
-                num_epoch_validation = 5
                 pred_vecs_matrix = torch.empty([num_scene_validation,num_epoch_validation, latent_size])
                 loss_pred_validation = []
                 cosine_distance_validation = []
                 loss_sdf_validation = []
                 loss_rgb_validation = []
+                norm_prediction_validation = []
+                norm_target_validation = []
 
                 
                 # decode to get sdf and rgb loss
@@ -281,6 +289,9 @@ if NEWTORK == 'grid':
                         loss_pred_validation.append(torch.norm(pred_vecs_validation - target_code_validation))
                         cosine_distance_validation.append(cosine_distance(pred_vecs_validation.squeeze(), target_code_validation.squeeze()))
 
+                        norm_prediction_validation.append(torch.norm(pred_vecs_validation))
+                        norm_target_validation.append(torch.norm(target_code_validation))
+
                         if scene_id == 0:
                             sdf_validation = decoder(pred_vecs_validation.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
                             sdf_target= decoder(target_code_validation.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
@@ -290,16 +301,14 @@ if NEWTORK == 'grid':
                             weight_sdf = ~((sdf_validation[:,0] > threshold_precision).squeeze() * (sdf_target[:,0] > threshold_precision).squeeze()) \
                                 * ~((sdf_validation[:,0] < -threshold_precision).squeeze() * (sdf_target[:,0] < -threshold_precision).squeeze())
 
-                            #L2 loss, only for hard samples
-                            loss_sdf = torch.nn.MSELoss(reduction='none')(sdf_validation[:,0].squeeze(), sdf_target[:,0])
+                            # Compute l1 loss, only for samples close to the surface
+                            loss_sdf = torch.nn.L1Loss(reduction='none')(sdf_validation[:,0].squeeze(), sdf_target[:,0])
                             loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
                         
                             # loss rgb
-                            lambda_rgb = 1/100
-                            
                             rgb_gt_normalized = sdf_target[:,1:]
-                            loss_rgb = torch.nn.MSELoss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
-                            loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean() * weight_sdf.numel()/weight_sdf.count_nonzero() * lambda_rgb
+                            loss_rgb = torch.nn.L1Loss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
+                            loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
                 
                             loss_sdf_validation.append(loss_sdf)
                             loss_rgb_validation.append(loss_rgb)
@@ -315,6 +324,10 @@ if NEWTORK == 'grid':
                 loss_sdf_validation_std = torch.tensor(loss_sdf_validation).std()
                 loss_rgb_validation_mean = torch.tensor(loss_rgb_validation).mean()
                 loss_rgb_validation_std = torch.tensor(loss_rgb_validation).std()
+                norm_prediction_validation_mean = torch.tensor(norm_prediction_validation).mean()
+                norm_prediction_validation_std = torch.tensor(norm_prediction_validation).std()
+                norm_target_validation_mean = torch.tensor(norm_target_validation).mean()
+                norm_target_validation_std = torch.tensor(norm_target_validation).std()
 
                 # validation between model
                 similarity_same_model_cos = []
@@ -378,6 +391,10 @@ if NEWTORK == 'grid':
                 log_loss_sdf_validation_std.append(loss_sdf_validation_std)
                 log_loss_rgb_validation.append(loss_rgb_validation_mean)
                 log_loss_rgb_validation_std.append(loss_rgb_validation_std)
+                log_norm_prediction_validation.append(norm_prediction_validation_mean)
+                log_norm_prediction_validation_std.append(norm_prediction_validation_std)
+                log_norm_target_validation.append(norm_target_validation_mean)
+                log_norm_target_validation_std.append(norm_target_validation_std)
 
                 encoder.train()
 
@@ -387,6 +404,8 @@ elif NEWTORK == 'face':
     for epoch in range(num_epoch):
         count_model = 0
         for batch_front, batch_left, batch_back, batch_right, batch_top, batch_target_code in training_generator_face:
+            # if count_model > total_model_to_show/num_epoch/2:
+            #     break
             optimizer.zero_grad()
 
             front, left, back, right, top, target_code = batch_front.cuda(), batch_left.cuda(), batch_back.cuda(), batch_right.cuda(), batch_top.cuda(), batch_target_code.cuda()
@@ -413,12 +432,13 @@ elif NEWTORK == 'face':
             # validation 
             if count_model%(num_model_seen_between_validation) == 0 or count_model == batch_size:
                 encoder.eval()
-                num_epoch_validation = 5
                 pred_vecs_matrix = torch.empty([num_scene_validation,num_epoch_validation, latent_size])
                 loss_pred_validation = []
                 cosine_distance_validation = []
                 loss_sdf_validation = []
                 loss_rgb_validation = []
+                norm_prediction_validation = []
+                norm_target_validation = []
 
                 
                 # decode to get sdf and rgb loss
@@ -433,6 +453,9 @@ elif NEWTORK == 'face':
                         loss_pred_validation.append(torch.norm(pred_vecs_validation - target_code_validation))
                         cosine_distance_validation.append(cosine_distance(pred_vecs_validation.squeeze(), target_code_validation.squeeze()))
 
+                        norm_prediction_validation.append(torch.norm(pred_vecs_validation))
+                        norm_target_validation.append(torch.norm(target_code_validation))
+
                         if scene_id == 0:
                             sdf_validation = decoder(pred_vecs_validation.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
                             sdf_target= decoder(target_code_validation.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
@@ -442,16 +465,14 @@ elif NEWTORK == 'face':
                             weight_sdf = ~((sdf_validation[:,0] > threshold_precision).squeeze() * (sdf_target[:,0] > threshold_precision).squeeze()) \
                                 * ~((sdf_validation[:,0] < -threshold_precision).squeeze() * (sdf_target[:,0] < -threshold_precision).squeeze())
 
-                            #L2 loss, only for hard samples
-                            loss_sdf = torch.nn.MSELoss(reduction='none')(sdf_validation[:,0].squeeze(), sdf_target[:,0])
+                            # Compute l1 loss, only for samples close to the surface
+                            loss_sdf = torch.nn.L1Loss(reduction='none')(sdf_validation[:,0].squeeze(), sdf_target[:,0])
                             loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
                         
                             # loss rgb
-                            lambda_rgb = 1/100
-                            
                             rgb_gt_normalized = sdf_target[:,1:]
-                            loss_rgb = torch.nn.MSELoss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
-                            loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean() * weight_sdf.numel()/weight_sdf.count_nonzero() * lambda_rgb
+                            loss_rgb = torch.nn.L1Loss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
+                            loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
                 
                             loss_sdf_validation.append(loss_sdf)
                             loss_rgb_validation.append(loss_rgb)
@@ -467,6 +488,14 @@ elif NEWTORK == 'face':
                 loss_sdf_validation_std = torch.tensor(loss_sdf_validation).std()
                 loss_rgb_validation_mean = torch.tensor(loss_rgb_validation).mean()
                 loss_rgb_validation_std = torch.tensor(loss_rgb_validation).std()
+                norm_prediction_validation_mean = torch.tensor(norm_prediction_validation).mean()
+                norm_prediction_validation_std = torch.tensor(norm_prediction_validation).std()
+                norm_target_validation_mean = torch.tensor(norm_target_validation).mean()
+                norm_target_validation_std = torch.tensor(norm_target_validation).std()
+                log_norm_prediction_validation.append(norm_prediction_validation_mean)
+                log_norm_prediction_validation_std.append(norm_prediction_validation_std)
+                log_norm_target_validation.append(norm_target_validation_mean)
+                log_norm_target_validation_std.append(norm_target_validation_std)
 
                 # validation between model
                 similarity_same_model_cos = []
@@ -616,20 +645,34 @@ plt.savefig("../../image2sdf/logs/log_l2_distance_validation")
 
 
 plt.figure()
-plt.title("Loss sdf")
+plt.title("Norm of predicted and targeted_code")
 plt.xlabel("Number of images shown")
-plt.ylabel("SDF loss")
-plt.semilogy(np.arange(len(log_loss_sdf_validation)) * (num_model_seen_between_validation), log_loss_sdf_validation[:], 'b', label = "validation loss sdf")
+plt.ylabel("Norm")
+plt.semilogy(np.arange(len(log_norm_prediction_validation)) * (num_model_seen_between_validation), log_norm_prediction_validation[:], 'b', label = "predicted code")
+plt.semilogy(np.arange(len(log_norm_prediction_validation)) * (num_model_seen_between_validation), log_norm_prediction_validation[:] + log_norm_prediction_validation_std[:], 'b--')
+plt.semilogy(np.arange(len(log_norm_prediction_validation)) * (num_model_seen_between_validation), log_norm_prediction_validation[:] - log_norm_prediction_validation_std[:], 'b--')
+plt.plot(np.arange(len(log_norm_target_validation)) * (num_model_seen_between_validation), log_norm_target_validation[:], 'r', label = "targeted code")
+plt.plot(np.arange(len(log_norm_target_validation)) * (num_model_seen_between_validation), log_norm_target_validation[:] + log_norm_target_validation_std[:], 'r--')
+plt.plot(np.arange(len(log_norm_target_validation)) * (num_model_seen_between_validation), log_norm_target_validation[:] - log_norm_target_validation_std[:], 'r--')
+plt.legend()
+plt.savefig("../../image2sdf/logs/log_sdf_validation")
+
+
+plt.figure()
+plt.title("SDF Error (mean distance error per sample)")
+plt.xlabel("Number of images shown")
+plt.ylabel("SDF Error")
+plt.semilogy(np.arange(len(log_loss_sdf_validation)) * (num_model_seen_between_validation), log_loss_sdf_validation[:], 'b', label = "validation samples")
 plt.semilogy(np.arange(len(log_loss_sdf_validation)) * (num_model_seen_between_validation), log_loss_sdf_validation[:] + log_loss_sdf_validation_std[:], 'b--')
 plt.semilogy(np.arange(len(log_loss_sdf_validation)) * (num_model_seen_between_validation), log_loss_sdf_validation[:] - log_loss_sdf_validation_std[:], 'b--')
 plt.legend()
 plt.savefig("../../image2sdf/logs/log_sdf_validation")
 
 plt.figure()
-plt.title("Loss rgb")
+plt.title("RGB Error (mean pixel value error per sample)")
 plt.xlabel("Number of images shown")
-plt.ylabel("RGB loss")
-plt.semilogy(np.arange(len(log_loss_rgb_validation)) * (num_model_seen_between_validation), log_loss_rgb_validation[:], 'b', label = "validation loss rgb")
+plt.ylabel("RGB Error")
+plt.semilogy(np.arange(len(log_loss_rgb_validation)) * (num_model_seen_between_validation), log_loss_rgb_validation[:], 'b', label = "validation samples")
 plt.semilogy(np.arange(len(log_loss_rgb_validation)) * (num_model_seen_between_validation), log_loss_rgb_validation[:] + log_loss_rgb_validation_std, 'b--')
 plt.semilogy(np.arange(len(log_loss_rgb_validation)) * (num_model_seen_between_validation), log_loss_rgb_validation[:] - log_loss_rgb_validation_std, 'b--')
 plt.legend()

@@ -12,26 +12,27 @@ from marching_cubes_rgb import *
 import IPython
 
 DEFAULT_RESOLUTION = 100
-DEFAULT_NUM_IMAGE = 10
-DEFAUT_OUTPUT_IMAGES = False
-DEFAULT_TYPE = "grid"
+DEFAULT_NUM_IMAGE = 3
+DEFAUT_OUTPUT_IMAGES = True
+# DEFAULT_TYPE = "grid"
+DEFAULT_TYPE = "face"
 
 DECODER_PATH = "models_pth/decoderSDF.pth"
 ENCODER_GRID_PATH = "models_pth/encoderGrid.pth"
 ENCODER_FACE_PATH = "models_pth/encoderFace.pth"
 LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred.pth"
 MATRIX_PATH = "../../image2sdf/input_images/matrix_w2c.pkl"
-# ANNOTATIONS_PATH = "../../image2sdf/input_images_validation/annotations.pkl"
-# IMAGES_PATH = "../../image2sdf/input_images_validation/images/"
+ANNOTATIONS_PATH = "../../image2sdf/input_images_validation/annotations.pkl"
+IMAGES_PATH = "../../image2sdf/input_images_validation/images/"
 
-ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
-IMAGES_PATH = "../../image2sdf/input_images/images/"
-LATENT_VECS_TARGET_PATH = "models_pth/latent_vecs_target.pth"
+# ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
+# IMAGES_PATH = "../../image2sdf/input_images/images/"
+# LATENT_VECS_TARGET_PATH = "models_pth/latent_vecs_target.pth"
 
 latent_size = 16
 
 height_input_image = 300
-width_input_image = 450
+width_input_image = 300
 
 num_slices = 48
 width_input_network_grid = 24
@@ -329,15 +330,8 @@ if __name__ == '__main__':
         lat_vecs = get_vecs_face(front, left, back, right, top)
         output_dir = "output_encoder_face"
 
-
-    # print(lat_vecs)
-    target_vecs = torch.load(LATENT_VECS_TARGET_PATH).cuda()
-    # print(target_vecs)
-
     num_scene = lat_vecs.shape[0]
     num_image_per_scene = lat_vecs.shape[1]
-
-    # IPython.embed()
 
     if args.output_images:
         
@@ -357,9 +351,9 @@ if __name__ == '__main__':
 
                     sdf_pred = decoder(lat_vecs[scene_id,j,:].repeat(resolution * resolution, 1),xyz[x * resolution * resolution: (x+1) * resolution * resolution]).detach()
 
-                    # sdf_pred[:,0] = sdf_pred[:,0] * resolution
-                    # sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
-                    # sdf_pred[:,1:] = sdf_pred[:,1:] * 255
+                    sdf_pred[:,0] = sdf_pred[:,0] * resolution
+                    sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
+                    sdf_pred[:,1:] = sdf_pred[:,1:] * 255
 
                     sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:].detach().cpu(), [resolution, resolution, 4])
 
