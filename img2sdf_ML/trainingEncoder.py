@@ -230,8 +230,8 @@ if NEWTORK == 'grid':
     for epoch in range(num_epoch):
         count_model = 0
         for batch_input_im, batch_target_code in training_generator_grid:
-            if count_model > total_model_to_show/num_epoch/5:
-                break
+            # if count_model > total_model_to_show/num_epoch/5:
+            #     break
 
             optimizer.zero_grad()
 
@@ -619,9 +619,9 @@ plt.figure()
 plt.title("Loss sdf")
 plt.xlabel("Number of images shown")
 plt.ylabel("SDF loss")
-plt.semilogy(np.arange(len(log_loss_sdf_validation)) * (total_model_to_show/num_epoch/100), log_loss_sdf_validation[:], 'b', label = "validation loss sdf")
-plt.semilogy(np.arange(len(log_loss_sdf_validation)) * (total_model_to_show/num_epoch/100), log_loss_sdf_validation[:] + log_loss_sdf_validation_std[:], 'b--')
-plt.semilogy(np.arange(len(log_loss_sdf_validation)) * (total_model_to_show/num_epoch/100), log_loss_sdf_validation[:] - log_loss_sdf_validation_std[:], 'b--')
+plt.semilogy(np.arange(len(log_loss_sdf_validation)) * (num_model_seen_between_validation), log_loss_sdf_validation[:], 'b', label = "validation loss sdf")
+plt.semilogy(np.arange(len(log_loss_sdf_validation)) * (num_model_seen_between_validation), log_loss_sdf_validation[:] + log_loss_sdf_validation_std[:], 'b--')
+plt.semilogy(np.arange(len(log_loss_sdf_validation)) * (num_model_seen_between_validation), log_loss_sdf_validation[:] - log_loss_sdf_validation_std[:], 'b--')
 plt.legend()
 plt.savefig("../../image2sdf/logs/log_sdf_validation")
 
@@ -629,9 +629,9 @@ plt.figure()
 plt.title("Loss rgb")
 plt.xlabel("Number of images shown")
 plt.ylabel("RGB loss")
-plt.semilogy(np.arange(len(log_loss_rgb_validation)) * (total_model_to_show/num_epoch/100), log_loss_rgb_validation[:], 'b', label = "validation loss rgb")
-plt.semilogy(np.arange(len(log_loss_rgb_validation)) * (total_model_to_show/num_epoch/100), log_loss_rgb_validation[:] + log_loss_rgb_validation_std, 'b--')
-plt.semilogy(np.arange(len(log_loss_rgb_validation)) * (total_model_to_show/num_epoch/100), log_loss_rgb_validation[:] - log_loss_rgb_validation_std, 'b--')
+plt.semilogy(np.arange(len(log_loss_rgb_validation)) * (num_model_seen_between_validation), log_loss_rgb_validation[:], 'b', label = "validation loss rgb")
+plt.semilogy(np.arange(len(log_loss_rgb_validation)) * (num_model_seen_between_validation), log_loss_rgb_validation[:] + log_loss_rgb_validation_std, 'b--')
+plt.semilogy(np.arange(len(log_loss_rgb_validation)) * (num_model_seen_between_validation), log_loss_rgb_validation[:] - log_loss_rgb_validation_std, 'b--')
 plt.legend()
 plt.savefig("../../image2sdf/logs/log_rgb_validation")
 
