@@ -304,12 +304,14 @@ if NEWTORK == 'grid':
                             # Compute l1 loss, only for samples close to the surface
                             loss_sdf = torch.nn.L1Loss(reduction='none')(sdf_validation[:,0].squeeze(), sdf_target[:,0])
                             loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
+                            loss_sdf *= resolution
                         
                             # loss rgb
                             rgb_gt_normalized = sdf_target[:,1:]
                             loss_rgb = torch.nn.L1Loss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
                             loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
-                
+                            loss_rgb *= 255
+
                             loss_sdf_validation.append(loss_sdf)
                             loss_rgb_validation.append(loss_rgb)
 
@@ -468,12 +470,14 @@ elif NEWTORK == 'face':
                             # Compute l1 loss, only for samples close to the surface
                             loss_sdf = torch.nn.L1Loss(reduction='none')(sdf_validation[:,0].squeeze(), sdf_target[:,0])
                             loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
+                            loss_sdf *= resolution
                         
                             # loss rgb
                             rgb_gt_normalized = sdf_target[:,1:]
                             loss_rgb = torch.nn.L1Loss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
                             loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
-                
+                            loss_rgb *= 255
+
                             loss_sdf_validation.append(loss_sdf)
                             loss_rgb_validation.append(loss_rgb)
 

@@ -12,8 +12,8 @@ from marching_cubes_rgb import *
 import IPython
 
 DEFAULT_RESOLUTION = 100
-DEFAULT_NUM_IMAGE = 3
-DEFAUT_OUTPUT_IMAGES = True
+DEFAULT_NUM_IMAGE = 5
+DEFAUT_OUTPUT_IMAGES = False
 # DEFAULT_TYPE = "grid"
 DEFAULT_TYPE = "face"
 
