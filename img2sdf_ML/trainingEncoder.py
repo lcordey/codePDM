@@ -35,6 +35,7 @@ NEWTORK = 'face'
 
 num_epoch = 1
 batch_size = 10
+model_max_to_show_per_epoch = 100000
 num_validation_per_epoch = 200
 num_epoch_validation = 3
 
@@ -237,8 +238,8 @@ if NEWTORK == 'grid':
     for epoch in range(num_epoch):
         count_model = 0
         for batch_input_im, batch_target_code in training_generator_grid:
-            # if count_model > total_model_to_show/num_epoch/2:
-            #     break
+            if count_model > model_max_to_show_per_epoch:
+                break
 
             optimizer.zero_grad()
 
@@ -375,6 +376,9 @@ if NEWTORK == 'grid':
 
                 print(f"reconstruction sdf loss: {loss_sdf_validation_mean} +- {loss_sdf_validation_std}")
                 print(f"reconstruction rgb loss: {loss_rgb_validation_mean} +- {loss_rgb_validation_std}")
+
+                print(f"norm of predicted code: {norm_prediction_validation_mean} +- {norm_prediction_validation_std}")
+                print(f"norm of targeted code: {norm_target_validation_mean} +- {norm_target_validation_std}")
                 print("****************************** VALIDATION ******************************\n")
 
                 log_same_model_cos.append(same_model_cos_mean)
@@ -406,8 +410,8 @@ elif NEWTORK == 'face':
     for epoch in range(num_epoch):
         count_model = 0
         for batch_front, batch_left, batch_back, batch_right, batch_top, batch_target_code in training_generator_face:
-            # if count_model > total_model_to_show/num_epoch/2:
-            #     break
+            if count_model > model_max_to_show_per_epoch:
+                break
             optimizer.zero_grad()
 
             front, left, back, right, top, target_code = batch_front.cuda(), batch_left.cuda(), batch_back.cuda(), batch_right.cuda(), batch_top.cuda(), batch_target_code.cuda()
@@ -545,6 +549,9 @@ elif NEWTORK == 'face':
 
                 print(f"reconstruction sdf loss: {loss_sdf_validation_mean} +- {loss_sdf_validation_std}")
                 print(f"reconstruction rgb loss: {loss_rgb_validation_mean} +- {loss_rgb_validation_std}")
+
+                print(f"norm of predicted code: {norm_prediction_validation_mean} +- {norm_prediction_validation_std}")
+                print(f"norm of targeted code: {norm_target_validation_mean} +- {norm_target_validation_std}")
                 print("****************************** VALIDATION ******************************\n")
 
                 log_same_model_cos.append(same_model_cos_mean)
@@ -614,6 +621,11 @@ log_loss_sdf_validation_std = torch.tensor(log_loss_sdf_validation_std)
 log_loss_rgb_validation = torch.tensor(log_loss_rgb_validation)
 log_loss_rgb_validation_std = torch.tensor(log_loss_rgb_validation_std)
 
+log_norm_prediction_validation = torch.tensor(log_norm_prediction_validation)
+log_norm_prediction_validation_std = torch.tensor(log_norm_prediction_validation_std)
+log_norm_target_validation = torch.tensor(log_norm_target_validation)
+log_norm_target_validation_std = torch.tensor(log_norm_target_validation_std)
+
 plt.figure()
 plt.title("Latent code cosine distance Validation")
 plt.xlabel("Number of images shown")
@@ -647,21 +659,6 @@ plt.plot(np.arange(len(log_loss_pred_validation)) * (num_model_seen_between_vali
 plt.legend()
 plt.savefig("../../image2sdf/logs/log_l2_distance_validation")
 
-
-plt.figure()
-plt.title("Norm of predicted and targeted_code")
-plt.xlabel("Number of images shown")
-plt.ylabel("Norm")
-plt.semilogy(np.arange(len(log_norm_prediction_validation)) * (num_model_seen_between_validation), log_norm_prediction_validation[:], 'b', label = "predicted code")
-plt.semilogy(np.arange(len(log_norm_prediction_validation)) * (num_model_seen_between_validation), log_norm_prediction_validation[:] + log_norm_prediction_validation_std[:], 'b--')
-plt.semilogy(np.arange(len(log_norm_prediction_validation)) * (num_model_seen_between_validation), log_norm_prediction_validation[:] - log_norm_prediction_validation_std[:], 'b--')
-plt.plot(np.arange(len(log_norm_target_validation)) * (num_model_seen_between_validation), log_norm_target_validation[:], 'r', label = "targeted code")
-plt.plot(np.arange(len(log_norm_target_validation)) * (num_model_seen_between_validation), log_norm_target_validation[:] + log_norm_target_validation_std[:], 'r--')
-plt.plot(np.arange(len(log_norm_target_validation)) * (num_model_seen_between_validation), log_norm_target_validation[:] - log_norm_target_validation_std[:], 'r--')
-plt.legend()
-plt.savefig("../../image2sdf/logs/log_sdf_validation")
-
-
 plt.figure()
 plt.title("SDF Error (mean distance error per sample)")
 plt.xlabel("Number of images shown")
@@ -682,6 +679,20 @@ plt.semilogy(np.arange(len(log_loss_rgb_validation)) * (num_model_seen_between_v
 plt.legend()
 plt.savefig("../../image2sdf/logs/log_rgb_validation")
 
+
+plt.figure()
+plt.title("Norm of predicted and targeted_code")
+plt.xlabel("Number of images shown")
+plt.ylabel("Norm")
+plt.semilogy(np.arange(len(log_norm_prediction_validation)) * (num_model_seen_between_validation), log_norm_prediction_validation[:], 'b', label = "predicted code")
+plt.semilogy(np.arange(len(log_norm_prediction_validation)) * (num_model_seen_between_validation), log_norm_prediction_validation[:] + log_norm_prediction_validation_std[:], 'b--')
+plt.semilogy(np.arange(len(log_norm_prediction_validation)) * (num_model_seen_between_validation), log_norm_prediction_validation[:] - log_norm_prediction_validation_std[:], 'b--')
+plt.plot(np.arange(len(log_norm_target_validation)) * (num_model_seen_between_validation), log_norm_target_validation[:], 'r', label = "targeted code")
+plt.plot(np.arange(len(log_norm_target_validation)) * (num_model_seen_between_validation), log_norm_target_validation[:] + log_norm_target_validation_std[:], 'r--')
+plt.plot(np.arange(len(log_norm_target_validation)) * (num_model_seen_between_validation), log_norm_target_validation[:] - log_norm_target_validation_std[:], 'r--')
+plt.legend()
+plt.savefig("../../image2sdf/logs/log_norms")
+
 with open("../../image2sdf/logs/log.txt", "wb") as fp:
     pickle.dump(avrg_loss, fp)
 
@@ -691,5 +702,4 @@ with open("../../image2sdf/logs/log.txt", "wb") as fp:
 # with open("../../image2sdf/logs/log_l2.txt", "wb") as fp:
 #     pickle.dump(log_same_model_l2, fp)
 
-
-# IPython.embed()
+print("Done")
