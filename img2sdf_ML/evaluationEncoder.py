@@ -14,8 +14,8 @@ import IPython
 DEFAULT_RESOLUTION = 100
 DEFAULT_NUM_IMAGE = 1
 DEFAUT_OUTPUT_IMAGES = True
-# DEFAULT_TYPE = "grid"
-DEFAULT_TYPE = "face"
+DEFAULT_TYPE = "grid"
+# DEFAULT_TYPE = "face"
 
 DECODER_PATH = "models_pth/decoderSDF.pth"
 ENCODER_GRID_PATH = "models_pth/encoderGrid.pth"
@@ -28,6 +28,8 @@ MATRIX_PATH = "../../image2sdf/input_images/matrix_w2c.pkl"
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
 LATENT_VECS_TARGET_PATH = "models_pth/latent_vecs_target.pth"
+
+NUM_SCENE_VALIDATION = 5
 
 latent_size = 16
 
@@ -99,7 +101,7 @@ def load_grid(annotations, argument_num_image):
 
     num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
     # num_scene = len(annotations.keys())
-    num_scene = 3
+    num_scene = NUM_SCENE_VALIDATION
     num_image_per_scene = min(num_image_per_scene, argument_num_image)
 
     width_input_network = width_input_network_grid
@@ -108,7 +110,10 @@ def load_grid(annotations, argument_num_image):
     
     all_grid = torch.empty([num_scene, num_image_per_scene, 3, num_slices, width_input_network, height_input_network], dtype=torch.float)
 
-    for scene, scene_id in zip(annotations.keys(), range(num_scene)):
+    list_id = list(annotations.keys())
+
+    # for scene, scene_id in zip(annotations.keys(), range(num_scene)):
+    for scene, scene_id in zip(list_id[-num_scene:], range(num_scene)):
         for image, image_id in zip(glob.glob(IMAGES_PATH + scene + '/*'), range(num_image_per_scene)):
 
             # Load data and get label
@@ -334,18 +339,25 @@ if __name__ == '__main__':
 
     target_vecs = torch.load(LATENT_VECS_TARGET_PATH)
 
-    num_scene = lat_vecs.shape[0]
+    # num_scene = lat_vecs.shape[0]
+    num_scene = NUM_SCENE_VALIDATION
+    target_vecs = target_vecs[-num_scene:]
+
     num_image_per_scene = lat_vecs.shape[1]
 
     if args.output_images:
-        
-        idx = torch.arange(num_scene).cuda()
+
+        # idx = torch.arange(num_scene).cuda()
         xyz = init_xyz(resolution)
 
         decoder = torch.load(DECODER_PATH).cuda()
         decoder.eval()
 
-        for scene, scene_id in zip(annotations.keys(), range(num_scene)):
+        list_id = list(annotations.keys())
+
+        # for scene, scene_id in zip(annotations.keys(), range(num_scene)):
+        for scene, scene_id in zip(list_id[-num_scene:], range(num_scene)):
+            print(f"scene: {scene}")
             for j in range(num_image_per_scene):
             
                 # decode
@@ -371,7 +383,7 @@ if __name__ == '__main__':
                     colors_f = exctract_colors_f(colors_v, faces)
                     off_file = '../../image2sdf/%s/%s_%d.off' %(output_dir, scene, j)
                     write_off(off_file, vertices, faces, colors_f)
-                    print('Wrote %s.' % off_file)
+                    # print('Wrote %s.' % off_file)
                 else:
                     print("surface level: 0, should be comprise in between the minimum and maximum value")
 
@@ -399,7 +411,7 @@ if __name__ == '__main__':
                 colors_f = exctract_colors_f(colors_v, faces)
                 off_file = '../../image2sdf/%s/%s_%d_target.off' %(output_dir, scene, j)
                 write_off(off_file, vertices, faces, colors_f)
-                print('Wrote %s.' % off_file)
+                # print('Wrote %s.' % off_file)
             else:
                 print("surface level: 0, should be comprise in between the minimum and maximum value")
         
@@ -427,85 +439,85 @@ if __name__ == '__main__':
             print(f"rgb loss: {loss_rgb}")
 
 
-    similarity_same_model_cos = []
-    similarity_different_model_cos = []
+    # similarity_same_model_cos = []
+    # similarity_different_model_cos = []
 
-    similarity_same_model_l2 = []
-    similarity_different_model_l2 = []
+    # similarity_same_model_l2 = []
+    # similarity_different_model_l2 = []
 
-    for scene_id_1 in range(num_scene):
-        for scene_id_2 in range(scene_id_1, num_scene):
-            for vec1 in range(num_image_per_scene):
-                for vec2 in range(num_image_per_scene):
-                    dist = cosine_distance(lat_vecs[scene_id_1,vec1,:], lat_vecs[scene_id_2,vec2,:])
-                    l2 = torch.norm(lat_vecs[scene_id_1,vec1,:]- lat_vecs[scene_id_2,vec2,:])
-                    if scene_id_1 == scene_id_2 and vec2 != vec1:
-                        similarity_same_model_cos.append(dist)
-                        similarity_same_model_l2.append(l2)
-                    elif scene_id_1 != scene_id_2:
-                        similarity_different_model_cos.append(dist)
-                        similarity_different_model_l2.append(l2)
-
-
-    print(f"average similarity between same models cosinus: {torch.tensor(similarity_same_model_cos).mean()}")
-    print(f"average similarity between differents models cosinus: {torch.tensor(similarity_different_model_cos).mean()}")
-
-    print(f"average similarity between same models l2: {torch.tensor(similarity_same_model_l2).mean()}")
-    print(f"average similarity between differents models l2: {torch.tensor(similarity_different_model_l2).mean()}")
+    # for scene_id_1 in range(num_scene):
+    #     for scene_id_2 in range(scene_id_1, num_scene):
+    #         for vec1 in range(num_image_per_scene):
+    #             for vec2 in range(num_image_per_scene):
+    #                 dist = cosine_distance(lat_vecs[scene_id_1,vec1,:], lat_vecs[scene_id_2,vec2,:])
+    #                 l2 = torch.norm(lat_vecs[scene_id_1,vec1,:]- lat_vecs[scene_id_2,vec2,:])
+    #                 if scene_id_1 == scene_id_2 and vec2 != vec1:
+    #                     similarity_same_model_cos.append(dist)
+    #                     similarity_same_model_l2.append(l2)
+    #                 elif scene_id_1 != scene_id_2:
+    #                     similarity_different_model_cos.append(dist)
+    #                     similarity_different_model_l2.append(l2)
 
 
-    matrix_cos_dist = np.empty([num_scene * num_image_per_scene, num_scene * num_image_per_scene])
-    matrix_l2_dist = np.empty([num_scene * num_image_per_scene, num_scene * num_image_per_scene])
+    # print(f"average similarity between same models cosinus: {torch.tensor(similarity_same_model_cos).mean()}")
+    # print(f"average similarity between differents models cosinus: {torch.tensor(similarity_different_model_cos).mean()}")
 
-    for scene_id_1 in range(num_scene):
-        for scene_id_2 in range(num_scene):
-            for vec1 in range(num_image_per_scene):
-                for vec2 in range(num_image_per_scene):
-                    dist = cosine_distance(lat_vecs[scene_id_1,vec1,:], lat_vecs[scene_id_2,vec2,:])
-                    matrix_cos_dist[scene_id_1 * num_image_per_scene + vec1, scene_id_2 * num_image_per_scene + vec2] = dist
-                    matrix_l2_dist[scene_id_1 * num_image_per_scene + vec1, scene_id_2 * num_image_per_scene + vec2] = torch.norm(lat_vecs[scene_id_1,vec1,:] - lat_vecs[scene_id_2,vec2,:])
-
-    matrix_l2_dist = matrix_l2_dist/matrix_l2_dist.mean()
+    # print(f"average similarity between same models l2: {torch.tensor(similarity_same_model_l2).mean()}")
+    # print(f"average similarity between differents models l2: {torch.tensor(similarity_different_model_l2).mean()}")
 
 
-    plt.figure()
-    plt.imshow(matrix_cos_dist, cmap='RdBu')
-    plt.title("cosine distance")
-    plt.colorbar()
-    if args.type == 'grid':
-        plt.savefig("../../image2sdf/logs/encoder_grid/cosine_distance.png")
-    else:
-        plt.savefig("../../image2sdf/logs/encoder_face/cosine_distance.png")
+    # matrix_cos_dist = np.empty([num_scene * num_image_per_scene, num_scene * num_image_per_scene])
+    # matrix_l2_dist = np.empty([num_scene * num_image_per_scene, num_scene * num_image_per_scene])
 
- 
-    clustered_cosine_dist, idx = cluster_corr(matrix_cos_dist)
-    plt.figure()
-    plt.imshow(clustered_cosine_dist, cmap = 'RdBu')
-    plt.title("cosine distance")
-    plt.colorbar()
-    if args.type == 'grid':
-        plt.savefig("../../image2sdf/logs/encoder_grid/cosine_distance_clustered.png")
-    else:
-        plt.savefig("../../image2sdf/logs/encoder_face/cosine_distance_clustered.png")
+    # for scene_id_1 in range(num_scene):
+    #     for scene_id_2 in range(num_scene):
+    #         for vec1 in range(num_image_per_scene):
+    #             for vec2 in range(num_image_per_scene):
+    #                 dist = cosine_distance(lat_vecs[scene_id_1,vec1,:], lat_vecs[scene_id_2,vec2,:])
+    #                 matrix_cos_dist[scene_id_1 * num_image_per_scene + vec1, scene_id_2 * num_image_per_scene + vec2] = dist
+    #                 matrix_l2_dist[scene_id_1 * num_image_per_scene + vec1, scene_id_2 * num_image_per_scene + vec2] = torch.norm(lat_vecs[scene_id_1,vec1,:] - lat_vecs[scene_id_2,vec2,:])
+
+    # matrix_l2_dist = matrix_l2_dist/matrix_l2_dist.mean()
 
 
-
-    plt.figure()
-    plt.imshow(matrix_l2_dist)
-    plt.title("l2 distance")
-    plt.colorbar()
-    if args.type == 'grid':
-        plt.savefig("../../image2sdf/logs/encoder_grid/l2_distance.png")
-    else:
-        plt.savefig("../../image2sdf/logs/encoder_face/l2_distance.png")
+    # plt.figure()
+    # plt.imshow(matrix_cos_dist, cmap='RdBu')
+    # plt.title("cosine distance")
+    # plt.colorbar()
+    # if args.type == 'grid':
+    #     plt.savefig("../../image2sdf/logs/encoder_grid/cosine_distance.png")
+    # else:
+    #     plt.savefig("../../image2sdf/logs/encoder_face/cosine_distance.png")
 
  
-    clustered_l2_dist, idx = cluster_corr(matrix_l2_dist)
-    plt.figure()
-    plt.imshow(clustered_l2_dist)
-    plt.title("l2 distance")
-    plt.colorbar()
-    if args.type == 'grid':
-        plt.savefig("../../image2sdf/logs/encoder_grid/l2_distance_clustered.png")
-    else:
-        plt.savefig("../../image2sdf/logs/encoder_face/l2_distance_clustered.png")
+    # clustered_cosine_dist, idx = cluster_corr(matrix_cos_dist)
+    # plt.figure()
+    # plt.imshow(clustered_cosine_dist, cmap = 'RdBu')
+    # plt.title("cosine distance")
+    # plt.colorbar()
+    # if args.type == 'grid':
+    #     plt.savefig("../../image2sdf/logs/encoder_grid/cosine_distance_clustered.png")
+    # else:
+    #     plt.savefig("../../image2sdf/logs/encoder_face/cosine_distance_clustered.png")
+
+
+
+    # plt.figure()
+    # plt.imshow(matrix_l2_dist)
+    # plt.title("l2 distance")
+    # plt.colorbar()
+    # if args.type == 'grid':
+    #     plt.savefig("../../image2sdf/logs/encoder_grid/l2_distance.png")
+    # else:
+    #     plt.savefig("../../image2sdf/logs/encoder_face/l2_distance.png")
+
+ 
+    # clustered_l2_dist, idx = cluster_corr(matrix_l2_dist)
+    # plt.figure()
+    # plt.imshow(clustered_l2_dist)
+    # plt.title("l2 distance")
+    # plt.colorbar()
+    # if args.type == 'grid':
+    #     plt.savefig("../../image2sdf/logs/encoder_grid/l2_distance_clustered.png")
+    # else:
+    #     plt.savefig("../../image2sdf/logs/encoder_face/l2_distance_clustered.png")
