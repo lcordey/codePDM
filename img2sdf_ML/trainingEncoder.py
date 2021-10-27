@@ -424,9 +424,9 @@ elif NEWTORK == 'face':
                 # decode to get sdf and rgb loss
                 for epoch_validation in range(num_epoch_validation):
                     scene_id = 0
-                    for batch_input_im_validation, batch_target_code_validation in validation_generator_grid:
-                        input_im_validation, target_code_validation = batch_input_im_validation.cuda(), batch_target_code_validation.cuda()
-                        pred_vecs_validation = encoder(input_im_validation).detach()
+                    for batch_front, batch_left, batch_back, batch_right, batch_top, batch_target_code in validation_generator_face:
+                        front, left, back, right, top, target_code = batch_front.cuda(), batch_left.cuda(), batch_back.cuda(), batch_right.cuda(), batch_top.cuda(), batch_target_code.cuda()
+                        pred_vecs = encoder(front, left, back, right, top)
 
                         pred_vecs_matrix[scene_id, epoch_validation, :] = pred_vecs_validation
                         # loss_pred_validation.append(loss(pred_vecs_validation, target_code_validation))
