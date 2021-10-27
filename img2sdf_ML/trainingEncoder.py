@@ -30,12 +30,12 @@ LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred.pth"
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
 
-# NEWTORK = 'grid'
-NEWTORK = 'face'
+NEWTORK = 'grid'
+# NEWTORK = 'face'
 
 num_epoch = 1
 batch_size = 10
-model_max_to_show_per_epoch = 100000
+model_max_to_show_per_epoch = 10000000
 num_validation_per_epoch = 200
 num_epoch_validation = 3
 
