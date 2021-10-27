@@ -278,8 +278,8 @@ if NEWTORK == 'grid':
 
                         pred_vecs_matrix[scene_id, epoch_validation, :] = pred_vecs_validation
                         # loss_pred_validation.append(loss(pred_vecs_validation, target_code_validation))
-                        loss_pred_validation.append(torch.norm(pred_vecs_validation - target_code_validation).detach().cpu())
-                        cosine_distance_validation.append(cosine_distance(pred_vecs_validation.squeeze(), target_code_validation.squeeze()).detach().cpu())
+                        loss_pred_validation.append(torch.norm(pred_vecs_validation - target_code_validation))
+                        cosine_distance_validation.append(cosine_distance(pred_vecs_validation.squeeze(), target_code_validation.squeeze()))
 
                         if scene_id == 0:
                             sdf_validation = decoder(pred_vecs_validation.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
@@ -301,19 +301,19 @@ if NEWTORK == 'grid':
                             loss_rgb = torch.nn.MSELoss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
                             loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean() * weight_sdf.numel()/weight_sdf.count_nonzero() * lambda_rgb
                 
-                            loss_sdf_validation.append(loss_sdf.detach().cpu())
-                            loss_rgb_validation.append(loss_rgb.detach().cpu())
+                            loss_sdf_validation.append(loss_sdf)
+                            loss_rgb_validation.append(loss_rgb)
 
 
                         scene_id += 1
                 
-                cosine_distance_validation = torch.tensor(cosine_distance_validation).mean()
+                cosine_distance_validation_mean = torch.tensor(cosine_distance_validation).mean()
                 cosine_distance_validation_std = torch.tensor(cosine_distance_validation).std()
-                loss_pred_validation = torch.tensor(loss_pred_validation).mean()
+                loss_pred_validation_mean = torch.tensor(loss_pred_validation).mean()
                 loss_pred_validation_std = torch.tensor(loss_pred_validation).std()
-                loss_sdf_validation = torch.tensor(loss_sdf_validation).mean()
+                loss_sdf_validation_mean = torch.tensor(loss_sdf_validation).mean()
                 loss_sdf_validation_std = torch.tensor(loss_sdf_validation).std()
-                loss_rgb_validation = torch.tensor(loss_rgb_validation).mean()
+                loss_rgb_validation_mean = torch.tensor(loss_rgb_validation).mean()
                 loss_rgb_validation_std = torch.tensor(loss_rgb_validation).std()
 
                 # validation between model
@@ -338,45 +338,45 @@ if NEWTORK == 'grid':
                                     similarity_different_model_l2.append(l2)
 
 
-                same_model_cos = torch.tensor(similarity_same_model_cos).mean()
+                same_model_cos_mean = torch.tensor(similarity_same_model_cos).mean()
                 same_model_cos_std = torch.tensor(similarity_same_model_cos).std()
-                diff_model_cos = torch.tensor(similarity_different_model_cos).mean()
+                diff_model_cos_mean = torch.tensor(similarity_different_model_cos).mean()
                 diff_model_cos_std = torch.tensor(similarity_different_model_cos).std()
-                same_model_l2 = torch.tensor(similarity_same_model_l2).mean()
+                same_model_l2_mean = torch.tensor(similarity_same_model_l2).mean()
                 same_model_l2_std = torch.tensor(similarity_same_model_l2).std()
-                diff_model_l2 = torch.tensor(similarity_different_model_l2).mean()
+                diff_model_l2_mean = torch.tensor(similarity_different_model_l2).mean()
                 diff_model_l2_std = torch.tensor(similarity_different_model_l2).std()
 
                 print("\n****************************** VALIDATION ******************************")
 
-                print(f"cosinus distance between same models : {same_model_cos} +- {same_model_cos_std}")
-                print(f"cosinus distance between differents models: {diff_model_cos} +- {diff_model_cos_std}")
+                print(f"cosinus distance between same models : {same_model_cos_mean} +- {same_model_cos_std}")
+                print(f"cosinus distance between differents models: {diff_model_cos_mean} +- {diff_model_cos_std}")
 
-                print(f"l2 distance between same models: {same_model_l2} +- {same_model_l2_std}")
-                print(f"l2 distance between differents models: {diff_model_l2} +- {diff_model_l2_std}")
+                print(f"l2 distance between same models: {same_model_l2_mean} +- {same_model_l2_std}")
+                print(f"l2 distance between differents models: {diff_model_l2_mean} +- {diff_model_l2_std}")
 
-                print(f"cosinus distance with target: {cosine_distance_validation} +- {cosine_distance_validation_std}")
-                print(f"L2 distance with target: {loss_pred_validation} +- {loss_pred_validation_std}")
+                print(f"cosinus distance with target: {cosine_distance_validation_mean} +- {cosine_distance_validation_std}")
+                print(f"L2 distance with target: {loss_pred_validation_mean} +- {loss_pred_validation_std}")
 
-                print(f"reconstruction sdf loss: {loss_sdf_validation} +- {loss_sdf_validation_std}")
-                print(f"reconstruction rgb loss: {loss_rgb_validation} +- {loss_rgb_validation_std}")
+                print(f"reconstruction sdf loss: {loss_sdf_validation_mean} +- {loss_sdf_validation_std}")
+                print(f"reconstruction rgb loss: {loss_rgb_validation_mean} +- {loss_rgb_validation_std}")
                 print("****************************** VALIDATION ******************************\n")
 
-                log_same_model_cos.append(same_model_cos)
+                log_same_model_cos.append(same_model_cos_mean)
                 log_same_model_cos_std.append(same_model_cos_std)
-                log_diff_model_cos.append(diff_model_cos)
+                log_diff_model_cos.append(diff_model_cos_mean)
                 log_diff_model_cos_std.append(diff_model_cos_std)
-                log_same_model_l2.append(same_model_l2)
+                log_same_model_l2.append(same_model_l2_mean)
                 log_same_model_l2_std.append(same_model_l2_std)
-                log_diff_model_l2.append(diff_model_l2)
+                log_diff_model_l2.append(diff_model_l2_mean)
                 log_diff_model_l2_std.append(diff_model_l2_std)
-                log_cosine_distance_validation.append(cosine_distance_validation)
+                log_cosine_distance_validation.append(cosine_distance_validation_mean)
                 log_cosine_distance_validation_std.append(cosine_distance_validation_std)
-                log_loss_pred_validation.append(loss_pred_validation)
+                log_loss_pred_validation.append(loss_pred_validation_mean)
                 log_loss_pred_validation_std.append(loss_pred_validation_std)
-                log_loss_sdf_validation.append(loss_sdf_validation)
+                log_loss_sdf_validation.append(loss_sdf_validation_mean)
                 log_loss_sdf_validation_std.append(loss_sdf_validation_std)
-                log_loss_rgb_validation.append(loss_rgb_validation)
+                log_loss_rgb_validation.append(loss_rgb_validation_mean)
                 log_loss_rgb_validation_std.append(loss_rgb_validation_std)
 
                 encoder.train()
