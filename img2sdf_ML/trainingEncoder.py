@@ -36,8 +36,8 @@ NEWTORK = 'grid'
 num_epoch = 20
 batch_size = 10
 model_max_to_show_per_epoch = 10000000000
-num_validation_per_epoch = 200
-num_epoch_validation = 5
+num_validation_per_epoch = 100
+num_epoch_validation = 3
 
 eta_encoder = 1e-4
 gammaLR = 0.97
