@@ -33,11 +33,12 @@ IMAGES_PATH = "../../image2sdf/input_images/images/"
 NEWTORK = 'grid'
 # NEWTORK = 'face'
 
-num_epoch = 20
+num_epoch = 4
 batch_size = 10
+num_validation_per_epoch = 10
 
 eta_encoder = 1e-4
-gammaLR = 0.97
+gammaLR = 0.75
 
 num_scene_validation = 15
 
@@ -83,8 +84,9 @@ num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
 num_scene, latent_size = target_vecs.shape
 assert(num_scene == len(annotations.keys()))
 
-num_scene_training = num_scene -num_scene_validation
+num_scene_training = num_scene - num_scene_validation
 total_model_to_show = num_scene_training * num_image_per_scene * num_epoch
+num_model_seen_between_validation = total_model_to_show/num_epoch/num_validation_per_epoch
 
 params = {'batch_size': batch_size,
           'shuffle': True,
@@ -106,7 +108,7 @@ list_scene_validation = list_scene[-num_scene_validation:]
 
 list_scene_training = np.repeat(list_scene_training, num_image_per_scene)
 
-training_set_grid = DatasetGrid(list_scene_training,
+training_set_grid = DatasetGrid(list_scene_training,    
                        dict_scene_2_code,
                        target_vecs.cpu(),
                        annotations,
@@ -189,8 +191,8 @@ scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=gammaLR)
 
 ####################### Training loop ##########################
 
+# used for decoding in order to get validation results
 resolution = 64
-
 xyz = torch.empty(resolution * resolution * resolution, 3).cuda()
 for x in range(resolution):
     for y in range(resolution):
@@ -203,15 +205,23 @@ time_start = time.time()
 log_loss = []
 
 log_same_model_cos = []
+log_same_model_cos_std = []
 log_diff_model_cos = []
+log_diff_model_cos_std = []
 log_same_model_l2 = []
+log_same_model_l2_std = []
 log_diff_model_l2 = []
+log_diff_model_l2_std = []
 
 log_loss_pred_validation = []
+log_loss_pred_validation_std = []
 log_cosine_distance_validation = []
+log_cosine_distance_validation_std = []
 
 log_loss_sdf_validation = []
+log_loss_sdf_validation_std = []
 log_loss_rgb_validation = []
+log_loss_rgb_validation_std = []
 
 encoder.train()
 print("Start trainging...")
@@ -235,8 +245,6 @@ if NEWTORK == 'grid':
             loss_pred.backward()
             optimizer.step()
 
-            # print(f"network time: {time.time() - time_start}")
-
             time_passed = time.time() - time_start
             model_seen = len(log_loss) * batch_size
             time_per_model = time_passed/(model_seen)
@@ -245,13 +253,13 @@ if NEWTORK == 'grid':
             count_model += batch_size
 
             # print everyl X model seen
-            if count_model%(total_model_to_show/num_epoch/1000) == 0:
+            if count_model%(total_model_to_show/num_epoch/100) == 0:
                 print("epoch: {}/{}, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(epoch, count_model, torch.Tensor(log_loss[-10:]).mean(), \
                 abs(pred_vecs - target_code).mean(), abs(pred_vecs).mean(), abs(target_code).mean(), optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
 
 
             # validation 
-            if count_model%(total_model_to_show/num_epoch/100) == 0 or count_model == batch_size:
+            if count_model%(num_model_seen_between_validation) == 0 or count_model == batch_size:
                 encoder.eval()
                 num_epoch_validation = 5
                 pred_vecs_matrix = torch.empty([num_scene_validation,num_epoch_validation, latent_size])
@@ -261,6 +269,7 @@ if NEWTORK == 'grid':
                 loss_rgb_validation = []
 
                 
+                # decode to get sdf and rgb loss
                 for epoch_validation in range(num_epoch_validation):
                     scene_id = 0
                     for batch_input_im_validation, batch_target_code_validation in validation_generator_grid:
@@ -299,9 +308,13 @@ if NEWTORK == 'grid':
                         scene_id += 1
                 
                 cosine_distance_validation = torch.tensor(cosine_distance_validation).mean()
+                cosine_distance_validation_std = torch.tensor(cosine_distance_validation).std()
                 loss_pred_validation = torch.tensor(loss_pred_validation).mean()
+                loss_pred_validation_std = torch.tensor(loss_pred_validation).std()
                 loss_sdf_validation = torch.tensor(loss_sdf_validation).mean()
+                loss_sdf_validation_std = torch.tensor(loss_sdf_validation).std()
                 loss_rgb_validation = torch.tensor(loss_rgb_validation).mean()
+                loss_rgb_validation_std = torch.tensor(loss_rgb_validation).std()
 
                 # validation between model
                 similarity_same_model_cos = []
@@ -326,33 +339,45 @@ if NEWTORK == 'grid':
 
 
                 same_model_cos = torch.tensor(similarity_same_model_cos).mean()
+                same_model_cos_std = torch.tensor(similarity_same_model_cos).std()
                 diff_model_cos = torch.tensor(similarity_different_model_cos).mean()
+                diff_model_cos_std = torch.tensor(similarity_different_model_cos).std()
                 same_model_l2 = torch.tensor(similarity_same_model_l2).mean()
+                same_model_l2_std = torch.tensor(similarity_same_model_l2).std()
                 diff_model_l2 = torch.tensor(similarity_different_model_l2).mean()
+                diff_model_l2_std = torch.tensor(similarity_different_model_l2).std()
 
                 print("\n****************************** VALIDATION ******************************")
 
-                print(f"average cosinus distance between same models : {same_model_cos}")
-                print(f"average cosinus distance between differents models: {diff_model_cos}")
+                print(f"cosinus distance between same models : {same_model_cos} +- {same_model_cos_std}")
+                print(f"cosinus distance between differents models: {diff_model_cos} +- {diff_model_cos_std}")
 
-                print(f"average l2 distance between same models: {same_model_l2}")
-                print(f"average l2 distance between differents models: {diff_model_l2}")
+                print(f"l2 distance between same models: {same_model_l2} +- {same_model_l2_std}")
+                print(f"l2 distance between differents models: {diff_model_l2} +- {diff_model_l2_std}")
 
-                print(f"avarage cosinus distance with target: {cosine_distance_validation}")
-                print(f"average L2 distance with target: {loss_pred_validation}")
+                print(f"cosinus distance with target: {cosine_distance_validation} +- {cosine_distance_validation_std}")
+                print(f"L2 distance with target: {loss_pred_validation} +- {loss_pred_validation_std}")
 
-                print(f"average reconstruction sdf loss: {loss_sdf_validation}")
-                print(f"average reconstruction rgb loss: {loss_rgb_validation}")
+                print(f"reconstruction sdf loss: {loss_sdf_validation} +- {loss_sdf_validation_std}")
+                print(f"reconstruction rgb loss: {loss_rgb_validation} +- {loss_rgb_validation_std}")
                 print("****************************** VALIDATION ******************************\n")
 
                 log_same_model_cos.append(same_model_cos)
+                log_same_model_cos_std.append(same_model_cos_std)
                 log_diff_model_cos.append(diff_model_cos)
+                log_diff_model_cos_std.append(diff_model_cos_std)
                 log_same_model_l2.append(same_model_l2)
+                log_same_model_l2_std.append(same_model_l2_std)
                 log_diff_model_l2.append(diff_model_l2)
+                log_diff_model_l2_std.append(diff_model_l2_std)
                 log_cosine_distance_validation.append(cosine_distance_validation)
+                log_cosine_distance_validation_std.append(cosine_distance_validation_std)
                 log_loss_pred_validation.append(loss_pred_validation)
+                log_loss_pred_validation_std.append(loss_pred_validation_std)
                 log_loss_sdf_validation.append(loss_sdf_validation)
+                log_loss_sdf_validation_std.append(loss_sdf_validation_std)
                 log_loss_rgb_validation.append(loss_rgb_validation)
+                log_loss_rgb_validation_std.append(loss_rgb_validation_std)
 
                 encoder.train()
 
@@ -415,8 +440,11 @@ else:
 #save logs plot
 avrg_loss = []
 for i in range(0,len(log_loss)):
-    avrg_loss.append(torch.Tensor(log_loss[i-20:i]).mean())
+    avrg_loss.append(torch.Tensor(log_loss[i-200:i]).mean())
 
+
+
+##################### PLOTTING TIME ######################
     
 
 from matplotlib import pyplot as plt
@@ -432,9 +460,15 @@ plt.figure()
 plt.title("Latent code cosine distance Validation")
 plt.xlabel("Number of images shown")
 plt.ylabel("cosine distance")
-plt.plot(np.arange(len(log_same_model_cos)) * (total_model_to_show/num_epoch/100), log_same_model_cos[:], label = "same models")
-plt.plot(np.arange(len(log_diff_model_cos)) * (total_model_to_show/num_epoch/100), log_diff_model_cos[:], label = "differents models")
-plt.plot(np.arange(len(log_cosine_distance_validation)) * (total_model_to_show/num_epoch/100), log_cosine_distance_validation[:], label = "target and prediction")
+plt.plot(np.arange(len(log_same_model_cos)) * (num_model_seen_between_validation), log_same_model_cos[:], 'b', label = "same models")
+plt.plot(np.arange(len(log_same_model_cos)) * (num_model_seen_between_validation), log_same_model_cos[:] + log_same_model_cos[:], 'b--', label = "same models")
+plt.plot(np.arange(len(log_same_model_cos)) * (num_model_seen_between_validation), log_same_model_cos[:] - log_same_model_cos[:], 'b--', label = "same models")
+plt.plot(np.arange(len(log_diff_model_cos)) * (num_model_seen_between_validation), log_diff_model_cos[:], 'r', label = "differents models")
+plt.plot(np.arange(len(log_diff_model_cos)) * (num_model_seen_between_validation), log_diff_model_cos[:] + log_diff_model_cos[:], 'r--', label = "differents models")
+plt.plot(np.arange(len(log_diff_model_cos)) * (num_model_seen_between_validation), log_diff_model_cos[:] - log_diff_model_cos[:], 'r--', label = "differents models")
+plt.plot(np.arange(len(log_cosine_distance_validation)) * (num_model_seen_between_validation), log_cosine_distance_validation[:], 'g', label = "target and prediction")
+plt.plot(np.arange(len(log_cosine_distance_validation)) * (num_model_seen_between_validation), log_cosine_distance_validation[:] + log_cosine_distance_validation[:], 'g--', label = "target and prediction")
+plt.plot(np.arange(len(log_cosine_distance_validation)) * (num_model_seen_between_validation), log_cosine_distance_validation[:] - log_cosine_distance_validation[:], 'g--', label = "target and prediction")
 plt.legend()
 plt.savefig("../../image2sdf/logs/log_cosine_distance_validation")
 
@@ -443,9 +477,15 @@ plt.figure()
 plt.title("Latent code l2 distance Validation")
 plt.xlabel("Number of images shown")
 plt.ylabel("l2 distance")
-plt.plot(np.arange(len(log_same_model_l2)) * (total_model_to_show/num_epoch/100), log_same_model_l2[:], label = "same models")
-plt.plot(np.arange(len(log_diff_model_l2)) * (total_model_to_show/num_epoch/100), log_diff_model_l2[:], label = "differents models")
-plt.semilogy(np.arange(len(log_loss_pred_validation)) * (total_model_to_show/num_epoch/100), log_loss_pred_validation[:], label = "target and prediction")
+plt.plot(np.arange(len(log_same_model_l2)) * (num_model_seen_between_validation), log_same_model_l2[:], 'b', label = "same models")
+plt.plot(np.arange(len(log_same_model_l2)) * (num_model_seen_between_validation), log_same_model_l2[:] + log_same_model_l2[:], 'b--', label = "same models")
+plt.plot(np.arange(len(log_same_model_l2)) * (num_model_seen_between_validation), log_same_model_l2[:] - log_same_model_l2[:], 'b--', label = "same models")
+plt.plot(np.arange(len(log_diff_model_l2)) * (num_model_seen_between_validation), log_diff_model_l2[:], 'r', label = "differents models")
+plt.plot(np.arange(len(log_diff_model_l2)) * (num_model_seen_between_validation), log_diff_model_l2[:] + log_diff_model_l2[:], 'r--', label = "differents models")
+plt.plot(np.arange(len(log_diff_model_l2)) * (num_model_seen_between_validation), log_diff_model_l2[:] - log_diff_model_l2[:], 'r--', label = "differents models")
+plt.plot(np.arange(len(log_loss_pred_validation)) * (num_model_seen_between_validation), log_loss_pred_validation[:], 'g', label = "target and prediction")
+plt.plot(np.arange(len(log_loss_pred_validation)) * (num_model_seen_between_validation), log_loss_pred_validation[:] + log_loss_pred_validation[:], 'g--', label = "target and prediction")
+plt.plot(np.arange(len(log_loss_pred_validation)) * (num_model_seen_between_validation), log_loss_pred_validation[:] - log_loss_pred_validation[:], 'g--', label = "target and prediction")
 plt.legend()
 plt.savefig("../../image2sdf/logs/log_l2_distance_validation")
 
@@ -454,14 +494,18 @@ plt.figure()
 plt.title("Loss sdf")
 plt.xlabel("Number of images shown")
 plt.ylabel("L2 loss")
-plt.semilogy(np.arange(len(log_loss_sdf_validation)) * (total_model_to_show/num_epoch/100), log_loss_sdf_validation[:], label = "validation loss sdf")
+plt.semilogy(np.arange(len(log_loss_sdf_validation)) * (total_model_to_show/num_epoch/100), log_loss_sdf_validation[:], 'b', label = "validation loss sdf")
+plt.semilogy(np.arange(len(log_loss_sdf_validation)) * (total_model_to_show/num_epoch/100), log_loss_sdf_validation[:] + log_loss_sdf_validation_std[:], 'b--', label = "validation loss sdf")
+plt.semilogy(np.arange(len(log_loss_sdf_validation)) * (total_model_to_show/num_epoch/100), log_loss_sdf_validation[:] - log_loss_sdf_validation_std[:], 'b--', label = "validation loss sdf")
 plt.savefig("../../image2sdf/logs/log_sdf_validation")
 
 plt.figure()
 plt.title("Loss rgb")
 plt.xlabel("Number of images shown")
 plt.ylabel("L2 loss")
-plt.semilogy(np.arange(len(log_loss_rgb_validation)) * (total_model_to_show/num_epoch/100), log_loss_rgb_validation[:], label = "validation loss rgb")
+plt.semilogy(np.arange(len(log_loss_rgb_validation)) * (total_model_to_show/num_epoch/100), log_loss_rgb_validation[:], 'b', label = "validation loss rgb")
+plt.semilogy(np.arange(len(log_loss_rgb_validation)) * (total_model_to_show/num_epoch/100), log_loss_rgb_validation[:] + log_loss_rgb_validation, 'b--', label = "validation loss rgb")
+plt.semilogy(np.arange(len(log_loss_rgb_validation)) * (total_model_to_show/num_epoch/100), log_loss_rgb_validation[:] - log_loss_rgb_validation, 'b--', label = "validation loss rgb")
 plt.savefig("../../image2sdf/logs/log_rgb_validation")
 
 with open("../../image2sdf/logs/log.txt", "wb") as fp:
