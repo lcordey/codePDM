@@ -33,12 +33,12 @@ IMAGES_PATH = "../../image2sdf/input_images/images/"
 NEWTORK = 'grid'
 # NEWTORK = 'face'
 
-num_epoch = 4
+num_epoch = 2
 batch_size = 10
 num_validation_per_epoch = 10
 
 eta_encoder = 1e-4
-gammaLR = 0.8
+gammaLR = 0.75
 
 num_scene_validation = 15
 
