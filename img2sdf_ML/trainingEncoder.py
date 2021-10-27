@@ -33,7 +33,7 @@ IMAGES_PATH = "../../image2sdf/input_images/images/"
 NEWTORK = 'grid'
 # NEWTORK = 'face'
 
-num_epoch = 4
+num_epoch = 1
 batch_size = 10
 num_validation_per_epoch = 10
 
@@ -230,8 +230,8 @@ if NEWTORK == 'grid':
     for epoch in range(num_epoch):
         count_model = 0
         for batch_input_im, batch_target_code in training_generator_grid:
-            # if count_model > total_model_to_show/num_epoch/3:
-                # break
+            if count_model > total_model_to_show/num_epoch/5:
+                break
 
             optimizer.zero_grad()
 
