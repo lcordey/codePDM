@@ -23,7 +23,7 @@ LATENT_VECS_TARGET_PATH = "models_pth/latent_vecs_target.pth"
 ALL_SDF_DIR_PATH = "../../image2sdf/sdf/"
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 
-latent_size = 16
+latent_size = 4
 num_epoch = 1000000
 batch_size = 10000
 

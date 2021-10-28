@@ -681,7 +681,7 @@ plt.savefig("../../image2sdf/logs/log_rgb_validation")
 
 
 plt.figure()
-plt.title("Norm of predicted and targeted_code")
+plt.title("Norm of predicted and targeted code")
 plt.xlabel("Number of images shown")
 plt.ylabel("Norm")
 plt.plot(np.arange(len(log_norm_prediction_validation)) * (num_model_seen_between_validation), log_norm_prediction_validation[:], 'b', label = "predicted code")

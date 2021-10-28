@@ -20,7 +20,7 @@ from random import random, randrange, choice
 
 DEFAULT_MODE = 'validation'
 NUM_SCENE_TRAINING = 1000
-NUM_SCENE_VALIDATION = 10
+NUM_SCENE_VALIDATION = 1
 
 # import IPython
 
