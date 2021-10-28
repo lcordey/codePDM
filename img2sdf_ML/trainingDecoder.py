@@ -23,7 +23,7 @@ LATENT_VECS_TARGET_PATH = "models_pth/latent_vecs_target.pth"
 ALL_SDF_DIR_PATH = "../../image2sdf/sdf/"
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 
-latent_size = 4
+latent_size = 6
 num_epoch = 1000000
 batch_size = 10000
 
@@ -191,7 +191,7 @@ if __name__ == '__main__':
         loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean() * weight_sdf.numel()/weight_sdf.count_nonzero() * lambda_rgb
         
         # regularization loss
-        lambda_kl = 1/100
+        lambda_kl = 1/500
         loss_kl = (-0.5 * (1 + lat_vecs_log_std.weight - lat_vecs_mu.weight.pow(2) - lat_vecs_log_std.weight.exp())).mean()
         loss_kl = loss_kl * lambda_kl
 
