@@ -216,7 +216,15 @@ if __name__ == '__main__':
     print(f"Training finish in {(int)((time.time() - time_start) / 60)} min")
 
 
-    with open("../../image2sdf/logs/log.txt", "wb") as fp:
+    with open("../../image2sdf/logs/log.pkl", "wb") as fp:
+        pickle.dump(logs, fp)
+    
+    
+    dict_hash_2_code = dict()
+    for model_hash in list_model_hash:
+        dict_hash_2_code[model_hash] = lat_code_mu(dict_model_hash_2_idx[hash])
+
+    with open(LATENT_CODE_PATH, "wb") as fp:
         pickle.dump(logs, fp)
 
 
