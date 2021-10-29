@@ -77,12 +77,12 @@ def init_opt_sched(decoder, lat_vecs_mu, lat_vecs_log_std, param):
 
     return optimizer, scheduler
 
-def compute_time_left(model_count, time_start, epoch, num_epoch):
+def compute_time_left(time_start, model_count, num_model, epoch, num_epoch):
     """ Compute time left until the end of training """
     time_passed = time.time() - time_start
     num_model_seen = epoch * num_model + model_count
     time_per_model = time_passed/num_model_seen
-    estimate_total_time = time_per_model * num_epoch
+    estimate_total_time = time_per_model * num_epoch * num_model
     estimate_time_left = estimate_total_time - time_passed
 
     return estimate_time_left
@@ -203,7 +203,7 @@ if __name__ == '__main__':
 
             # estime time left
             model_count += 1
-            time_left = compute_time_left(model_count, time_start, epoch, param["num_epoch"])
+            time_left = compute_time_left(time_start, model_count, num_model, epoch, param["num_epoch"])
 
             # print
             print("Epoch {} / {:.2f}% ,loss: sdf: {:.5f}, rgb: {:.5f}, reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, code std/mu: {:.2f}/{:.2f}, time left: {} min".format(\
@@ -215,7 +215,10 @@ if __name__ == '__main__':
         scheduler.step()
 
     print(f"Training finish in {(int)((time.time() - time_start) / 60)} min")
-    
+
+
+    with open("../../image2sdf/logs/log.txt", "wb") as fp:
+        pickle.dump(logs, fp)
 
 
 
