@@ -93,15 +93,13 @@ num_model_seen_between_validation = num_model_seen_between_validation - num_mode
 
 params = {'batch_size': batch_size,
           'shuffle': True,
-          'num_workers': 8,
-          'pin_memory': False
+          'num_workers': 8
           }
 
 
 params_validation = {'batch_size': 1,
           'shuffle': False,
-          'num_workers': 8,
-          'pin_memory': False
+          'num_workers': 8
           }
 
 list_scene, dict_scene_2_code = initialize_dataset(annotations)
