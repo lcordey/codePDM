@@ -78,6 +78,7 @@ def init_opt_sched(decoder, lat_vecs_mu, lat_vecs_log_std, param):
     return optimizer, scheduler
 
 def compute_time_left(model_count, time_start, epoch, num_epoch):
+    """ Compute time left until the end of training """
     time_passed = time.time() - time_start
     num_model_seen = epoch * num_model + model_count
     time_per_model = time_passed/num_model_seen
@@ -205,7 +206,7 @@ if __name__ == '__main__':
             time_left = compute_time_left(model_count, time_start, epoch, param["num_epoch"])
 
             # print
-            print("Epoch {} / {:.2f}% ,loss: sdf: {:.5f}, rgb: {:.5f}, reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, code std/mu: {:.2f}/{:.2f}, time left: {}".format(\
+            print("Epoch {} / {:.2f}% ,loss: sdf: {:.5f}, rgb: {:.5f}, reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, code std/mu: {:.2f}/{:.2f}, time left: {} min".format(\
                 epoch, model_count / num_model * 100, torch.Tensor(logs["sdf"][-10:]).mean(), torch.Tensor(logs["rgb"][-10:]).mean(), torch.Tensor(logs["reg"][-10:]).mean(), \
                 pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, \
                 (lat_code_log_std.weight.exp()).mean(), (lat_code_mu.weight).abs().mean(), (int)(time_left/60)))
@@ -213,7 +214,9 @@ if __name__ == '__main__':
 
         scheduler.step()
 
+    print(f"Training finish in {(int)((time.time() - time_start) / 60)} min")
     
+
 
 
  

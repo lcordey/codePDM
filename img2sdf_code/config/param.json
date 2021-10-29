@@ -2,7 +2,7 @@
     "decoder" :{
 
         "latent_size" : 6,
-        "num_epoch" : 1,
+        "num_epoch" : 1000,
         
         "lambda_variance": 0.1,
         "lambda_sdf": 1,
@@ -18,7 +18,7 @@
             "eta_decoder" : 1e-3,
             "eta_latent_space_mu" : 5e-3,
             "eta_latent_space_std" : 1e-2,
-            "gammaLR" : 1
+            "gammaLR" : 0.999
         }
     },
 

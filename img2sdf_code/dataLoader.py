@@ -20,7 +20,6 @@ class DatasetDecoder(torch.utils.data.Dataset):
 
         # Select sample
         model_hash = self.list_hash[index]
-        print(index)
 
         h5f = h5py.File(self.sdf_dir_pth + model_hash + '.h5', 'r')
         h5f_tensor = torch.tensor(h5f["tensor"][()], dtype = torch.float)
