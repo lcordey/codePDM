@@ -25,16 +25,18 @@ class DatasetDecoder(torch.utils.data.Dataset):
         h5f = h5py.File(self.sdf_dir_pth + model_hash + '.h5', 'r')
         h5f_tensor = torch.tensor(h5f["tensor"][()], dtype = torch.float)
 
-        num_samples_per_scene = (int)(h5f_tensor.numel()/4)
+        num_total_point_in_model = (int)(h5f_tensor.numel()/4)
 
-        sdf_gt = np.reshape(h5f_tensor[:,:,:,0], [num_samples_per_scene])
-        rgb_gt = np.reshape(h5f_tensor[:,:,:,1:], [num_samples_per_scene , 3])
+        sdf_gt = np.reshape(h5f_tensor[:,:,:,0], [num_total_point_in_model])
+        rgb_gt = np.reshape(h5f_tensor[:,:,:,1:], [num_total_point_in_model , 3])
+
+        xyz_idx = np.random.randint(num_total_point_in_model, size = self.num_samples_per_model)
+
+        sdf_gt = sdf_gt[xyz_idx]
+        rgb_gt = rgb_gt[xyz_idx]
 
         sdf_gt = sdf_gt / self.resolution
         rgb_gt = rgb_gt / 255
 
-        sdf_gt = sdf_gt[:self.num_samples_per_model]
-        rgb_gt = rgb_gt[:self.num_samples_per_model]
 
-
-        return model_hash, sdf_gt, rgb_gt
+        return model_hash, sdf_gt, rgb_gt, xyz_idx

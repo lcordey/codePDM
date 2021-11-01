@@ -169,10 +169,10 @@ if __name__ == '__main__':
 
     for epoch in range (param["num_epoch"]):
         model_count = 0
-        for hash, sdf_gt, rgb_gt in training_generator:
+        for hash, sdf_gt, rgb_gt, xyz_idx in training_generator:
             optimizer.zero_grad()
 
-            print(time.time() - time_start)
+            print(f"time to load the data: {time.time() - time_start}")
 
             # only 1 sample per batch!
             # hash = hash[0]
@@ -189,21 +189,20 @@ if __name__ == '__main__':
 
             # pred = decoder(latent_code, xyz)
 
-            code_log_std = []
-            code_mu = []
-            latent_code_list = []
             a = torch.empty(batch_size, param["latent_size"]).normal_().cuda()
+            latent_code = torch.empty([batch_size, param["latent_size"]]).cuda()
+            xyz_sample = torch.empty([num_samples_per_model * batch_size, 3]).cuda()
 
-            for i in range(len(hash)):
-                code_mu.append(lat_code_mu(dict_model_hash_2_idx[hash[i]]))
-                code_log_std.append(lat_code_log_std(dict_model_hash_2_idx[hash[i]]))
-                latent_code_list.append(a[i] * code_log_std[i].exp() * param["lambda_variance"] + code_mu[i])
+            for i in range(batch_size):
+                code_mu = lat_code_mu(dict_model_hash_2_idx[hash[i]])
+                code_log_std = lat_code_log_std(dict_model_hash_2_idx[hash[i]])
+                latent_code[i] = a[i] * code_log_std.exp() * param["lambda_variance"] + code_mu
+                xyz_sample[i: (i+1) * num_samples_per_model] = xyz[xyz_idx[i]]
 
-            latent_code = torch.empty([len(latent_code_list), param["latent_size"]]).cuda()
-            for i in range(len(latent_code)):
-                latent_code[i] = latent_code_list[i]
+            latent_code = latent_code.repeat_interleave(num_samples_per_model, dim=0)
 
-            pred = decoder(latent_code.repeat_interleave(num_samples_per_model, dim=0), xyz[:num_samples_per_model].repeat(batch_size,1))
+            # pred = decoder(latent_code.repeat_interleave(num_samples_per_model, dim=0), xyz[:num_samples_per_model].repeat(batch_size,1))
+            pred = decoder(latent_code, xyz_sample)
 
             ##### compute loss and store logs #####
             pred_sdf = pred[:,0]
