@@ -132,10 +132,6 @@ if __name__ == '__main__':
         list_model_hash.append(os.path.basename(val).split('.')[0])
     num_model = len(list_model_hash)
 
-    # dataLoader for training dataset
-    training_dataset = DatasetDecoder(list_model_hash, SDF_DIR, resolution, num_samples_per_model)
-    training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader"])
-
     # fill a xyz grid to give as input to the decoder 
     xyz = init_xyz(resolution)
 
@@ -147,6 +143,11 @@ if __name__ == '__main__':
     dict_model_hash_2_idx = dict()
     for model_hash, i in zip(list_model_hash, range(num_model)):
         dict_model_hash_2_idx[model_hash] = idx[i]
+
+    list_model_hash = np.repeat(list_model_hash, 100)
+    # dataLoader for training dataset
+    training_dataset = DatasetDecoder(list_model_hash, SDF_DIR, resolution, num_samples_per_model)
+    training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader"])
 
     # initialize decoder
     decoder = Decoder(param["latent_size"]).cuda()
