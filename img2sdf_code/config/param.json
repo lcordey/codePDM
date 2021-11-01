@@ -2,7 +2,7 @@
     "decoder" :{
 
         "latent_size" : 6,
-        "num_epoch" : 1,
+        "num_epoch" : 100,
         "num_samples_per_model": 2000,
         
         "lambda_variance": 0.0,
