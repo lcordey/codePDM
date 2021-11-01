@@ -6,9 +6,9 @@
         "num_samples_per_model": 100,
         
         "lambda_variance": 1.0,
-        "lambda_sdf": 1,
-        "lambda_rgb": 0.01,
-        "lambda_kl": 0.002,
+        "lambda_sdf": 100,
+        "lambda_rgb": 1.0,
+        "lambda_kl": 0.2,
 
         "dataLoader" :{
             "batch_size" : 200,
@@ -16,7 +16,7 @@
             "num_workers": 42
         },
         "optimizer":{
-            "eta_decoder" : 1e-1,
+            "eta_decoder" : 1e-3,
             "eta_latent_space_mu" : 5e-3,
             "eta_latent_space_std" : 1e-2,
             "gammaLR" : 0.95
