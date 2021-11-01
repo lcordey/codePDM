@@ -170,6 +170,8 @@ if __name__ == '__main__':
         for hash, sdf_gt, rgb_gt in training_generator:
             optimizer.zero_grad()
 
+            print(time.time() - time_start)
+
             # only 1 sample per batch!
             # hash = hash[0]
             # sdf_gt = sdf_gt[0]
@@ -235,6 +237,8 @@ if __name__ == '__main__':
             #update weights
             loss_total.backward()
             optimizer.step()
+
+            time_start = time.time()
 
         scheduler.step()
 

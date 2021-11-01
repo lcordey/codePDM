@@ -10,7 +10,7 @@
         "lambda_kl": 0.002,
 
         "dataLoader" :{
-            "batch_size" : 2,
+            "batch_size" : 10,
             "shuffle": 1,
             "num_workers": 8
         },
