@@ -203,6 +203,9 @@ if __name__ == '__main__':
             sdf_gt = sdf_gt.cuda()
             rgb_gt = rgb_gt.cuda()
 
+
+            print(f"Time to transfer the data to gpu: {time.time() - time_start}")
+
             ##### compute sdf prediction #####
             # code_mu, code_log_std = lat_code_mu(dict_model_hash_2_idx[hash]), lat_code_log_std(dict_model_hash_2_idx[hash])
             # latent_code =  torch.empty(num_samples_per_model, param["latent_size"]).normal_().cuda() * code_log_std.exp() * param["lambda_variance"] + code_mu
@@ -253,7 +256,7 @@ if __name__ == '__main__':
 
             loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt.reshape(mini_batch_size * num_samples_per_model), rgb_gt.reshape(mini_batch_size * num_samples_per_model, 3), threshold_precision, param)
             
-            loss_total = loss_sdf + loss_rgb
+            loss_total = loss_sdf + loss_rgb + loss_kl
 
 
             #log
