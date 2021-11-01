@@ -256,8 +256,8 @@ if __name__ == '__main__':
 
                 pred_slice = decoder(latent_code, xyz_samples)
 
-                pred_sdf_slice[i * num_samples_per_model: (i+1) * num_samples_per_model] = pred[:,0]
-                pred_rgb_slice[i * num_samples_per_model: (i+1) * num_samples_per_model, :] = pred[:,1:]
+                pred_sdf_slice[i * num_samples_per_model: (i+1) * num_samples_per_model] = pred_slice[:,0]
+                pred_rgb_slice[i * num_samples_per_model: (i+1) * num_samples_per_model, :] = pred_slice[:,1:]
 
             pred = decoder(all_latend_code, all_xyz)
 
