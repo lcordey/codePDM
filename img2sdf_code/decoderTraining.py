@@ -179,11 +179,6 @@ if __name__ == '__main__':
                 print("\nDataLoader is saturated!!!\n")
             time_start = time.time()
 
-            # only 1 sample per batch!
-            # hash = hash[0]
-            # sdf_gt = sdf_gt[0]
-            # rgb_gt = rgb_gt[0]
-
             # transfer to gpu
             sdf_gt = sdf_gt.cuda()
             rgb_gt = rgb_gt.cuda()
