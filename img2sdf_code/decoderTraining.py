@@ -151,7 +151,7 @@ if __name__ == '__main__':
     dict_gt_data["rgb"] = dict()
     num_total_point_per_model = resolution * resolution * resolution
 
-    for model_hash, i in zip(list_model_hash, num_model):
+    for model_hash, i in zip(list_model_hash, range(num_model)):
         if i%20 == 0:
             print(f"loading models: {i/num_model}%")
         h5f = h5py.File(SDF_DIR + model_hash + '.h5', 'r')
