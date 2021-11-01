@@ -6,8 +6,8 @@ import IPython
 def fc_layer(size_in, size_out, batch_norm=False):
 
     layers = [nn.Linear(size_in, size_out)]
-    if batch_norm:
-        layers += [nn.BatchNorm1d(size_out)]
+    # if batch_norm:
+    #     layers += [nn.BatchNorm1d(size_out)]
     layers += [nn.ReLU()]
 
     return nn.Sequential(*layers)
