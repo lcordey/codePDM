@@ -11,9 +11,9 @@
         "lambda_kl": 0.002,
 
         "dataLoader" :{
-            "batch_size" : 10,
+            "batch_size" : 1,
             "shuffle": 1,
-            "num_workers": 24
+            "num_workers": 32
         },
         "optimizer":{
             "eta_decoder" : 1e-4,
