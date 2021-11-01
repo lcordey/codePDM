@@ -237,7 +237,7 @@ if __name__ == '__main__':
             pred_sdf_slice = torch.empty([mini_batch_size * num_samples_per_model]).cuda()
             pred_rgb_slice = torch.empty([mini_batch_size * num_samples_per_model, 3]).cuda()
 
-            all_latend_code = torch.empty(mini_batch_size * num_samples_per_model, param["latent_size"]).cuda()
+            all_latent_code = torch.empty(mini_batch_size * num_samples_per_model, param["latent_size"]).cuda()
             all_xyz = torch.empty([mini_batch_size * num_samples_per_model, 3]).cuda()
             
 
@@ -251,15 +251,17 @@ if __name__ == '__main__':
                 latent_code = latent_code.unsqueeze(0).repeat_interleave(num_samples_per_model, dim=0)
                 xyz_samples = xyz[xyz_idx[i]]
 
-                all_latend_code[i * num_samples_per_model: (i+1) * num_samples_per_model] = latent_code
+
+                # pred_slice = decoder(latent_code, xyz_samples)
+
+                # pred_sdf_slice[i * num_samples_per_model: (i+1) * num_samples_per_model] = pred_slice[:,0]
+                # pred_rgb_slice[i * num_samples_per_model: (i+1) * num_samples_per_model, :] = pred_slice[:,1:]
+
+
+                all_latent_code[i * num_samples_per_model: (i+1) * num_samples_per_model] = latent_code
                 all_xyz[i * num_samples_per_model: (i+1) * num_samples_per_model] = xyz_samples
 
-                pred_slice = decoder(latent_code, xyz_samples)
-
-                pred_sdf_slice[i * num_samples_per_model: (i+1) * num_samples_per_model] = pred_slice[:,0]
-                pred_rgb_slice[i * num_samples_per_model: (i+1) * num_samples_per_model, :] = pred_slice[:,1:]
-
-            pred = decoder(all_latend_code, all_xyz)
+            pred = decoder(all_latent_code, all_xyz)
 
             pred_sdf = pred[:,0]
             pred_rgb = pred[:,1:]

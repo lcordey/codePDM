@@ -6,26 +6,26 @@ import IPython
 def fc_layer(size_in, size_out, batch_norm=False):
 
     layers = [nn.Linear(size_in, size_out)]
-    # if batch_norm:
-    #     layers += [nn.BatchNorm1d(size_out)]
+    if batch_norm:
+        layers += [nn.BatchNorm1d(size_out)]
     layers += [nn.ReLU()]
 
     return nn.Sequential(*layers)
 
 
 class Decoder(nn.Module):
-    def __init__(self, latent_size):
+    def __init__(self, latent_size, batch_norm=False):
         super(Decoder, self).__init__()
 
         num_features = 256
 
-        self.lnStart = fc_layer(latent_size + 3, num_features, batch_norm=True)
+        self.lnStart = fc_layer(latent_size + 3, num_features, batch_norm=batch_norm)
 
-        self.ln1 = fc_layer(num_features, num_features, batch_norm=True)
-        self.ln2 = fc_layer(num_features, num_features, batch_norm=True)
-        self.ln3 = fc_layer(num_features, num_features, batch_norm=True)
-        self.ln4 = fc_layer(num_features, num_features, batch_norm=True)
-        self.ln5 = fc_layer(num_features, num_features, batch_norm=True)
+        self.ln1 = fc_layer(num_features, num_features, batch_norm=batch_norm)
+        self.ln2 = fc_layer(num_features, num_features, batch_norm=batch_norm)
+        self.ln3 = fc_layer(num_features, num_features, batch_norm=batch_norm)
+        self.ln4 = fc_layer(num_features, num_features, batch_norm=batch_norm)
+        self.ln5 = fc_layer(num_features, num_features, batch_norm=batch_norm)
 
         self.lnEnd = nn.Linear(num_features, 4)
 
