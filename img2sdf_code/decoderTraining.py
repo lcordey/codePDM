@@ -152,8 +152,8 @@ if __name__ == '__main__':
     num_total_point_per_model = resolution * resolution * resolution
 
     for model_hash, i in zip(list_model_hash, range(num_model)):
-        if i%20 == 0:
-            print(f"loading models: {i/num_model}%")
+        if i%25 == 0:
+            print(f"loading models: {i/num_model*100:3.0f}%")
         h5f = h5py.File(SDF_DIR + model_hash + '.h5', 'r')
         h5f_tensor = torch.tensor(h5f["tensor"][()], dtype = torch.float)
 
@@ -166,12 +166,6 @@ if __name__ == '__main__':
         dict_gt_data["sdf"][model_hash] = sdf_gt
         dict_gt_data["rgb"][model_hash] = rgb_gt
 
-
-    # list_model_hash = np.repeat(list_model_hash, 100)
-    # dataLoader for training dataset
-    # training_dataset = DatasetDecoder(list_model_hash, SDF_DIR, resolution, num_samples_per_model)
-
-
     list_model_hash = np.repeat(list_model_hash, 100)
     training_dataset = DatasetDecoder(list_model_hash, dict_gt_data, num_samples_per_model)
     training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader"])
@@ -181,7 +175,6 @@ if __name__ == '__main__':
 
     # initialize optimizer and scheduler
     optimizer, scheduler = init_opt_sched(decoder, lat_code_mu, lat_code_log_std, param["optimizer"])
-
 
     # logs
     logs = dict()
@@ -276,7 +269,7 @@ if __name__ == '__main__':
 
             # print
             print("Epoch {} / {:.2f}% ,loss: sdf: {:.5f}, rgb: {:.5f}, reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, code std/mu: {:.2f}/{:.2f}, time left: {} min".format(\
-                epoch, model_count / num_model * 100, loss_sdf, loss_rgb, loss_kl, \
+                epoch, model_count / num_model * 100 / 100, loss_sdf, loss_rgb, loss_kl, \
                 pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, \
                 (lat_code_log_std.weight.exp()).mean(), (lat_code_mu.weight).abs().mean(), (int)(time_left/60)))
 
