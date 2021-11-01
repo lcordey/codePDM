@@ -3,7 +3,7 @@
 
         "latent_size" : 6,
         "num_epoch" : 1000,
-        "num_samples_per_model": 50000,
+        "num_samples_per_model": 10000,
         
         "lambda_variance": 0.0,
         "lambda_sdf": 1,
@@ -13,10 +13,10 @@
         "dataLoader" :{
             "batch_size" : 10,
             "shuffle": 1,
-            "num_workers": 16
+            "num_workers": 24
         },
         "optimizer":{
-            "eta_decoder" : 1e-3,
+            "eta_decoder" : 1e-4,
             "eta_latent_space_mu" : 5e-3,
             "eta_latent_space_std" : 1e-2,
             "gammaLR" : 0.995
