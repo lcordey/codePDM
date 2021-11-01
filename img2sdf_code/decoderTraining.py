@@ -188,28 +188,26 @@ if __name__ == '__main__':
             # latent_code =  torch.empty(num_samples_per_model, param["latent_size"]).normal_().cuda() * code_log_std.exp() * param["lambda_variance"] + code_mu
 
             # pred = decoder(latent_code, xyz)
+            mini_batch_size = len(hash)
 
-            a = torch.empty(batch_size, param["latent_size"]).normal_().cuda()
-            latent_code = torch.empty([batch_size, param["latent_size"]]).cuda()
-            xyz_sample = torch.empty([num_samples_per_model * batch_size, 3]).cuda()
+            a = torch.empty(mini_batch_size, param["latent_size"]).normal_().cuda()
+            latent_code = torch.empty([mini_batch_size, param["latent_size"]]).cuda()
+            xyz_samples = torch.empty([num_samples_per_model * mini_batch_size, 3]).cuda()
 
-            IPython.embed()
-
-            for i in range(batch_size):
+            for i in range(mini_batch_size):
                 code_mu = lat_code_mu(dict_model_hash_2_idx[hash[i]])
                 code_log_std = lat_code_log_std(dict_model_hash_2_idx[hash[i]])
                 latent_code[i] = a[i] * code_log_std.exp() * param["lambda_variance"] + code_mu
-                xyz_sample[i: (i+1) * num_samples_per_model] = xyz[xyz_idx[i]]
+                xyz_samples[i * num_samples_per_model: (i+1) * num_samples_per_model, :] = xyz[xyz_idx[i]]
 
             latent_code = latent_code.repeat_interleave(num_samples_per_model, dim=0)
 
-            # pred = decoder(latent_code.repeat_interleave(num_samples_per_model, dim=0), xyz[:num_samples_per_model].repeat(batch_size,1))
-            pred = decoder(latent_code, xyz_sample)
+            pred = decoder(latent_code, xyz_samples)
 
             ##### compute loss and store logs #####
             pred_sdf = pred[:,0]
             pred_rgb = pred[:,1:]
-            loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt.reshape(batch_size * num_samples_per_model), rgb_gt.reshape(batch_size * num_samples_per_model, 3), threshold_precision, param)
+            loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt.reshape(mini_batch_size * num_samples_per_model), rgb_gt.reshape(mini_batch_size * num_samples_per_model, 3), threshold_precision, param)
             
             loss_total = loss_sdf + loss_rgb + loss_kl
 
@@ -224,7 +222,7 @@ if __name__ == '__main__':
             # optimizer.step()
 
             # estime time left
-            model_count += 1
+            model_count += mini_batch_size
             time_left = compute_time_left(time_start, model_count, num_model, epoch, param["num_epoch"])
 
             # print
