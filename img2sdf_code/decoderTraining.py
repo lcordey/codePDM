@@ -211,7 +211,8 @@ if __name__ == '__main__':
             pred_rgb = pred[:,1:]
             loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt.reshape(mini_batch_size * num_samples_per_model), rgb_gt.reshape(mini_batch_size * num_samples_per_model, 3), threshold_precision, param)
             
-            loss_total = loss_sdf + loss_rgb + loss_kl
+            # loss_total = loss_sdf + loss_rgb + loss_kl
+            loss_total = loss_sdf + loss_rgb
 
             #log
             logs["total"].append(loss_total.detach().cpu())
