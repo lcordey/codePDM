@@ -173,7 +173,10 @@ if __name__ == '__main__':
         for hash, sdf_gt, rgb_gt, xyz_idx in training_generator:
             optimizer.zero_grad()
 
-            print(f"time to load the data: {time.time() - time_start}")
+            time_loading = time.time() - time_start
+            print(f"time to load the data: {time_loading}")
+            if time_loading > 0.2:
+                print("\nDataLoader is saturated!!!\n")
             time_start = time.time()
 
             # only 1 sample per batch!
