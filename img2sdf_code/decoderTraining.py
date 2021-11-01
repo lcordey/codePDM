@@ -225,10 +225,10 @@ if __name__ == '__main__':
                 xyz_samples = xyz[xyz_idx[i]]
 
 
-                # pred_slice = decoder(latent_code, xyz_samples)
+                pred_slice = decoder(latent_code, xyz_samples)
 
-                # pred_sdf_slice[i * num_samples_per_model: (i+1) * num_samples_per_model] = pred_slice[:,0]
-                # pred_rgb_slice[i * num_samples_per_model: (i+1) * num_samples_per_model, :] = pred_slice[:,1:]
+                pred_sdf_slice[i * num_samples_per_model: (i+1) * num_samples_per_model] = pred_slice[:,0]
+                pred_rgb_slice[i * num_samples_per_model: (i+1) * num_samples_per_model, :] = pred_slice[:,1:]
 
 
                 all_latent_code[i * num_samples_per_model: (i+1) * num_samples_per_model] = latent_code
@@ -240,7 +240,9 @@ if __name__ == '__main__':
             pred_rgb = pred[:,1:]
 
             loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt.reshape(mini_batch_size * num_samples_per_model), rgb_gt.reshape(mini_batch_size * num_samples_per_model, 3), threshold_precision, param)
+            loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf_slice, pred_rgb_slice, sdf_gt.reshape(mini_batch_size * num_samples_per_model), rgb_gt.reshape(mini_batch_size * num_samples_per_model, 3), threshold_precision, param)
             
+
             # loss_total = loss_sdf + loss_rgb + loss_kl
             loss_total = loss_sdf + loss_rgb
 
