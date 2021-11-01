@@ -121,8 +121,10 @@ if __name__ == '__main__':
     param = param_all["decoder"]
 
     resolution = RESOLUTION
-    num_samples_per_model = resolution * resolution * resolution
     threshold_precision = 1.0/resolution
+    # num_samples_per_model = resolution * resolution * resolution
+    num_samples_per_model = param["num_samples_per_model"]
+    batch_size = param["dataLoader"]["batch_size"]
 
     # get models' hashs
     list_model_hash = []
@@ -190,7 +192,7 @@ if __name__ == '__main__':
             code_log_std = []
             code_mu = []
             latent_code_list = []
-            a = torch.empty(sdf_gt.shape[0], param["latent_size"]).normal_().cuda()
+            a = torch.empty(batch_size, param["latent_size"]).normal_().cuda()
 
             for i in range(len(hash)):
                 code_mu.append(lat_code_mu(dict_model_hash_2_idx[hash[i]]))
@@ -201,12 +203,12 @@ if __name__ == '__main__':
             for i in range(len(latent_code)):
                 latent_code[i] = latent_code_list[i]
 
-            pred = decoder(latent_code.repeat_interleave(num_samples_per_model, dim=0), xyz[:num_samples_per_model].repeat(sdf_gt.shape[0],1))
+            pred = decoder(latent_code.repeat_interleave(num_samples_per_model, dim=0), xyz[:num_samples_per_model].repeat(batch_size,1))
 
             ##### compute loss and store logs #####
             pred_sdf = pred[:,0]
             pred_rgb = pred[:,1:]
-            loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt.reshape(sdf_gt.shape[0] * num_samples_per_model), rgb_gt.reshape(rgb_gt.shape[0] * num_samples_per_model, 3), threshold_precision, param)
+            loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt.reshape(batch_size * num_samples_per_model), rgb_gt.reshape(batch_size * num_samples_per_model, 3), threshold_precision, param)
             
             loss_total = loss_sdf + loss_rgb + loss_kl
 
