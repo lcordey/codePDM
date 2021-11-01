@@ -204,7 +204,6 @@ if __name__ == '__main__':
             rgb_gt = rgb_gt.cuda()
 
 
-            print(f"Time to transfer the data to gpu: {time.time() - time_start}")
 
             ##### compute sdf prediction #####
             # code_mu, code_log_std = lat_code_mu(dict_model_hash_2_idx[hash]), lat_code_log_std(dict_model_hash_2_idx[hash])
@@ -238,6 +237,10 @@ if __name__ == '__main__':
             pred_sdf = torch.empty([mini_batch_size * num_samples_per_model]).cuda()
             pred_rgb = torch.empty([mini_batch_size * num_samples_per_model, 3]).cuda()
 
+            all_latend_code = torch.empty(mini_batch_size * num_samples_per_model, param["latent_size"]).cuda()
+            all_xyz = torch.empty([mini_batch_size * num_samples_per_model, 3]).cuda()
+            
+
 
             a = torch.empty(mini_batch_size, param["latent_size"]).normal_().cuda()
             for i in range(mini_batch_size):
@@ -247,12 +250,18 @@ if __name__ == '__main__':
                 latent_code = latent_code.unsqueeze(0).repeat_interleave(num_samples_per_model, dim=0)
                 xyz_samples = xyz[xyz_idx[i]]
 
-                pred = decoder(latent_code, xyz_samples)    
+                all_latend_code[i * num_samples_per_model: (i+1) * num_samples_per_model] = latent_code
+                all_xyz[i * num_samples_per_model: (i+1) * num_samples_per_model] = xyz_samples
 
-                pred_sdf[i * num_samples_per_model: (i+1) * num_samples_per_model] = pred[:,0]
-                pred_rgb[i * num_samples_per_model: (i+1) * num_samples_per_model, :] = pred[:,1:]
+                # pred = decoder(latent_code, xyz_samples)
 
-            # IPython.embed()
+                # pred_sdf[i * num_samples_per_model: (i+1) * num_samples_per_model] = pred[:,0]
+                # pred_rgb[i * num_samples_per_model: (i+1) * num_samples_per_model, :] = pred[:,1:]
+
+            pred = decoder(all_latend_code, all_xyz)
+
+            pred_sdf = pred[:,0]
+            pred_rgb = pred[:,1:]
 
             loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt.reshape(mini_batch_size * num_samples_per_model), rgb_gt.reshape(mini_batch_size * num_samples_per_model, 3), threshold_precision, param)
             
