@@ -5,7 +5,7 @@
         "num_epoch" : 50,
         "num_samples_per_model": 100,
         
-        "lambda_variance": 1.0,
+        "lambda_variance": 0.0,
         "lambda_sdf": 1,
         "lambda_rgb": 0.01,
         "lambda_kl": 0.002,

@@ -246,7 +246,8 @@ if __name__ == '__main__':
             for i in range(mini_batch_size):
                 code_mu = lat_code_mu(dict_model_hash_2_idx[hash[i]])
                 code_log_std = lat_code_log_std(dict_model_hash_2_idx[hash[i]])
-                latent_code = a[i] * code_log_std.exp() * param["lambda_variance"] + code_mu
+                # latent_code = a[i] * code_log_std.exp() * param["lambda_variance"] + code_mu
+                latent_code = code_mu
                 latent_code = latent_code.unsqueeze(0).repeat_interleave(num_samples_per_model, dim=0)
                 xyz_samples = xyz[xyz_idx[i]]
 
@@ -265,7 +266,8 @@ if __name__ == '__main__':
 
             loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt.reshape(mini_batch_size * num_samples_per_model), rgb_gt.reshape(mini_batch_size * num_samples_per_model, 3), threshold_precision, param)
             
-            loss_total = loss_sdf + loss_rgb + loss_kl
+            # loss_total = loss_sdf + loss_rgb + loss_kl
+            loss_total = loss_sdf + loss_rgb
 
 
             #log
