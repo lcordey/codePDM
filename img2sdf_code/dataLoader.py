@@ -32,5 +32,8 @@ class DatasetDecoder(torch.utils.data.Dataset):
         sdf_gt = sdf_gt / self.resolution
         rgb_gt = rgb_gt / 255
 
+        sdf_gt = sdf_gt[:1000]
+        rgb_gt = rgb_gt[:1000]
+
 
         return model_hash, sdf_gt, rgb_gt

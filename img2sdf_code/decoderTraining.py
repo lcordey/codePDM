@@ -17,6 +17,7 @@ MAIN_DIR = "../../image2sdf/"
 
 DECODER_PATH = "models_and_codes/decoderSDF.pth"
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
+LOGS_PATH = "../../image2sdf/logs/log.pkl"
 PARAM_FILE = "config/param.json"
 
 SDF_DIR = MAIN_DIR + "sdf/"
@@ -170,24 +171,40 @@ if __name__ == '__main__':
             optimizer.zero_grad()
 
             # only 1 sample per batch!
-            hash = hash[0]
-            sdf_gt = sdf_gt[0]
-            rgb_gt = rgb_gt[0]
+            # hash = hash[0]
+            # sdf_gt = sdf_gt[0]
+            # rgb_gt = rgb_gt[0]
 
             # transfer to gpu
             sdf_gt = sdf_gt.cuda()
             rgb_gt = rgb_gt.cuda()
 
             ##### compute sdf prediction #####
-            code_mu, code_log_std = lat_code_mu(dict_model_hash_2_idx[hash]), lat_code_log_std(dict_model_hash_2_idx[hash])
-            latent_code =  torch.empty(num_samples_per_model, param["latent_size"]).normal_().cuda() * code_log_std.exp() * param["lambda_variance"] + code_mu
+            # code_mu, code_log_std = lat_code_mu(dict_model_hash_2_idx[hash]), lat_code_log_std(dict_model_hash_2_idx[hash])
+            # latent_code =  torch.empty(num_samples_per_model, param["latent_size"]).normal_().cuda() * code_log_std.exp() * param["lambda_variance"] + code_mu
 
-            pred = decoder(latent_code, xyz)
+            # pred = decoder(latent_code, xyz)
+
+            code_log_std = []
+            code_mu = []
+            latent_code_list = []
+            a = torch.empty(sdf_gt.shape[0], param["latent_size"]).normal_().cuda()
+
+            for i in range(len(hash)):
+                code_mu.append(lat_code_mu(dict_model_hash_2_idx[hash[i]]))
+                code_log_std.append(lat_code_log_std(dict_model_hash_2_idx[hash[i]]))
+                latent_code_list.append(a[i] * code_log_std[i].exp() * param["lambda_variance"] + code_mu[i])
+
+            latent_code = torch.empty([len(latent_code_list), param["latent_size"]]).cuda()
+            for i in range(len(latent_code)):
+                latent_code[i] = latent_code_list[i]
+
+            pred = decoder(latent_code.repeat_interleave(num_samples_per_model, dim=0), xyz[:num_samples_per_model].repeat(sdf_gt.shape[0],1))
 
             ##### compute loss and store logs #####
             pred_sdf = pred[:,0]
             pred_rgb = pred[:,1:]
-            loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, threshold_precision, param)
+            loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt.reshape(sdf_gt.shape[0] * num_samples_per_model), rgb_gt.reshape(rgb_gt.shape[0] * num_samples_per_model, 3), threshold_precision, param)
             
             loss_total = loss_sdf + loss_rgb + loss_kl
 
@@ -197,9 +214,9 @@ if __name__ == '__main__':
             logs["rgb"].append(loss_rgb.detach().cpu())
             logs["reg"].append(loss_kl.detach().cpu())
 
-            #update weights
-            loss_total.backward()
-            optimizer.step()
+            # #update weights
+            # loss_total.backward()
+            # optimizer.step()
 
             # estime time left
             model_count += 1
@@ -211,12 +228,20 @@ if __name__ == '__main__':
                 pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, \
                 (lat_code_log_std.weight.exp()).mean(), (lat_code_mu.weight).abs().mean(), (int)(time_left/60)))
                 
+            if (loss_sdf.isnan()):
+                IPython.embed()
+
+
+            #update weights
+            loss_total.backward()
+            optimizer.step()
+
         scheduler.step()
 
     print(f"Training finish in {(int)((time.time() - time_start) / 60)} min")
 
 
-    with open("../../image2sdf/logs/log.pkl", "wb") as fp:
+    with open(LOGS_PATH, "wb") as fp:
         pickle.dump(logs, fp)
     
     
