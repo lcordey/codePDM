@@ -122,7 +122,10 @@ if __name__ == '__main__':
 
     resolution = RESOLUTION
     threshold_precision = 1.0/resolution
-    # num_samples_per_model = resolution * resolution * resolution
+
+    # fill a xyz grid to give as input to the decoder 
+    xyz = init_xyz(resolution)
+    
     num_samples_per_model = param["num_samples_per_model"]
     batch_size = param["dataLoader"]["batch_size"]
 
@@ -131,9 +134,6 @@ if __name__ == '__main__':
     for val in glob.glob(SDF_DIR + "*.h5"):
         list_model_hash.append(os.path.basename(val).split('.')[0])
     num_model = len(list_model_hash)
-
-    # fill a xyz grid to give as input to the decoder 
-    xyz = init_xyz(resolution)
 
     # initialize a random latent code for each models
     lat_code_mu, lat_code_log_std = init_lat_vecs(num_model, param["latent_size"])
@@ -144,9 +144,34 @@ if __name__ == '__main__':
     for model_hash, i in zip(list_model_hash, range(num_model)):
         dict_model_hash_2_idx[model_hash] = idx[i]
 
-    list_model_hash = np.repeat(list_model_hash, 100)
+    # load every models
+    print("Loading models...")
+    dict_gt_data = dict()
+    dict_gt_data["sdf"] = dict()
+    dict_gt_data["rgb"] = dict()
+    num_total_point_per_model = resolution * resolution * resolution
+
+    for model_hash, i in zip(list_model_hash, num_model):
+        if i%20 == 0:
+            print(f"loading models: {i/num_model}%")
+        h5f = h5py.File(SDF_DIR + model_hash + '.h5', 'r')
+        h5f_tensor = torch.tensor(h5f["tensor"][()], dtype = torch.float)
+
+        sdf_gt = np.reshape(h5f_tensor[:,:,:,0], [num_total_point_per_model])
+        rgb_gt = np.reshape(h5f_tensor[:,:,:,1:], [num_total_point_per_model , 3])
+
+        sdf_gt = sdf_gt / resolution
+        rgb_gt = rgb_gt / 255
+
+        dict_gt_data["sdf"][model_hash] = sdf_gt
+        dict_gt_data["rgb"][model_hash] = rgb_gt
+
+
+    # list_model_hash = np.repeat(list_model_hash, 100)
     # dataLoader for training dataset
-    training_dataset = DatasetDecoder(list_model_hash, SDF_DIR, resolution, num_samples_per_model)
+    # training_dataset = DatasetDecoder(list_model_hash, SDF_DIR, resolution, num_samples_per_model)
+
+    training_dataset = DatasetDecoder(list_model_hash, dict_gt_data, num_samples_per_model)
     training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader"])
 
     # initialize decoder
