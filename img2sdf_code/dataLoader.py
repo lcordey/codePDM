@@ -27,7 +27,7 @@ class DatasetDecoder(torch.utils.data.Dataset):
         h5f = h5py.File(self.sdf_dir_pth + model_hash + '.h5', 'r')
         h5f_tensor = torch.tensor(h5f["tensor"][()], dtype = torch.float)
 
-        print(time.time() - time_start)
+        # print(time.time() - time_start)
 
         num_total_point_in_model = (int)(h5f_tensor.numel()/4)
 
