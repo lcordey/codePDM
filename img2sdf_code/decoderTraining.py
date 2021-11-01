@@ -133,7 +133,7 @@ if __name__ == '__main__':
     num_model = len(list_model_hash)
 
     # dataLoader for training dataset
-    training_dataset = DatasetDecoder(list_model_hash, SDF_DIR, resolution)
+    training_dataset = DatasetDecoder(list_model_hash, SDF_DIR, resolution, num_samples_per_model)
     training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader"])
 
     # fill a xyz grid to give as input to the decoder 

@@ -5,11 +5,12 @@ import h5py
 
 class DatasetDecoder(torch.utils.data.Dataset):
     'Characterizes a dataset for PyTorch'
-    def __init__(self, list_hash, sdf_dir_pth, resolution):
+    def __init__(self, list_hash, sdf_dir_pth, resolution, num_samples_per_model):
         'Initialization'
         self.list_hash = list_hash
         self.sdf_dir_pth = sdf_dir_pth
         self.resolution = resolution
+        self.num_samples_per_model = num_samples_per_model
 
     def __len__(self):
         'Denotes the total number of samples'
@@ -32,8 +33,8 @@ class DatasetDecoder(torch.utils.data.Dataset):
         sdf_gt = sdf_gt / self.resolution
         rgb_gt = rgb_gt / 255
 
-        # sdf_gt = sdf_gt[:1000]
-        # rgb_gt = rgb_gt[:1000]
+        sdf_gt = sdf_gt[:self.num_samples_per_model]
+        rgb_gt = rgb_gt[:self.num_samples_per_model]
 
 
         return model_hash, sdf_gt, rgb_gt
