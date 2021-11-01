@@ -235,11 +235,14 @@ if __name__ == '__main__':
             pred_sdf = torch.empty([mini_batch_size * num_samples_per_model]).cuda()
             pred_rgb = torch.empty([mini_batch_size * num_samples_per_model, 3]).cuda()
 
+
+            a = torch.empty(mini_batch_size, param["latent_size"]).normal_().cuda()
             for i in range(mini_batch_size):
                 code_mu = lat_code_mu(dict_model_hash_2_idx[hash[i]])
-                latent_code = code_mu.unsqueeze(0)
+                code_log_std = lat_code_log_std(dict_model_hash_2_idx[hash[i]])
+                latent_code = a[i] * code_log_std.exp() * param["lambda_variance"] + code_mu
+                latent_code = latent_code.unsqueeze(0).repeat_interleave(num_samples_per_model, dim=0)
                 xyz_samples = xyz[xyz_idx[i]]
-                latent_code = latent_code.repeat_interleave(num_samples_per_model, dim=0)
 
                 pred = decoder(latent_code, xyz_samples)    
 
