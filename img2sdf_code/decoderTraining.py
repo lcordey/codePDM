@@ -5,6 +5,8 @@ import glob
 import json
 import time
 
+from torch.nn.modules import batchnorm
+
 from networks import Decoder
 from dataLoader import DatasetDecoder
 from marching_cubes_rgb import *
@@ -171,7 +173,7 @@ if __name__ == '__main__':
     training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader"])
 
     # initialize decoder
-    decoder = Decoder(param["latent_size"]).cuda()
+    decoder = Decoder(param["latent_size"], batchnorm=True).cuda()
 
     # initialize optimizer and scheduler
     optimizer, scheduler = init_opt_sched(decoder, lat_code_mu, lat_code_log_std, param["optimizer"])
@@ -193,46 +195,19 @@ if __name__ == '__main__':
         for hash, sdf_gt, rgb_gt, xyz_idx in training_generator:
             optimizer.zero_grad()
 
-            time_loading = time.time() - time_start
-            print(f"Time to load the data: {time_loading}")
-            if time_loading > 0.2:
-                print("\nDataLoader is saturated!!!\n")
-            time_start = time.time()
+            # time_loading = time.time() - time_start
+            # print(f"Time to load the data: {time_loading}")
+            # if time_loading > 0.2:
+            #     print("\nDataLoader is saturated!!!\n")
+            # time_start = time.time()
 
             # transfer to gpu
             sdf_gt = sdf_gt.cuda()
             rgb_gt = rgb_gt.cuda()
 
-
-
-            ##### compute sdf prediction #####
-            # code_mu, code_log_std = lat_code_mu(dict_model_hash_2_idx[hash]), lat_code_log_std(dict_model_hash_2_idx[hash])
-            # latent_code =  torch.empty(num_samples_per_model, param["latent_size"]).normal_().cuda() * code_log_std.exp() * param["lambda_variance"] + code_mu
-
-            # pred = decoder(latent_code, xyz)
             mini_batch_size = len(hash)
 
-            # a = torch.empty(mini_batch_size, param["latent_size"]).normal_().cuda()
-            # latent_code = torch.empty([mini_batch_size, param["latent_size"]]).cuda()
-            # xyz_samples = torch.empty([num_samples_per_model * mini_batch_size, 3]).cuda()
-
-            # for i in range(mini_batch_size):
-            #     code_mu = lat_code_mu(dict_model_hash_2_idx[hash[i]])
-                # code_log_std = lat_code_log_std(dict_model_hash_2_idx[hash[i]])
-                # latent_code[i] = a[i] * code_log_std.exp() * param["lambda_variance"] + code_mu
-            #     xyz_samples[i * num_samples_per_model: (i+1) * num_samples_per_model, :] = xyz[xyz_idx[i]]
-
-            # latent_code = latent_code.repeat_interleave(num_samples_per_model, dim=0)
-
-            # pred = decoder(latent_code, xyz_samples)
-
-            # ##### compute loss and store logs #####
-            # pred_sdf = pred[:,0]
-            # pred_rgb = pred[:,1:]
-            # loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt.reshape(mini_batch_size * num_samples_per_model), rgb_gt.reshape(mini_batch_size * num_samples_per_model, 3), threshold_precision, param)
-            
-            # # loss_total = loss_sdf + loss_rgb + loss_kl
-            # loss_total = loss_sdf + loss_rgb
+            ##### compute sdf prediction #####
 
             pred_sdf_slice = torch.empty([mini_batch_size * num_samples_per_model]).cuda()
             pred_rgb_slice = torch.empty([mini_batch_size * num_samples_per_model, 3]).cuda()
@@ -240,7 +215,6 @@ if __name__ == '__main__':
             all_latent_code = torch.empty(mini_batch_size * num_samples_per_model, param["latent_size"]).cuda()
             all_xyz = torch.empty([mini_batch_size * num_samples_per_model, 3]).cuda()
             
-
 
             a = torch.empty(mini_batch_size, param["latent_size"]).normal_().cuda()
             for i in range(mini_batch_size):
@@ -270,7 +244,6 @@ if __name__ == '__main__':
             # loss_total = loss_sdf + loss_rgb + loss_kl
             loss_total = loss_sdf + loss_rgb
 
-
             #log
             logs["total"].append(loss_total.detach().cpu())
             logs["sdf"].append(loss_sdf.detach().cpu())
@@ -291,8 +264,8 @@ if __name__ == '__main__':
                 pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, \
                 (lat_code_log_std.weight.exp()).mean(), (lat_code_mu.weight).abs().mean(), (int)(time_left/60)))
 
-            print(f"Time for network pass: {time.time() - time_start}")
-            time_start = time.time()
+            # print(f"Time for network pass: {time.time() - time_start}")
+            # time_start = time.time()
 
         scheduler.step()
 
