@@ -2,6 +2,7 @@ from numpy.core.fromnumeric import _std_dispatcher
 import torch
 import numpy as np
 import h5py
+import time
 
 class DatasetDecoder(torch.utils.data.Dataset):
     'Characterizes a dataset for PyTorch'
@@ -22,8 +23,11 @@ class DatasetDecoder(torch.utils.data.Dataset):
         # Select sample
         model_hash = self.list_hash[index]
 
+        time_start = time.time()
         h5f = h5py.File(self.sdf_dir_pth + model_hash + '.h5', 'r')
         h5f_tensor = torch.tensor(h5f["tensor"][()], dtype = torch.float)
+
+        print(time.time() - time_start)
 
         num_total_point_in_model = (int)(h5f_tensor.numel()/4)
 
