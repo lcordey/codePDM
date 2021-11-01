@@ -171,6 +171,8 @@ if __name__ == '__main__':
     # dataLoader for training dataset
     # training_dataset = DatasetDecoder(list_model_hash, SDF_DIR, resolution, num_samples_per_model)
 
+
+    list_model_hash = np.repeat(list_model_hash, 100)
     training_dataset = DatasetDecoder(list_model_hash, dict_gt_data, num_samples_per_model)
     training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader"])
 
@@ -199,7 +201,7 @@ if __name__ == '__main__':
             optimizer.zero_grad()
 
             time_loading = time.time() - time_start
-            print(f"time to load the data: {time_loading}")
+            print(f"Time to load the data: {time_loading}")
             if time_loading > 0.2:
                 print("\nDataLoader is saturated!!!\n")
             time_start = time.time()
@@ -278,7 +280,7 @@ if __name__ == '__main__':
                 pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, \
                 (lat_code_log_std.weight.exp()).mean(), (lat_code_mu.weight).abs().mean(), (int)(time_left/60)))
 
-            print(f"time for network pass: {time.time() - time_start}")
+            print(f"Time for network pass: {time.time() - time_start}")
             time_start = time.time()
 
         scheduler.step()
