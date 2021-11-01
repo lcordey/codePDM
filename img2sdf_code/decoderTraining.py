@@ -193,6 +193,8 @@ if __name__ == '__main__':
             latent_code = torch.empty([batch_size, param["latent_size"]]).cuda()
             xyz_sample = torch.empty([num_samples_per_model * batch_size, 3]).cuda()
 
+            IPython.embed()
+
             for i in range(batch_size):
                 code_mu = lat_code_mu(dict_model_hash_2_idx[hash[i]])
                 code_log_std = lat_code_log_std(dict_model_hash_2_idx[hash[i]])
