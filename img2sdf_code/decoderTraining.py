@@ -234,8 +234,8 @@ if __name__ == '__main__':
             # # loss_total = loss_sdf + loss_rgb + loss_kl
             # loss_total = loss_sdf + loss_rgb
 
-            pred_sdf = torch.empty([mini_batch_size * num_samples_per_model]).cuda()
-            pred_rgb = torch.empty([mini_batch_size * num_samples_per_model, 3]).cuda()
+            pred_sdf_slice = torch.empty([mini_batch_size * num_samples_per_model]).cuda()
+            pred_rgb_slice = torch.empty([mini_batch_size * num_samples_per_model, 3]).cuda()
 
             all_latend_code = torch.empty(mini_batch_size * num_samples_per_model, param["latent_size"]).cuda()
             all_xyz = torch.empty([mini_batch_size * num_samples_per_model, 3]).cuda()
@@ -254,15 +254,17 @@ if __name__ == '__main__':
                 all_latend_code[i * num_samples_per_model: (i+1) * num_samples_per_model] = latent_code
                 all_xyz[i * num_samples_per_model: (i+1) * num_samples_per_model] = xyz_samples
 
-                # pred = decoder(latent_code, xyz_samples)
+                pred_slice = decoder(latent_code, xyz_samples)
 
-                # pred_sdf[i * num_samples_per_model: (i+1) * num_samples_per_model] = pred[:,0]
-                # pred_rgb[i * num_samples_per_model: (i+1) * num_samples_per_model, :] = pred[:,1:]
+                pred_sdf_slice[i * num_samples_per_model: (i+1) * num_samples_per_model] = pred[:,0]
+                pred_rgb_slice[i * num_samples_per_model: (i+1) * num_samples_per_model, :] = pred[:,1:]
 
             pred = decoder(all_latend_code, all_xyz)
 
             pred_sdf = pred[:,0]
             pred_rgb = pred[:,1:]
+
+            IPython.embed()
 
             loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt.reshape(mini_batch_size * num_samples_per_model), rgb_gt.reshape(mini_batch_size * num_samples_per_model, 3), threshold_precision, param)
             
