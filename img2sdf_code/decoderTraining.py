@@ -174,6 +174,7 @@ if __name__ == '__main__':
             optimizer.zero_grad()
 
             print(f"time to load the data: {time.time() - time_start}")
+            time_start = time.time()
 
             # only 1 sample per batch!
             # hash = hash[0]
@@ -218,9 +219,9 @@ if __name__ == '__main__':
             logs["rgb"].append(loss_rgb.detach().cpu())
             logs["reg"].append(loss_kl.detach().cpu())
 
-            # #update weights
-            # loss_total.backward()
-            # optimizer.step()
+            #update weights
+            loss_total.backward()
+            optimizer.step()
 
             # estime time left
             model_count += mini_batch_size
@@ -231,15 +232,8 @@ if __name__ == '__main__':
                 epoch, model_count / num_model * 100, loss_sdf, loss_rgb, loss_kl, \
                 pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, \
                 (lat_code_log_std.weight.exp()).mean(), (lat_code_mu.weight).abs().mean(), (int)(time_left/60)))
-                
-            if (loss_sdf.isnan()):
-                IPython.embed()
 
-
-            #update weights
-            loss_total.backward()
-            optimizer.step()
-
+            print(f"time for network pass: {time.time() - time_start}")
             time_start = time.time()
 
         scheduler.step()

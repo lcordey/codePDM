@@ -13,7 +13,7 @@
         "dataLoader" :{
             "batch_size" : 25,
             "shuffle": 1,
-            "num_workers": 8
+            "num_workers": 16
         },
         "optimizer":{
             "eta_decoder" : 1e-3,
