@@ -195,27 +195,48 @@ if __name__ == '__main__':
             # pred = decoder(latent_code, xyz)
             mini_batch_size = len(hash)
 
-            a = torch.empty(mini_batch_size, param["latent_size"]).normal_().cuda()
-            latent_code = torch.empty([mini_batch_size, param["latent_size"]]).cuda()
-            xyz_samples = torch.empty([num_samples_per_model * mini_batch_size, 3]).cuda()
+            # a = torch.empty(mini_batch_size, param["latent_size"]).normal_().cuda()
+            # latent_code = torch.empty([mini_batch_size, param["latent_size"]]).cuda()
+            # xyz_samples = torch.empty([num_samples_per_model * mini_batch_size, 3]).cuda()
+
+            # for i in range(mini_batch_size):
+            #     code_mu = lat_code_mu(dict_model_hash_2_idx[hash[i]])
+                # code_log_std = lat_code_log_std(dict_model_hash_2_idx[hash[i]])
+                # latent_code[i] = a[i] * code_log_std.exp() * param["lambda_variance"] + code_mu
+            #     xyz_samples[i * num_samples_per_model: (i+1) * num_samples_per_model, :] = xyz[xyz_idx[i]]
+
+            # latent_code = latent_code.repeat_interleave(num_samples_per_model, dim=0)
+
+            # pred = decoder(latent_code, xyz_samples)
+
+            # ##### compute loss and store logs #####
+            # pred_sdf = pred[:,0]
+            # pred_rgb = pred[:,1:]
+            # loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt.reshape(mini_batch_size * num_samples_per_model), rgb_gt.reshape(mini_batch_size * num_samples_per_model, 3), threshold_precision, param)
+            
+            # # loss_total = loss_sdf + loss_rgb + loss_kl
+            # loss_total = loss_sdf + loss_rgb
+
+            pred_sdf = torch.empty([mini_batch_size * num_samples_per_model]).cuda()
+            pred_rgb = torch.empty([mini_batch_size * num_samples_per_model, 3]).cuda()
 
             for i in range(mini_batch_size):
                 code_mu = lat_code_mu(dict_model_hash_2_idx[hash[i]])
-                code_log_std = lat_code_log_std(dict_model_hash_2_idx[hash[i]])
-                latent_code[i] = a[i] * code_log_std.exp() * param["lambda_variance"] + code_mu
-                xyz_samples[i * num_samples_per_model: (i+1) * num_samples_per_model, :] = xyz[xyz_idx[i]]
+                latent_code = code_mu.unsqueeze(0)
+                xyz_samples = xyz[xyz_idx[i]]
+                latent_code = latent_code.repeat_interleave(num_samples_per_model, dim=0)
 
-            latent_code = latent_code.repeat_interleave(num_samples_per_model, dim=0)
+                pred = decoder(latent_code, xyz_samples)    
 
-            pred = decoder(latent_code, xyz_samples)
+                pred_sdf[i * num_samples_per_model: (i+1) * num_samples_per_model] = pred[:,0]
+                pred_rgb[i * num_samples_per_model: (i+1) * num_samples_per_model, :] = pred[:,1:]
 
-            ##### compute loss and store logs #####
-            pred_sdf = pred[:,0]
-            pred_rgb = pred[:,1:]
+            # IPython.embed()
+
             loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt.reshape(mini_batch_size * num_samples_per_model), rgb_gt.reshape(mini_batch_size * num_samples_per_model, 3), threshold_precision, param)
             
-            # loss_total = loss_sdf + loss_rgb + loss_kl
             loss_total = loss_sdf + loss_rgb
+
 
             #log
             logs["total"].append(loss_total.detach().cpu())

@@ -2,8 +2,8 @@
     "decoder" :{
 
         "latent_size" : 6,
-        "num_epoch" : 1000,
-        "num_samples_per_model": 100000,
+        "num_epoch" : 1,
+        "num_samples_per_model": 50000,
         
         "lambda_variance": 0.0,
         "lambda_sdf": 1,
@@ -11,7 +11,7 @@
         "lambda_kl": 0.002,
 
         "dataLoader" :{
-            "batch_size" : 2,
+            "batch_size" : 25,
             "shuffle": 1,
             "num_workers": 42
         },
