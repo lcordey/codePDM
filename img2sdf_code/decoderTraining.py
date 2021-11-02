@@ -250,6 +250,9 @@ if __name__ == '__main__':
 
 
     ###### Saving Decoder ######
+    # save decoder
+    torch.save(decoder, DECODER_PATH)
+
     # save logs
     with open(LOGS_PATH, "wb") as fp:
         pickle.dump(logs, fp)
