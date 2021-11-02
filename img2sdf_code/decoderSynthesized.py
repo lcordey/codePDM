@@ -10,7 +10,7 @@ DEFAULT_RENDER_RESOLUTION = 64
 
 DECODER_PATH = "models_and_codes/decoder.pth"
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
-OUTPUT_DIR = "../../image2sdf/decoder_synthesized"
+OUTPUT_DIR = "../../image2sdf/decoder_output/synthesized"
 
 def init_xyz(resolution):
     xyz = torch.empty(resolution * resolution * resolution, 3).cuda()
@@ -66,14 +66,18 @@ if __name__ == '__main__':
         # variable to store results
         sdf_result = np.empty([resolution, resolution, resolution, 4])
 
-        for x in range(resolution):
-            sdf_pred = decoder(lat_code_synthesized(idx[i].repeat(resolution * resolution)),xyz[x * resolution * resolution: (x+1) * resolution * resolution]).detach()
 
+        # loop because it requires too much GPU memory on my computer
+        for x in range(resolution):
+            latent_code = lat_code_synthesized(idx[i].repeat(resolution * resolution))
+            xyz_sub_sample = xyz[x * resolution * resolution: (x+1) * resolution * resolution]
+
+            sdf_pred = decoder(latent_code, xyz_sub_sample).detach().cpu()
             sdf_pred[:,0] = sdf_pred[:,0] * resolution
             sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
             sdf_pred[:,1:] = sdf_pred[:,1:] * 255
 
-            sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:].cpu(), [resolution, resolution, 4])
+            sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:], [resolution, resolution, 4])
 
         # print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result[:,:,:,0]), np.max(sdf_result[:,:,:,0])))
         if(np.min(sdf_result[:,:,:,0]) < 0 and np.max(sdf_result[:,:,:,0]) > 0):

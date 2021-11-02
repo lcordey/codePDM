@@ -16,7 +16,7 @@ DEFAULT_LOGS = True
 RESOLUTION_USED_IN_TRAINING = 64
 DECODER_PATH = "models_and_codes/decoder.pth"
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
-OUTPUT_DIR = "../../image2sdf/decoder_output"
+OUTPUT_DIR = "../../image2sdf/decoder_output/evaluation"
 LOGS_PATH = "../../image2sdf/logs/decoder/log.pkl"
 PLOT_PATH = "../../image2sdf/plots/decoder/"
 PARAM_FILE = "config/param.json"
@@ -64,15 +64,18 @@ if __name__ == '__main__':
             # variable to store results
             sdf_result = np.empty([resolution, resolution, resolution, 4])
 
+
+            # loop because it requires too much GPU memory on my computer
             for x in range(resolution):
+                latent_code = dict_hash_2_code[hash].repeat(resolution * resolution, 1).cuda()
+                xyz_sub_sample = xyz[x * resolution * resolution: (x+1) * resolution * resolution]
 
-                sdf_pred = decoder(dict_hash_2_code[hash].repeat(resolution * resolution, 1).cuda(),xyz[x * resolution * resolution: (x+1) * resolution * resolution]).detach()
-
+                sdf_pred = decoder(latent_code, xyz_sub_sample).detach().cpu()
                 sdf_pred[:,0] = sdf_pred[:,0] * resolution
                 sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
                 sdf_pred[:,1:] = sdf_pred[:,1:] * 255
 
-                sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:].cpu(), [resolution, resolution, 4])
+                sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:], [resolution, resolution, 4])
 
             # print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result[:,:,:,0]), np.max(sdf_result[:,:,:,0])))
             if(np.min(sdf_result[:,:,:,0]) < 0 and np.max(sdf_result[:,:,:,0]) > 0):
