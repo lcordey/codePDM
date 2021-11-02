@@ -171,7 +171,7 @@ if __name__ == '__main__':
         dict_gt_data["rgb"][model_hash] = rgb_gt
 
     list_model_hash = np.repeat(list_model_hash, DATASET_REPETITION)
-    training_dataset = DatasetDecoder(list_model_hash, dict_gt_data, num_samples_per_model)
+    training_dataset = DatasetDecoder(list_model_hash, dict_gt_data, num_samples_per_model, dict_model_hash_2_idx)
     training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader"])
 
     # initialize decoder
@@ -209,11 +209,11 @@ if __name__ == '__main__':
 
             ##### compute sdf prediction #####
 
-            pred_sdf_slice = torch.empty([mini_batch_size * num_samples_per_model]).cuda()
-            pred_rgb_slice = torch.empty([mini_batch_size * num_samples_per_model, 3]).cuda()
+            # pred_sdf_slice = torch.empty([mini_batch_size * num_samples_per_model]).cuda()
+            # pred_rgb_slice = torch.empty([mini_batch_size * num_samples_per_model, 3]).cuda()
 
-            all_latent_code = torch.empty(mini_batch_size * num_samples_per_model, param["latent_size"]).cuda()
-            all_xyz = torch.empty([mini_batch_size * num_samples_per_model, 3]).cuda()
+            # all_latent_code = torch.empty(mini_batch_size * num_samples_per_model, param["latent_size"]).cuda()
+            # all_xyz = torch.empty([mini_batch_size * num_samples_per_model, 3]).cuda()
             
 
             a = torch.empty(mini_batch_size, param["latent_size"]).normal_().cuda()
@@ -234,11 +234,11 @@ if __name__ == '__main__':
             #     all_latent_code[i * num_samples_per_model: (i+1) * num_samples_per_model] = latent_code
             #     all_xyz[i * num_samples_per_model: (i+1) * num_samples_per_model] = xyz_samples
 
-            batch_idx = torch.empty([mini_batch_size]).type(torch.LongTensor).cuda()
-            for i in range(mini_batch_size):
-                batch_idx[i] = dict_model_hash_2_idx[hash[i]]
+            # batch_idx = torch.empty([mini_batch_size]).type(torch.LongTensor).cuda()
+            # for i in range(mini_batch_size):
+            #     batch_idx[i] = dict_model_hash_2_idx[hash[i]]
 
-            latent_code = a * lat_code_log_std(batch_idx).exp() * param["lambda_variance"] + lat_code_mu(batch_idx)
+            latent_code = a * lat_code_log_std(np.array(hash.squeeze())).exp() * param["lambda_variance"] + lat_code_mu(hash.squeeze())
 
             pred = decoder(latent_code, xyz[np.array(xyz_idx).squeeze()])
 

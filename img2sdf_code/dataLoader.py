@@ -8,11 +8,12 @@ import time
 
 class DatasetDecoder(torch.utils.data.Dataset):
     'Characterizes a dataset for PyTorch'
-    def __init__(self, list_hash, dict_gt_data, num_samples_per_model):
+    def __init__(self, list_hash, dict_gt_data, num_samples_per_model, dict_model_hash_2_idx):
         'Initialization'
         self.list_hash = list_hash
         self.dict_gt_data = dict_gt_data
         self.num_samples_per_model = num_samples_per_model
+        self.dict_model_hash_2_idx = dict_model_hash_2_idx
 
     def __len__(self):
         'Denotes the total number of samples'
@@ -45,7 +46,7 @@ class DatasetDecoder(torch.utils.data.Dataset):
         rgb_gt = rgb_gt[xyz_idx]
 
 
-        return model_hash, sdf_gt, rgb_gt, xyz_idx
+        return self.dict_model_hash_2_idx[model_hash], sdf_gt, rgb_gt, xyz_idx
 
 
 # class DatasetDecoder(torch.utils.data.Dataset):
