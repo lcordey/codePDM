@@ -116,6 +116,8 @@ if __name__ == '__main__':
             sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
             sdf_pred[:,1:] = sdf_pred[:,1:] * 255
 
+
+            IPython.embed()
             sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:].cpu(), [resolution, resolution, 4])
 
         # print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result[:,:,:,0]), np.max(sdf_result[:,:,:,0])))
