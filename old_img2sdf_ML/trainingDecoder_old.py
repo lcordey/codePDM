@@ -20,7 +20,7 @@ DEFAULT_SDF_DIR = '64'
 MODEL_PATH = "models_pth/decoderSDF.pth"
 LATENT_VECS_TARGET_PATH = "models_pth/latent_vecs_target.pth"
 
-ALL_SDF_DIR_PATH = "../../image2sdf/sdf/"
+ALL_SDF_DIR_PATH = "../../old_image2sdf/sdf/"
 ANNOTATIONS_PATH = "../../old_image2sdf/input_images/annotations.pkl"
 
 latent_size = 6
