@@ -10,8 +10,8 @@ import glob
 
 from traitlets.traitlets import default
 
-from networks import DecoderSDF
-from marching_cubes_rgb import *
+from networks_old import DecoderSDF
+from marching_cubes_rgb_old import *
 
 ###### parameter #####
 
