@@ -210,7 +210,7 @@ if __name__ == '__main__':
             rgb_gt = rgb_gt.cuda()
             rgb_gt = rgb_gt.reshape(num_samples_per_batch, 3)
             model_idx = torch.tensor(model_idx).cuda()
-            model_idx = model_idx.reshape(num_samples_per_batch)
+            model_idx = model_idx.repeat_interleave(num_samples_per_model, dim=0)
             xyz_idx = torch.tensor(xyz_idx)
             xyz_idx = xyz_idx.reshape(num_samples_per_batch)
 
