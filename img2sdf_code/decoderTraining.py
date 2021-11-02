@@ -173,7 +173,7 @@ if __name__ == '__main__':
     training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader"])
 
     # initialize decoder
-    decoder = Decoder(param["latent_size"], batch_norm=True).cuda()
+    decoder = Decoder(param["latent_size"], batch_norm=False).cuda()
 
     # initialize optimizer and scheduler
     optimizer, scheduler = init_opt_sched(decoder, lat_code_mu, lat_code_log_std, param["optimizer"])
@@ -225,10 +225,10 @@ if __name__ == '__main__':
                 xyz_samples = xyz[xyz_idx[i]]
 
 
-                pred_slice = decoder(latent_code, xyz_samples)
+                # pred_slice = decoder(latent_code, xyz_samples)
 
-                pred_sdf_slice[i * num_samples_per_model: (i+1) * num_samples_per_model] = pred_slice[:,0]
-                pred_rgb_slice[i * num_samples_per_model: (i+1) * num_samples_per_model, :] = pred_slice[:,1:]
+                # pred_sdf_slice[i * num_samples_per_model: (i+1) * num_samples_per_model] = pred_slice[:,0]
+                # pred_rgb_slice[i * num_samples_per_model: (i+1) * num_samples_per_model, :] = pred_slice[:,1:]
 
 
                 all_latent_code[i * num_samples_per_model: (i+1) * num_samples_per_model] = latent_code
@@ -239,8 +239,8 @@ if __name__ == '__main__':
             pred_sdf = pred[:,0]
             pred_rgb = pred[:,1:]
 
-            # loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt.reshape(mini_batch_size * num_samples_per_model), rgb_gt.reshape(mini_batch_size * num_samples_per_model, 3), threshold_precision, param)
-            loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf_slice, pred_rgb_slice, sdf_gt.reshape(mini_batch_size * num_samples_per_model), rgb_gt.reshape(mini_batch_size * num_samples_per_model, 3), threshold_precision, param)
+            loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt.reshape(mini_batch_size * num_samples_per_model), rgb_gt.reshape(mini_batch_size * num_samples_per_model, 3), threshold_precision, param)
+            # loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf_slice, pred_rgb_slice, sdf_gt.reshape(mini_batch_size * num_samples_per_model), rgb_gt.reshape(mini_batch_size * num_samples_per_model, 3), threshold_precision, param)
             
 
             # loss_total = loss_sdf + loss_rgb + loss_kl
