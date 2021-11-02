@@ -17,7 +17,7 @@ import IPython
 MAIN_DIR = "../../image2sdf/"
 # MAIN_DIR = "/home/loic/MasterPDM/image2sdf/"
 
-DECODER_PATH = "models_and_codes/decoderSDF.pth"
+DECODER_PATH = "models_and_codes/decoder.pth"
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
 LOGS_PATH = "../../image2sdf/logs/log.pkl"
 PARAM_FILE = "config/param.json"
