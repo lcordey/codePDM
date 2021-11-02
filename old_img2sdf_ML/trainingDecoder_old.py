@@ -21,10 +21,10 @@ MODEL_PATH = "models_pth/decoderSDF.pth"
 LATENT_VECS_TARGET_PATH = "models_pth/latent_vecs_target.pth"
 
 ALL_SDF_DIR_PATH = "../../image2sdf/sdf/"
-ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
+ANNOTATIONS_PATH = "../../old_image2sdf/input_images/annotations.pkl"
 
 latent_size = 6
-num_epoch = 1000000
+num_epoch = 1000
 batch_size = 10000
 
 eta_decoder = 1e-3
@@ -209,7 +209,7 @@ if __name__ == '__main__':
         scheduler.step()
 
         print("After {} epoch,  loss sdf: {:.5f}, loss rgb: {:.5f}, loss reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, lr: {:f}, lat_vec std/mu: {:.2f}/{:.2f}".format(\
-            epoch, torch.Tensor(log_loss_sdf[-10:]).mean(), torch.Tensor(log_loss_rgb[-10:]).mean(), torch.Tensor(log_loss_reg[-10:]).mean(), sdf_pred[:,0].min() * resolution, \
+            epoch, torch.Tensor(log_loss_sdf[-1]).mean(), torch.Tensor(log_loss_rgb[-1]).mean(), torch.Tensor(log_loss_reg[-1]).mean(), sdf_pred[:,0].min() * resolution, \
             sdf_pred[:,0].max() * resolution, sdf_pred[:,1:].min() * 255, sdf_pred[:,1:].max() * 255, optimizer.param_groups[0]['lr'], (lat_vecs_log_std.weight.exp()).mean(), (lat_vecs_mu.weight).abs().mean()))
 
     #save model
