@@ -132,6 +132,7 @@ if __name__ == '__main__':
     
     num_samples_per_model = param["num_samples_per_model"]
     batch_size = param["dataLoader"]["batch_size"]
+    num_samples_per_batch = batch_size * num_samples_per_model
 
     # get models' hashs
     list_model_hash = []
@@ -177,7 +178,7 @@ if __name__ == '__main__':
     training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader"])
 
     # initialize decoder
-    decoder = Decoder(param["latent_size"], batch_norm=False).cuda()
+    decoder = Decoder(param["latent_size"], batch_norm=True).cuda()
 
     # initialize optimizer and scheduler
     optimizer, scheduler = init_opt_sched(decoder, lat_code_mu, lat_code_log_std, param["optimizer"])
@@ -196,7 +197,7 @@ if __name__ == '__main__':
 
     for epoch in range (param["num_epoch"]):
         model_count = 0
-        for hash, sdf_gt, rgb_gt, xyz_idx in training_generator:
+        for model_idx, sdf_gt, rgb_gt, xyz_idx in training_generator:
             optimizer.zero_grad()
 
             time_loading = time.time() - time_start
@@ -205,57 +206,22 @@ if __name__ == '__main__':
 
             # transfer to gpu
             sdf_gt = sdf_gt.cuda()
+            sdf_gt = sdf_gt.reshape(num_samples_per_batch)
             rgb_gt = rgb_gt.cuda()
-            hash = hash.cuda()
+            rgb_gt = rgb_gt.reshape(num_samples_per_batch, 3)
+            model_idx = torch.tensor(model_idx).cuda()
+            model_idx = model_idx.reshape(num_samples_per_batch)
+            xyz_idx = torch.tensor(xyz_idx)
+            xyz_idx = xyz_idx.reshape(num_samples_per_batch)
 
+            coeff_std = torch.empty(num_samples_per_batch, param["latent_size"]).normal_()
+            latent_code = coeff_std * lat_code_log_std(model_idx).exp() * param["lambda_variance"] + lat_code_mu(model_idx)
 
-            # print(f"Time to transfer the data to gpu: {time.time() - time_start}")
-
-            mini_batch_size = len(hash)
-
-            ##### compute sdf prediction #####
-
-            # pred_sdf_slice = torch.empty([mini_batch_size * num_samples_per_model]).cuda()
-            # pred_rgb_slice = torch.empty([mini_batch_size * num_samples_per_model, 3]).cuda()
-
-            # all_latent_code = torch.empty(mini_batch_size * num_samples_per_model, param["latent_size"]).cuda()
-            # all_xyz = torch.empty([mini_batch_size * num_samples_per_model, 3]).cuda()
-            
-
-            a = torch.empty(mini_batch_size, param["latent_size"]).normal_().cuda()
-            # for i in range(mini_batch_size):
-            #     code_mu = lat_code_mu(dict_model_hash_2_idx[hash[i]])
-            #     code_log_std = lat_code_log_std(dict_model_hash_2_idx[hash[i]])
-            #     latent_code = a[i] * code_log_std.exp() * param["lambda_variance"] + code_mu
-            #     latent_code = latent_code.unsqueeze(0).repeat_interleave(num_samples_per_model, dim=0)
-            #     xyz_samples = xyz[xyz_idx[i]]
-
-
-            #     # pred_slice = decoder(latent_code, xyz_samples)
-
-            #     # pred_sdf_slice[i * num_samples_per_model: (i+1) * num_samples_per_model] = pred_slice[:,0]
-            #     # pred_rgb_slice[i * num_samples_per_model: (i+1) * num_samples_per_model, :] = pred_slice[:,1:]
-
-
-            #     all_latent_code[i * num_samples_per_model: (i+1) * num_samples_per_model] = latent_code
-            #     all_xyz[i * num_samples_per_model: (i+1) * num_samples_per_model] = xyz_samples
-
-            # batch_idx = torch.empty([mini_batch_size]).type(torch.LongTensor).cuda()
-            # for i in range(mini_batch_size):
-            #     batch_idx[i] = dict_model_hash_2_idx[hash[i]]
-
-            latent_code = a * lat_code_log_std(torch.tensor(hash.squeeze())).exp() * param["lambda_variance"] + lat_code_mu(torch.tensor(hash.squeeze()))
-
-            pred = decoder(latent_code, xyz[np.array(xyz_idx).squeeze()])
-
-            # pred = decoder(all_latent_code, all_xyz)
-
+            pred = decoder(latent_code, xyz[xyz_idx])
             pred_sdf = pred[:,0]
             pred_rgb = pred[:,1:]
 
-            loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt.reshape(mini_batch_size * num_samples_per_model), rgb_gt.reshape(mini_batch_size * num_samples_per_model, 3), threshold_precision, param)
-            # loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf_slice, pred_rgb_slice, sdf_gt.reshape(mini_batch_size * num_samples_per_model), rgb_gt.reshape(mini_batch_size * num_samples_per_model, 3), threshold_precision, param)
-            
+            loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, threshold_precision, param)
 
             # loss_total = loss_sdf + loss_rgb + loss_kl
             loss_total = loss_sdf + loss_rgb
@@ -271,7 +237,7 @@ if __name__ == '__main__':
             optimizer.step()
 
             # estime time left
-            model_count += mini_batch_size
+            model_count += batch_size
             time_left = compute_time_left(time_start, model_count, num_model, epoch, param["num_epoch"])
 
             # print
