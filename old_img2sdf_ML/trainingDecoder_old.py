@@ -11,7 +11,7 @@ import glob
 from traitlets.traitlets import default
 
 from networks_old import DecoderSDF
-from marching_cubes_rgb_old import *
+from marching_cubes_rgb import *
 
 ###### parameter #####
 
