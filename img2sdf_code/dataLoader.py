@@ -21,7 +21,7 @@ class DatasetDecoder(torch.utils.data.Dataset):
         'Generates one sample of data'
 
         # Select sample
-        xyz_idx = index%self.num_samples_per_model
+        xyz_idx = index%(64*64*64)
         model_hash = self.list_hash[(int)((index - xyz_idx)/(64*64*64))]
         model_idx = self.dict_model_hash_2_idx[model_hash]
 
