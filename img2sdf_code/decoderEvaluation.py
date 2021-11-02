@@ -81,23 +81,27 @@ if __name__ == '__main__':
                 colors_f = exctract_colors_f(colors_v, faces)
                 off_file = "%s/%s.off" %(OUTPUT_DIR, hash)
                 write_off(off_file, vertices, faces, colors_f)
-                print("Wrote %s." % hash)
+                print("Wrote %s.off" % hash)
             else:
                 print("surface level: 0, should be comprise in between the minimum and maximum value")
 
+
     if args.logs:
 
+        # load parameters
         logs = pickle.load(open(LOGS_PATH, 'rb'))
         dict_hash_2_code = pickle.load(open(LATENT_CODE_PATH, 'rb'))
+
         param_all = json.load(open(PARAM_FILE))
         param = param_all["decoder"]
 
-        list_hash = dict_hash_2_code.keys()
+        list_hash = list(dict_hash_2_code.keys())
         num_model = len(list_hash)
 
         num_batch_per_epoch = RESOLUTION_USED_IN_TRAINING **3 * num_model/ param["dataLoader"]["batch_size"]
         x_timestamp = np.arange(len(logs["sdf"])) / num_batch_per_epoch
 
+        # let's plots :)
         plt.figure()
         plt.title("logs loss sdf")
         plt.semilogy(x_timestamp,logs["sdf"])
@@ -112,5 +116,5 @@ if __name__ == '__main__':
         plt.xlabel("epoch")
         plt.savefig(PLOT_PATH + "sdf.png")
 
-        print("done plotting")
+    print("done")
 
