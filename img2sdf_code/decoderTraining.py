@@ -25,7 +25,7 @@ PARAM_FILE = "config/param.json"
 SDF_DIR = MAIN_DIR + "sdf/"
 RESOLUTION = 64
 
-DATASET_REPETITION = 1
+DATASET_REPETITION = 64*64*64
 
 
 
@@ -173,7 +173,7 @@ if __name__ == '__main__':
         dict_gt_data["sdf"][model_hash] = sdf_gt
         dict_gt_data["rgb"][model_hash] = rgb_gt
 
-    list_model_hash = np.repeat(list_model_hash, DATASET_REPETITION)
+    # list_model_hash = np.repeat(list_model_hash, DATASET_REPETITION)
     training_dataset = DatasetDecoder(list_model_hash, dict_gt_data, num_samples_per_model, dict_model_hash_2_idx_cpu)
     training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader"])
 
