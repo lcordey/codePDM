@@ -206,7 +206,6 @@ if __name__ == '__main__':
             # transfer to gpu
             sdf_gt = sdf_gt.cuda()
             rgb_gt = rgb_gt.cuda()
-            hash = hash.cuda()
 
 
             print(f"Time to transfer the data to gpu: {time.time() - time_start}")
