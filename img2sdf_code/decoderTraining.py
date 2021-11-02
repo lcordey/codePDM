@@ -263,7 +263,7 @@ if __name__ == '__main__':
         dict_hash_2_code[model_hash] = lat_code_mu(dict_model_hash_2_idx[model_hash].cuda())
 
     with open(LATENT_CODE_PATH, "wb") as fp:
-        pickle.dump(logs, fp)
+        pickle.dump(dict_hash_2_code, fp)
 
 
 

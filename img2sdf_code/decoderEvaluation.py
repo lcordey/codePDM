@@ -7,14 +7,13 @@ from decoderTraining import RESOLUTION
 from marching_cubes_rgb import *
 import IPython
 
-DEFAULT_RENDER = True
+DEFAULT_RENDER = False
 DEFAULT_RENDER_RESOLUTION = 64
 DEFAULT_MAX_MODEL_2_RENDER = 10
 DEFAULT_PLOT = True
 
+
 RESOLUTION_USED_IN_TRAINING = 64
-
-
 DECODER_PATH = "models_and_codes/decoderSDF.pth"
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
 OUTPUT_DIR = "../../image2sdf/output_decoder"
