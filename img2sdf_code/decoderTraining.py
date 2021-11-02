@@ -234,7 +234,7 @@ if __name__ == '__main__':
             #     all_latent_code[i * num_samples_per_model: (i+1) * num_samples_per_model] = latent_code
             #     all_xyz[i * num_samples_per_model: (i+1) * num_samples_per_model] = xyz_samples
 
-            batch_idx = np.empty([mini_batch_size])
+            batch_idx = torch.empty([mini_batch_size])
             for i in range(mini_batch_size):
                 batch_idx[i] = dict_model_hash_2_idx[hash[i]]
 
