@@ -10,7 +10,7 @@ import IPython
 DEFAULT_RENDER = False
 DEFAULT_RENDER_RESOLUTION = 64
 DEFAULT_MAX_MODEL_2_RENDER = 10
-DEFAULT_PLOT = True
+DEFAULT_LOGS = True
 
 
 RESOLUTION_USED_IN_TRAINING = 64
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     parser.add_argument('--render', type=bool, help='render model -> True or False', default= DEFAULT_RENDER)
     parser.add_argument('--resolution', type=int, help='resolution -> int', default= DEFAULT_RENDER_RESOLUTION)
     parser.add_argument('--max_model', type=int, help='max number of model to render -> int', default= DEFAULT_MAX_MODEL_2_RENDER)
-    parser.add_argument('--logs', type=bool, help='plots logs -> True or False', default= DEFAULT_PLOT)
+    parser.add_argument('--logs', type=bool, help='plots logs -> True or False', default= DEFAULT_LOGS)
     args = parser.parse_args()
 
 
@@ -87,7 +87,6 @@ if __name__ == '__main__':
 
     if args.logs:
 
-
         logs = pickle.load(open(LOGS_PATH, 'rb'))
         dict_hash_2_code = pickle.load(open(LATENT_CODE_PATH, 'rb'))
         param_all = json.load(open(PARAM_FILE))
@@ -96,7 +95,7 @@ if __name__ == '__main__':
         list_hash = dict_hash_2_code.keys()
         num_model = len(list_hash)
 
-        num_batch_per_epoch = RESOLUTION_USED_IN_TRAINING **3 * num_model/ param["batch_size"]
+        num_batch_per_epoch = RESOLUTION_USED_IN_TRAINING **3 * num_model/ param["dataLoader"]["batch_size"]
         x_timestamp = np.arange(len(logs["sdf"])) / num_batch_per_epoch
 
         plt.figure()
@@ -104,5 +103,7 @@ if __name__ == '__main__':
         plt.semilogy(x_timestamp,logs["sdf"])
         plt.ylabel("loss sdf")
         plt.xlabel("epoch")
-        plt.savefig(LOGS_PATH + "sdf.png")
+        plt.savefig(PLOT_PATH + "sdf.png")
+
+        print("done plotting")
 
