@@ -205,6 +205,9 @@ if __name__ == '__main__':
             sdf_gt = sdf_gt.cuda()
             rgb_gt = rgb_gt.cuda()
 
+
+            print(f"Time to transfer the data to gpu: {time.time() - time_start}")
+
             mini_batch_size = len(hash)
 
             ##### compute sdf prediction #####
