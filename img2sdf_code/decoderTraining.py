@@ -25,6 +25,8 @@ PARAM_FILE = "config/param.json"
 SDF_DIR = MAIN_DIR + "sdf/"
 RESOLUTION = 64
 
+DATASET_REPETITION = 10000
+
 
 
 def init_xyz(resolution):
@@ -168,7 +170,7 @@ if __name__ == '__main__':
         dict_gt_data["sdf"][model_hash] = sdf_gt
         dict_gt_data["rgb"][model_hash] = rgb_gt
 
-    list_model_hash = np.repeat(list_model_hash, 100)
+    list_model_hash = np.repeat(list_model_hash, DATASET_REPETITION)
     training_dataset = DatasetDecoder(list_model_hash, dict_gt_data, num_samples_per_model)
     training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader"])
 
@@ -195,11 +197,9 @@ if __name__ == '__main__':
         for hash, sdf_gt, rgb_gt, xyz_idx in training_generator:
             optimizer.zero_grad()
 
-            # time_loading = time.time() - time_start
-            # print(f"Time to load the data: {time_loading}")
-            # if time_loading > 0.2:
-            #     print("\nDataLoader is saturated!!!\n")
-            # time_start = time.time()
+            time_loading = time.time() - time_start
+            print(f"Time to load the data: {time_loading}")
+            time_start = time.time()
 
             # transfer to gpu
             sdf_gt = sdf_gt.cuda()
@@ -262,12 +262,12 @@ if __name__ == '__main__':
 
             # print
             print("Epoch {} / {:.2f}% ,loss: sdf: {:.5f}, rgb: {:.5f}, reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, code std/mu: {:.2f}/{:.2f}, time left: {} min".format(\
-                epoch, model_count / num_model * 100 / 100, loss_sdf, loss_rgb, loss_kl, \
+                epoch, model_count / num_model * 100 / DATASET_REPETITION, loss_sdf, loss_rgb, loss_kl, \
                 pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, \
                 (lat_code_log_std.weight.exp()).mean(), (lat_code_mu.weight).abs().mean(), (int)(time_left/60)))
 
-            # print(f"Time for network pass: {time.time() - time_start}")
-            # time_start = time.time()
+            print(f"Time for network pass: {time.time() - time_start}")
+            time_start = time.time()
 
         scheduler.step()
 
