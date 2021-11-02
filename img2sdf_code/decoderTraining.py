@@ -217,24 +217,31 @@ if __name__ == '__main__':
             
 
             a = torch.empty(mini_batch_size, param["latent_size"]).normal_().cuda()
+            # for i in range(mini_batch_size):
+            #     code_mu = lat_code_mu(dict_model_hash_2_idx[hash[i]])
+            #     code_log_std = lat_code_log_std(dict_model_hash_2_idx[hash[i]])
+            #     latent_code = a[i] * code_log_std.exp() * param["lambda_variance"] + code_mu
+            #     latent_code = latent_code.unsqueeze(0).repeat_interleave(num_samples_per_model, dim=0)
+            #     xyz_samples = xyz[xyz_idx[i]]
+
+
+            #     # pred_slice = decoder(latent_code, xyz_samples)
+
+            #     # pred_sdf_slice[i * num_samples_per_model: (i+1) * num_samples_per_model] = pred_slice[:,0]
+            #     # pred_rgb_slice[i * num_samples_per_model: (i+1) * num_samples_per_model, :] = pred_slice[:,1:]
+
+
+            #     all_latent_code[i * num_samples_per_model: (i+1) * num_samples_per_model] = latent_code
+            #     all_xyz[i * num_samples_per_model: (i+1) * num_samples_per_model] = xyz_samples
+
+            batch_idx = np.empty([mini_batch_size])
             for i in range(mini_batch_size):
-                code_mu = lat_code_mu(dict_model_hash_2_idx[hash[i]])
-                code_log_std = lat_code_log_std(dict_model_hash_2_idx[hash[i]])
-                latent_code = a[i] * code_log_std.exp() * param["lambda_variance"] + code_mu
-                latent_code = latent_code.unsqueeze(0).repeat_interleave(num_samples_per_model, dim=0)
-                xyz_samples = xyz[xyz_idx[i]]
+                batch_idx[i] = dict_model_hash_2_idx[hash[i]]
 
+            latent_code = a * lat_code_log_std(batch_idx).exp() * param["lambda_variance"] + lat_code_mu(batch_idx)
+            pred = decoder(latent_code, xyz[np.array(xyz_idx)])
 
-                # pred_slice = decoder(latent_code, xyz_samples)
-
-                # pred_sdf_slice[i * num_samples_per_model: (i+1) * num_samples_per_model] = pred_slice[:,0]
-                # pred_rgb_slice[i * num_samples_per_model: (i+1) * num_samples_per_model, :] = pred_slice[:,1:]
-
-
-                all_latent_code[i * num_samples_per_model: (i+1) * num_samples_per_model] = latent_code
-                all_xyz[i * num_samples_per_model: (i+1) * num_samples_per_model] = xyz_samples
-
-            pred = decoder(all_latent_code, all_xyz)
+            # pred = decoder(all_latent_code, all_xyz)
 
             pred_sdf = pred[:,0]
             pred_rgb = pred[:,1:]
