@@ -214,7 +214,7 @@ if __name__ == '__main__':
             xyz_idx = torch.tensor(xyz_idx)
             xyz_idx = xyz_idx.reshape(num_samples_per_batch)
 
-            coeff_std = torch.empty(num_samples_per_batch, param["latent_size"]).normal_()
+            coeff_std = torch.empty(num_samples_per_batch, param["latent_size"]).normal_().cuda()
             latent_code = coeff_std * lat_code_log_std(model_idx).exp() * param["lambda_variance"] + lat_code_mu(model_idx)
 
             pred = decoder(latent_code, xyz[xyz_idx])
