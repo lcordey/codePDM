@@ -200,9 +200,9 @@ if __name__ == '__main__':
         for model_idx, sdf_gt, rgb_gt, xyz_idx in training_generator:
             optimizer.zero_grad()
 
-            time_loading = time.time() - time_start
+            # time_loading = time.time() - time_start
             # print(f"Time to load the data: {time_loading}")
-            time_start = time.time()
+            # time_start = time.time()
 
             # transfer to gpu
             sdf_gt = sdf_gt.cuda()
@@ -223,8 +223,8 @@ if __name__ == '__main__':
 
             loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, threshold_precision, param)
 
-            # loss_total = loss_sdf + loss_rgb + loss_kl
-            loss_total = loss_sdf + loss_rgb
+            loss_total = loss_sdf + loss_rgb + loss_kl
+            # loss_total = loss_sdf + loss_rgb
 
             #log
             logs["total"].append(loss_total.detach().cpu())
