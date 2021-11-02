@@ -3,7 +3,7 @@
 
         "latent_size" : 8,
         "num_epoch" : 10,
-        "num_samples_per_model": 1000,
+        "num_samples_per_model": 100,
         
         "lambda_variance": 0.1,
         "lambda_sdf": 1,
