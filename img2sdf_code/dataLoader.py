@@ -22,7 +22,7 @@ class DatasetDecoder(torch.utils.data.Dataset):
 
         # Select sample
         xyz_idx = index%self.num_samples_per_model
-        model_hash = self.list_hash[(int)((index * xyz_idx)/64/64/64)]
+        model_hash = self.list_hash[(int)((index - xyz_idx)/(64*64*64))]
         model_idx = self.dict_model_hash_2_idx[model_hash]
 
         sdf_gt = self.dict_gt_data["sdf"][model_hash][xyz_idx]
