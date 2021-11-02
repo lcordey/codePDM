@@ -145,8 +145,10 @@ if __name__ == '__main__':
     # create a dictionary going from an hash to a corresponding index
     idx = torch.arange(num_model).type(torch.LongTensor).cuda()
     dict_model_hash_2_idx = dict()
+    dict_model_hash_2_idx_cpu = dict()
     for model_hash, i in zip(list_model_hash, range(num_model)):
         dict_model_hash_2_idx[model_hash] = idx[i]
+        dict_model_hash_2_idx_cpu[model_hash] = idx[i].cpu()
 
     # load every models
     print("Loading models...")
@@ -171,7 +173,7 @@ if __name__ == '__main__':
         dict_gt_data["rgb"][model_hash] = rgb_gt
 
     list_model_hash = np.repeat(list_model_hash, DATASET_REPETITION)
-    training_dataset = DatasetDecoder(list_model_hash, dict_gt_data, num_samples_per_model, dict_model_hash_2_idx)
+    training_dataset = DatasetDecoder(list_model_hash, dict_gt_data, num_samples_per_model, dict_model_hash_2_idx_cpu)
     training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader"])
 
     # initialize decoder
@@ -204,6 +206,7 @@ if __name__ == '__main__':
             # transfer to gpu
             sdf_gt = sdf_gt.cuda()
             rgb_gt = rgb_gt.cuda()
+            hash = hash.cuda()
 
 
             print(f"Time to transfer the data to gpu: {time.time() - time_start}")
