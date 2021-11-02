@@ -3,7 +3,7 @@
 
         "latent_size" : 8,
         "num_epoch" : 10,
-        "num_samples_per_model": 100,
+        "num_samples_per_model": 1,
         
         "lambda_variance": 0.1,
         "lambda_sdf": 1,
@@ -11,7 +11,7 @@
         "lambda_kl": 0.002,
 
         "dataLoader" :{
-            "batch_size" : 100,
+            "batch_size" : 10000,
             "shuffle": 1,
             "num_workers": 42
         },

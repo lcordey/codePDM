@@ -14,26 +14,33 @@ class DatasetDecoder(torch.utils.data.Dataset):
 
     def __len__(self):
         'Denotes the total number of samples'
-        return len(self.list_hash)
+        return len(self.list_hash) * 64*64*64
+        # return len(self.list_hash)
 
     def __getitem__(self, index):
         'Generates one sample of data'
 
-        time_start = time.time()
-
         # Select sample
-        model_hash = self.list_hash[index]
+        xyz_idx = index%self.num_samples_per_model
+        model_hash = self.list_hash[index - xyz_idx]
         model_idx = self.dict_model_hash_2_idx[model_hash]
 
+        sdf_gt = self.dict_gt_data["sdf"][model_hash][xyz_idx]
+        rgb_gt = self.dict_gt_data["rgb"][model_hash][xyz_idx]
+
+
+        # model_hash = self.list_hash[index]
+        # model_idx = self.dict_model_hash_2_idx[model_hash]
+
         # get model gt data from dictionnary
-        sdf_gt = self.dict_gt_data["sdf"][model_hash]
-        rgb_gt = self.dict_gt_data["rgb"][model_hash]
+        # sdf_gt = self.dict_gt_data["sdf"][model_hash]
+        # rgb_gt = self.dict_gt_data["rgb"][model_hash]
         
-        num_total_point_in_model = sdf_gt.shape[0]
+        # num_total_point_in_model = sdf_gt.shape[0]
 
         # Select random sample from model
-        xyz_idx = np.random.randint(num_total_point_in_model, size = self.num_samples_per_model)
-        sdf_gt = sdf_gt[xyz_idx]
-        rgb_gt = rgb_gt[xyz_idx]
+        # xyz_idx = np.random.randint(num_total_point_in_model, size = self.num_samples_per_model)
+        # sdf_gt = sdf_gt[xyz_idx]
+        # rgb_gt = rgb_gt[xyz_idx]
 
         return model_idx, sdf_gt, rgb_gt, xyz_idx
