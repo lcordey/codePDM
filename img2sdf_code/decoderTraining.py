@@ -200,9 +200,9 @@ if __name__ == '__main__':
         for model_idx, sdf_gt, rgb_gt, xyz_idx in training_generator:
             optimizer.zero_grad()
 
-            time_loading = time.time() - time_start
-            print(f"Time to load the data: {time_loading}")
-            time_start = time.time()
+            # time_loading = time.time() - time_start
+            # print(f"Time to load the data: {time_loading}")
+            # time_start = time.time()
 
             # transfer to gpu
             sdf_gt = sdf_gt.cuda()
@@ -246,8 +246,8 @@ if __name__ == '__main__':
                 pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, \
                 (lat_code_log_std.weight.exp()).mean(), (lat_code_mu.weight).abs().mean(), (int)(time_left/60)))
 
-            print(f"Time for network pass: {time.time() - time_start}")
-            time_start = time.time()
+            # print(f"Time for network pass: {time.time() - time_start}")
+            # time_start = time.time()
 
         scheduler.step()
 
