@@ -142,12 +142,10 @@ if __name__ == '__main__':
     lat_code_mu, lat_code_log_std = init_lat_vecs(num_model, param["latent_size"])
 
     # create a dictionary going from an hash to a corresponding index
-    idx = torch.arange(num_model).type(torch.LongTensor).cuda()
+    idx = torch.arange(num_model).type(torch.LongTensor)
     dict_model_hash_2_idx = dict()
-    dict_model_hash_2_idx_cpu = dict()
     for model_hash, i in zip(list_model_hash, range(num_model)):
         dict_model_hash_2_idx[model_hash] = idx[i]
-        dict_model_hash_2_idx_cpu[model_hash] = idx[i].cpu()
 
     # load every models
     print("Loading models...")
@@ -172,7 +170,7 @@ if __name__ == '__main__':
         dict_gt_data["rgb"][model_hash] = rgb_gt
 
     # list_model_hash = np.repeat(list_model_hash, DATASET_REPETITION)
-    training_dataset = DatasetDecoder(list_model_hash, dict_gt_data, num_samples_per_model, dict_model_hash_2_idx_cpu)
+    training_dataset = DatasetDecoder(list_model_hash, dict_gt_data, num_samples_per_model, dict_model_hash_2_idx)
     training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader"])
 
     # initialize decoder
@@ -204,17 +202,11 @@ if __name__ == '__main__':
 
             batch_size = len(model_idx)
 
-            IPython.embed()
-
             # transfer to gpu
             sdf_gt = sdf_gt.cuda()
-            # sdf_gt = sdf_gt.reshape(num_samples_per_batch)
             rgb_gt = rgb_gt.cuda()
-            # rgb_gt = rgb_gt.reshape(num_samples_per_batch, 3)
             model_idx = torch.tensor(model_idx).cuda()
-            # model_idx = model_idx.repeat_interleave(num_samples_per_model, dim=0)
             xyz_idx = torch.tensor(xyz_idx)
-            # xyz_idx = xyz_idx.reshape(num_samples_per_batch)
 
             coeff_std = torch.empty(batch_size, param["latent_size"]).normal_().cuda()
             latent_code = coeff_std * lat_code_log_std(model_idx).exp() * param["lambda_variance"] + lat_code_mu(model_idx)
@@ -263,6 +255,7 @@ if __name__ == '__main__':
         pickle.dump(logs, fp)
     
     dict_hash_2_code = dict()
+    lat_code_mu = lat_code_mu.cuda()
     for model_hash in list_model_hash:
         dict_hash_2_code[model_hash] = lat_code_mu(dict_model_hash_2_idx[model_hash])
 

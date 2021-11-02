@@ -14,15 +14,15 @@ class DatasetDecoder(torch.utils.data.Dataset):
 
     def __len__(self):
         'Denotes the total number of samples'
-        return len(self.list_hash) * 64*64*64
+        return len(self.list_hash) * self.num_samples_per_model
         # return len(self.list_hash)
 
     def __getitem__(self, index):
         'Generates one sample of data'
 
         # Select sample
-        xyz_idx = index%(64*64*64)
-        model_hash = self.list_hash[(int)((index - xyz_idx)/(64*64*64))]
+        xyz_idx = index%self.num_samples_per_model
+        model_hash = self.list_hash[(int)((index - xyz_idx)/self.num_samples_per_model)]
         model_idx = self.dict_model_hash_2_idx[model_hash]
 
         sdf_gt = self.dict_gt_data["sdf"][model_hash][xyz_idx]
