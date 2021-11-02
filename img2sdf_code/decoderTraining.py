@@ -239,6 +239,8 @@ if __name__ == '__main__':
                 batch_idx[i] = dict_model_hash_2_idx[hash[i]]
 
             latent_code = a * lat_code_log_std(batch_idx).exp() * param["lambda_variance"] + lat_code_mu(batch_idx)
+
+            IPython.embed()
             pred = decoder(latent_code, xyz[np.array(xyz_idx)])
 
             # pred = decoder(all_latent_code, all_xyz)
