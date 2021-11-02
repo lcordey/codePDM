@@ -25,8 +25,6 @@ PARAM_FILE = "config/param.json"
 SDF_DIR = MAIN_DIR + "sdf/"
 RESOLUTION = 64
 
-DATASET_REPETITION = 64*64*64
-
 
 
 def init_xyz(resolution):
@@ -126,12 +124,11 @@ if __name__ == '__main__':
 
     resolution = RESOLUTION
     threshold_precision = 1.0/resolution
+    num_samples_per_model = resolution * resolution * resolution
 
     # fill a xyz grid to give as input to the decoder 
     xyz = init_xyz(resolution)
     
-    num_samples_per_model = resolution * resolution * resolution
-
     # get models' hashs
     list_model_hash = []
     for val in glob.glob(SDF_DIR + "*.h5"):
@@ -152,20 +149,24 @@ if __name__ == '__main__':
     dict_gt_data = dict()
     dict_gt_data["sdf"] = dict()
     dict_gt_data["rgb"] = dict()
-    num_total_point_per_model = resolution * resolution * resolution
 
     for model_hash, i in zip(list_model_hash, range(num_model)):
         if i%25 == 0:
             print(f"loading models: {i/num_model*100:3.0f}%")
+
+        # load sdf tensor
         h5f = h5py.File(SDF_DIR + model_hash + '.h5', 'r')
         h5f_tensor = torch.tensor(h5f["tensor"][()], dtype = torch.float)
 
-        sdf_gt = np.reshape(h5f_tensor[:,:,:,0], [num_total_point_per_model])
-        rgb_gt = np.reshape(h5f_tensor[:,:,:,1:], [num_total_point_per_model , 3])
+        # split sdf and rgb then reshape
+        sdf_gt = np.reshape(h5f_tensor[:,:,:,0], [num_samples_per_model])
+        rgb_gt = np.reshape(h5f_tensor[:,:,:,1:], [num_samples_per_model , 3])
 
+        # normalize
         sdf_gt = sdf_gt / resolution
         rgb_gt = rgb_gt / 255
 
+        # store in dict
         dict_gt_data["sdf"][model_hash] = sdf_gt
         dict_gt_data["rgb"][model_hash] = rgb_gt
 
@@ -249,11 +250,11 @@ if __name__ == '__main__':
 
 
     ###### Saving Decoder ######
-
-
+    # save logs
     with open(LOGS_PATH, "wb") as fp:
         pickle.dump(logs, fp)
     
+    # save latent code in dict
     dict_hash_2_code = dict()
     for model_hash in list_model_hash:
         dict_hash_2_code[model_hash] = lat_code_mu(dict_model_hash_2_idx[model_hash].cuda())
