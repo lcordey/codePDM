@@ -87,7 +87,7 @@ def compute_time_left(time_start, model_count, num_model, epoch, num_epoch):
     time_passed = time.time() - time_start
     num_model_seen = epoch * num_model + model_count
     time_per_model = time_passed/num_model_seen
-    estimate_total_time = time_per_model * num_epoch * num_model
+    estimate_total_time = time_per_model * num_epoch * num_model * DATASET_REPETITION
     estimate_time_left = estimate_total_time - time_passed
 
     return estimate_time_left
