@@ -5,8 +5,6 @@ import glob
 import json
 import time
 
-from torch.nn.modules import batchnorm
-
 from networks import Decoder
 from dataLoader import DatasetDecoder
 from marching_cubes_rgb import *

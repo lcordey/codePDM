@@ -7,16 +7,16 @@ from decoderTraining import RESOLUTION
 from marching_cubes_rgb import *
 import IPython
 
-DEFAULT_RENDER = False
+DEFAULT_RENDER = True
 DEFAULT_RENDER_RESOLUTION = 64
 DEFAULT_MAX_MODEL_2_RENDER = 10
 DEFAULT_LOGS = True
 
 
 RESOLUTION_USED_IN_TRAINING = 64
-DECODER_PATH = "models_and_codes/decoderSDF.pth"
+DECODER_PATH = "models_and_codes/decoder.pth"
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
-OUTPUT_DIR = "../../image2sdf/output_decoder"
+OUTPUT_DIR = "../../image2sdf/decoder_output"
 LOGS_PATH = "../../image2sdf/logs/decoder/log.pkl"
 PLOT_PATH = "../../image2sdf/plots/decoder/"
 PARAM_FILE = "config/param.json"
@@ -101,6 +101,13 @@ if __name__ == '__main__':
         plt.figure()
         plt.title("logs loss sdf")
         plt.semilogy(x_timestamp,logs["sdf"])
+        plt.ylabel("loss sdf")
+        plt.xlabel("epoch")
+        plt.savefig(PLOT_PATH + "sdf.png")
+
+        plt.figure()
+        plt.title("logs loss sdf")
+        plt.semilogy(x_timestamp,logs["rgb"])
         plt.ylabel("loss sdf")
         plt.xlabel("epoch")
         plt.savefig(PLOT_PATH + "sdf.png")
