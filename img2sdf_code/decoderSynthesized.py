@@ -79,17 +79,18 @@ if __name__ == '__main__':
     dict_hash_2_code = pickle.load(open(LATENT_CODE_PATH, 'rb'))
 
     # initialize parameters
-    list_hash = list(dict_hash_2_code.keys())
-    num_model= len(list_hash)
+    num_model= args.num_model
     resolution = args.resolution
 
     # fill a xyz grid to give as input to the decoder 
     xyz = init_xyz(resolution)
     idx = torch.arange(num_model).cuda()
 
+    # find std of latend codes
+    list_hash = list(dict_hash_2_code.keys())
     list_code = []
     for model_hash in list_hash:
-        list_code.append(np.array(dict_hash_2_code[model_hash].detach().cpu()))
+        list_code.append(np.array(dict_hash_2_code[model_hash]))
 
     array_code = np.array(list_code)
     std_lat_space = array_code.std()
@@ -106,7 +107,7 @@ if __name__ == '__main__':
 
     for i in range(num_model):
         
-        # decode
+        # variable to store results
         sdf_result = np.empty([resolution, resolution, resolution, 4])
 
         for x in range(resolution):
@@ -116,8 +117,6 @@ if __name__ == '__main__':
             sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
             sdf_pred[:,1:] = sdf_pred[:,1:] * 255
 
-
-            IPython.embed()
             sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:].cpu(), [resolution, resolution, 4])
 
         # print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result[:,:,:,0]), np.max(sdf_result[:,:,:,0])))
