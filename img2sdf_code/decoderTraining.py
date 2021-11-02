@@ -82,12 +82,12 @@ def init_opt_sched(decoder, lat_vecs_mu, lat_vecs_log_std, param):
 
     return optimizer, scheduler
 
-def compute_time_left(time_start, model_count, num_model, epoch, num_epoch):
+def compute_time_left(time_start, model_count, num_model, num_samples_per_model, epoch, num_epoch):
     """ Compute time left until the end of training """
     time_passed = time.time() - time_start
     num_model_seen = epoch * num_model + model_count
     time_per_model = time_passed/num_model_seen
-    estimate_total_time = time_per_model * num_epoch * num_model * DATASET_REPETITION
+    estimate_total_time = time_per_model * num_epoch * num_model * num_samples_per_model
     estimate_time_left = estimate_total_time - time_passed
 
     return estimate_time_left
@@ -130,9 +130,7 @@ if __name__ == '__main__':
     # fill a xyz grid to give as input to the decoder 
     xyz = init_xyz(resolution)
     
-    num_samples_per_model = param["num_samples_per_model"]
-    batch_size = param["dataLoader"]["batch_size"]
-    num_samples_per_batch = batch_size * num_samples_per_model
+    num_samples_per_model = resolution * resolution * resolution
 
     # get models' hashs
     list_model_hash = []
@@ -204,17 +202,21 @@ if __name__ == '__main__':
             # print(f"Time to load the data: {time_loading}")
             # time_start = time.time()
 
+            batch_size = len(model_idx)
+
+            IPython.embed()
+
             # transfer to gpu
             sdf_gt = sdf_gt.cuda()
-            sdf_gt = sdf_gt.reshape(num_samples_per_batch)
+            # sdf_gt = sdf_gt.reshape(num_samples_per_batch)
             rgb_gt = rgb_gt.cuda()
-            rgb_gt = rgb_gt.reshape(num_samples_per_batch, 3)
+            # rgb_gt = rgb_gt.reshape(num_samples_per_batch, 3)
             model_idx = torch.tensor(model_idx).cuda()
-            model_idx = model_idx.repeat_interleave(num_samples_per_model, dim=0)
+            # model_idx = model_idx.repeat_interleave(num_samples_per_model, dim=0)
             xyz_idx = torch.tensor(xyz_idx)
-            xyz_idx = xyz_idx.reshape(num_samples_per_batch)
+            # xyz_idx = xyz_idx.reshape(num_samples_per_batch)
 
-            coeff_std = torch.empty(num_samples_per_batch, param["latent_size"]).normal_().cuda()
+            coeff_std = torch.empty(batch_size, param["latent_size"]).normal_().cuda()
             latent_code = coeff_std * lat_code_log_std(model_idx).exp() * param["lambda_variance"] + lat_code_mu(model_idx)
 
             pred = decoder(latent_code, xyz[xyz_idx])
@@ -238,11 +240,11 @@ if __name__ == '__main__':
 
             # estime time left
             model_count += batch_size
-            time_left = compute_time_left(time_start, model_count, num_model, epoch, param["num_epoch"])
+            time_left = compute_time_left(time_start, model_count, num_model, num_samples_per_model, epoch, param["num_epoch"])
 
             # print
             print("Epoch {} / {:.2f}% ,loss: sdf: {:.5f}, rgb: {:.5f}, reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, code std/mu: {:.2f}/{:.2f}, time left: {} min".format(\
-                epoch, model_count / num_model * 100 / DATASET_REPETITION, loss_sdf, loss_rgb, loss_kl, \
+                epoch, model_count / num_model * 100 / num_samples_per_model, loss_sdf, loss_rgb, loss_kl, \
                 pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, \
                 (lat_code_log_std.weight.exp()).mean(), (lat_code_mu.weight).abs().mean(), (int)(time_left/60)))
 
