@@ -177,7 +177,7 @@ if __name__ == '__main__':
     training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader"])
 
     # initialize decoder
-    decoder = Decoder(param["latent_size"], batch_norm=True).cuda()
+    decoder = Decoder(param["latent_size"], batch_norm=False).cuda()
 
     # initialize optimizer and scheduler
     optimizer, scheduler = init_opt_sched(decoder, lat_code_mu, lat_code_log_std, param["optimizer"])
