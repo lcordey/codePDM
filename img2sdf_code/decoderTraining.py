@@ -243,7 +243,7 @@ if __name__ == '__main__':
             # for i in range(mini_batch_size):
             #     batch_idx[i] = dict_model_hash_2_idx[hash[i]]
 
-            latent_code = a * lat_code_log_std(torch.array(hash.squeeze())).exp() * param["lambda_variance"] + lat_code_mu(torch.array(hash.squeeze()))
+            latent_code = a * lat_code_log_std(torch.tensor(hash.squeeze())).exp() * param["lambda_variance"] + lat_code_mu(torch.tensor(hash.squeeze()))
 
             pred = decoder(latent_code, xyz[np.array(xyz_idx).squeeze()])
 
