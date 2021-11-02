@@ -66,13 +66,13 @@ if __name__ == '__main__':
 
             for x in range(resolution):
 
-                sdf_pred = decoder(dict_hash_2_code[hash].repeat(resolution * resolution, 1),xyz[x * resolution * resolution: (x+1) * resolution * resolution]).detach()
+                sdf_pred = decoder(dict_hash_2_code[hash].repeat(resolution * resolution, 1).cuda(),xyz[x * resolution * resolution: (x+1) * resolution * resolution]).detach()
 
                 sdf_pred[:,0] = sdf_pred[:,0] * resolution
                 sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
                 sdf_pred[:,1:] = sdf_pred[:,1:] * 255
 
-                sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:].detach().cpu(), [resolution, resolution, 4])
+                sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:].cpu(), [resolution, resolution, 4])
 
             # print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result[:,:,:,0]), np.max(sdf_result[:,:,:,0])))
             if(np.min(sdf_result[:,:,:,0]) < 0 and np.max(sdf_result[:,:,:,0]) > 0):
@@ -98,10 +98,15 @@ if __name__ == '__main__':
         list_hash = list(dict_hash_2_code.keys())
         num_model = len(list_hash)
 
+        list_norm = []
+        for model_hash in list_hash:
+            list_norm.append(dict_hash_2_code[model_hash].norm())
+
         num_batch_per_epoch = RESOLUTION_USED_IN_TRAINING **3 * num_model/ param["dataLoader"]["batch_size"]
         x_timestamp = np.arange(len(logs["sdf"])) / num_batch_per_epoch
 
         # let's plots :)
+        # sdf
         plt.figure()
         plt.title("logs loss sdf")
         plt.semilogy(x_timestamp,logs["sdf"])
@@ -109,12 +114,21 @@ if __name__ == '__main__':
         plt.xlabel("epoch")
         plt.savefig(PLOT_PATH + "sdf.png")
 
+        # rgb
         plt.figure()
-        plt.title("logs loss sdf")
+        plt.title("logs loss rgb")
         plt.semilogy(x_timestamp,logs["rgb"])
-        plt.ylabel("loss sdf")
+        plt.ylabel("loss rgb")
         plt.xlabel("epoch")
-        plt.savefig(PLOT_PATH + "sdf.png")
+        plt.savefig(PLOT_PATH + "rgb.png")
+
+        # norms
+        plt.figure()
+        plt.title("norm of vecors")
+        plt.plot(list_norm)
+        plt.ylabel("norm")
+        plt.savefig(PLOT_PATH + "norms.png")
 
     print("done")
+
 

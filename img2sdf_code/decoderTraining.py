@@ -81,9 +81,9 @@ def init_opt_sched(decoder, lat_vecs_mu, lat_vecs_log_std, param):
 def compute_time_left(time_start, samples_count, num_model, num_samples_per_model, epoch, num_epoch):
     """ Compute time left until the end of training """
     time_passed = time.time() - time_start
-    num_samples_seen = epoch * num_model + samples_count
+    num_samples_seen = epoch * num_model * num_samples_per_model + samples_count
     time_per_sample = time_passed/num_samples_seen
-    estimate_total_time = time_per_sample * (num_epoch-epoch) * num_model * num_samples_per_model
+    estimate_total_time = time_per_sample * num_epoch * num_model * num_samples_per_model
     estimate_time_left = estimate_total_time - time_passed
 
     return estimate_time_left

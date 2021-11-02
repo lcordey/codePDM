@@ -12,50 +12,6 @@ DECODER_PATH = "models_and_codes/decoder.pth"
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
 OUTPUT_DIR = "../../image2sdf/decoder_synthesized"
 
-
-# std_lat_space = lat_vecs.std().item() * 1
-
-
-# # initialize random latent code 
-# lat_vecs_mean = torch.nn.Embedding(1, lat_vecs.shape[1]).cuda()
-# torch.nn.init.normal_(
-#     lat_vecs_mean.weight.data,
-#     0.0,
-#     0.0,
-# )
-
-# num_scenes = len(lat_vecs_mean.weight)
-# idx = torch.arange(num_scenes).cuda()
-
-# # decode
-# sdf_result = np.empty([resolution, resolution, resolution, 4])
-
-# for x in range(resolution):
-    
-#     sdf_pred = decoder(lat_vecs_mean(idx[0].repeat(resolution * resolution)),xyz[x * resolution * resolution: (x+1) * resolution * resolution]).detach()
-
-#     sdf_pred[:,0] = sdf_pred[:,0] * resolution
-#     sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
-#     sdf_pred[:,1:] = sdf_pred[:,1:] * 255
-
-#     # for y in range(resolution):
-#     #     for z in range(resolution):
-#     #         sdf_result[x,y,z,:] = sdf_pred[y * resolution + z,:].detach().cpu()
-
-#     sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:].detach().cpu(), [resolution, resolution, 4])
-
-# print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result[:,:,:,0]), np.max(sdf_result[:,:,:,0])))
-# if(np.min(sdf_result[:,:,:,0]) < 0 and np.max(sdf_result[:,:,:,0]) > 0):
-#     vertices, faces = marching_cubes(sdf_result[:,:,:,0])
-#     colors_v = exctract_colors_v(vertices, sdf_result)
-#     colors_f = exctract_colors_f(colors_v, faces)
-#     off_file = '../../image2sdf/output_synthesized/_mean.off'
-#     write_off(off_file, vertices, faces, colors_f)
-#     print('Wrote %s.' % off_file)
-# else:
-#     print("surface level: 0, should be comprise in between the minimum and maximum value")
-
-
 def init_xyz(resolution):
     xyz = torch.empty(resolution * resolution * resolution, 3).cuda()
 
@@ -96,7 +52,7 @@ if __name__ == '__main__':
     std_lat_space = array_code.std()
 
     # initialize random latent code 
-    lat_code_synthesized = torch.nn.Embedding(args.num_model, dict_hash_2_code[list_hash[0]].shape[0]).cuda()
+    lat_code_synthesized = torch.nn.Embedding(num_model, dict_hash_2_code[list_hash[0]].shape[0]).cuda()
     torch.nn.init.normal_(
         lat_code_synthesized.weight.data,
         0.0,
@@ -129,3 +85,34 @@ if __name__ == '__main__':
             print('Wrote %d.off' % i)
         else:
             print("surface level: 0, should be comprise in between the minimum and maximum value")
+
+    # initialize random latent code 
+    lat_vecs_mean = torch.nn.Embedding(1, dict_hash_2_code[list_hash[0]].shape[0]).cuda()
+    torch.nn.init.normal_(
+        lat_vecs_mean.weight.data,
+        0.0,
+        0.0,
+    )
+
+    # variable to store results
+    sdf_result_mean = np.empty([resolution, resolution, resolution, 4])
+
+    for x in range(resolution):
+        sdf_pred = decoder(lat_vecs_mean(idx[0].repeat(resolution * resolution)),xyz[x * resolution * resolution: (x+1) * resolution * resolution]).detach()
+
+        sdf_pred[:,0] = sdf_pred[:,0] * resolution
+        sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
+        sdf_pred[:,1:] = sdf_pred[:,1:] * 255
+
+        sdf_result_mean[x, :, :, :] = np.reshape(sdf_pred[:,:].cpu(), [resolution, resolution, 4])
+
+    # print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result_mean[:,:,:,0]), np.max(sdf_result_mean[:,:,:,0])))
+    if(np.min(sdf_result_mean[:,:,:,0]) < 0 and np.max(sdf_result_mean[:,:,:,0]) > 0):
+        vertices, faces = marching_cubes(sdf_result_mean[:,:,:,0])
+        colors_v = exctract_colors_v(vertices, sdf_result_mean)
+        colors_f = exctract_colors_f(colors_v, faces)
+        off_file = '%s/_mean.off' % OUTPUT_DIR
+        write_off(off_file, vertices, faces, colors_f)
+        print('Wrote _mean.off')
+    else:
+        print("surface level: 0, should be comprise in between the minimum and maximum value")
