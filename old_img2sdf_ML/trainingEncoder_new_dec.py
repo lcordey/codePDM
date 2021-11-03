@@ -2,7 +2,7 @@ from typing import NewType
 import h5py
 import math
 import numpy as np
-from numpy.core.defchararray import count
+from numpy.core.defchararray import count, mod
 from numpy.core.fromnumeric import transpose
 import torch
 import torch.nn as nn
@@ -18,31 +18,30 @@ import time
 # from networks import DecoderSDF, EncoderSDF, EncoderGrid, EncoderGrid2, EncoderFace
 # from dataLoader import DatasetGrid, DatasetFace
 
-from networks_old import EncoderGrid2
+# from networks_old import EncoderGrid2
+from networks import EncoderGrid
 from dataLoader_old import DatasetGrid
 from marching_cubes_rgb import *
 
 ###### parameter #####
 
-DECODER_PATH = "models_pth/decoderSDF.pth"
-ENCODER_GRID_PATH = "models_pth/encoderGrid.pth"
-ENCODER_FACE_PATH = "models_pth/encoderFace.pth"
-LATENT_VECS_TARGET_PATH = "models_pth/latent_vecs_target.pth"
-LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred.pth"
-
-ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
-IMAGES_PATH = "../../image2sdf/input_images/images/"
-
-
-
-# DECODER_PATH = "../image2sdf_code/models_and_codes/decoder.pth"
-# ENCODER_GRID_PATH = "../image2sdf_code/models_and_codes/encoderGrid.pth"
-# # ENCODER_FACE_PATH = "models_pth/encoderFace.pth"
+# DECODER_PATH = "models_pth/decoderSDF.pth"
+# ENCODER_GRID_PATH = "models_pth/encoderGrid.pth"
+# ENCODER_FACE_PATH = "models_pth/encoderFace.pth"
 # LATENT_VECS_TARGET_PATH = "models_pth/latent_vecs_target.pth"
 # LATENT_VECS_PRED_PATH = "models_pth/latent_vecs_pred.pth"
 
 # ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 # IMAGES_PATH = "../../image2sdf/input_images/images/"
+
+
+
+DECODER_PATH = "../img2sdf_code/models_and_codes/decoder.pth"
+ENCODER_GRID_PATH = "../img2sdf_code/models_and_codes/encoderGrid.pth"
+LATENT_CODE_PATH = "../img2sdf_code/models_and_codes/latent_code.pkl"
+
+ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
+IMAGES_PATH = "../../image2sdf/input_images/images/"
 
 NEWTORK = 'grid'
 # NEWTORK = 'face'
@@ -90,13 +89,26 @@ def cosine_distance(a,b):
 
 decoder = torch.load(DECODER_PATH).cuda()
 decoder.eval()
-target_vecs = torch.load(LATENT_VECS_TARGET_PATH).cuda()
 
 annotations_file = open(ANNOTATIONS_PATH, "rb")
 annotations = pickle.load(annotations_file)
 
+# target_vecs = torch.load(LATENT_VECS_TARGET_PATH).cuda()
+
+dict_hash_2_code = pickle.load(open(LATENT_CODE_PATH, 'rb'))
+list_hash = list(dict_hash_2_code.keys())
+num_scene  = len(annotations.keys())
+latent_size = 8
+target_vecs = torch.empty([num_scene, latent_size]).cuda()
+for model_hash, i in zip(list_hash, range(num_scene)):
+    if model_hash in annotations.keys():
+        target_vecs[i] = dict_hash_2_code[model_hash].cuda()
+    else:
+        print("\n WARNING \n")
+
+
 num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
-num_scene, latent_size = target_vecs.shape
+# num_scene, latent_size = target_vecs.shape
 assert(num_scene == len(annotations.keys()))
 
 num_scene_training = num_scene - num_scene_validation
@@ -183,7 +195,7 @@ validation_generator_grid = torch.utils.data.DataLoader(validation_set_grid, **p
 
 # encoder
 if NEWTORK == 'grid':
-    encoder = EncoderGrid2(latent_size).cuda()
+    encoder = EncoderGrid(latent_size).cuda()
 # elif NEWTORK == 'face':
 #     encoder = EncoderFace(latent_size).cuda()
 
@@ -593,8 +605,8 @@ print(f"time for training: {(int)((time.time() - time_start)/60)}")
 # torch.save(pred_vecs.detach().cpu(), LATENT_VECS_PRED_PATH)
 if NEWTORK == 'grid':
     torch.save(encoder, ENCODER_GRID_PATH)
-else:
-    torch.save(encoder, ENCODER_FACE_PATH)
+# else:
+#     torch.save(encoder, ENCODER_FACE_PATH)
 
 
 ##################### PLOTTING TIME ######################
@@ -615,102 +627,102 @@ plt.ylabel("L2 loss")
 plt.semilogy(np.arange(len(avrg_loss)) * batch_size, avrg_loss[:], label = "training loss")
 plt.savefig("../../image2sdf/logs/log_total")
 
-log_same_model_cos = torch.tensor(log_same_model_cos)
-log_same_model_cos_std = torch.tensor(log_same_model_cos_std)
-log_diff_model_cos = torch.tensor(log_diff_model_cos)
-log_diff_model_cos_std = torch.tensor(log_diff_model_cos_std)
-log_cosine_distance_validation = torch.tensor(log_cosine_distance_validation)
-log_cosine_distance_validation_std = torch.tensor(log_cosine_distance_validation_std)
-log_same_model_l2 = torch.tensor(log_same_model_l2)
-log_same_model_l2_std = torch.tensor(log_same_model_l2_std)
-log_diff_model_l2 = torch.tensor(log_diff_model_l2)
-log_diff_model_l2_std = torch.tensor(log_diff_model_l2_std)
-log_loss_pred_validation = torch.tensor(log_loss_pred_validation)
-log_loss_pred_validation_std = torch.tensor(log_loss_pred_validation_std)
-log_loss_sdf_validation = torch.tensor(log_loss_sdf_validation)
-log_loss_sdf_validation_std = torch.tensor(log_loss_sdf_validation_std)
-log_loss_rgb_validation = torch.tensor(log_loss_rgb_validation)
-log_loss_rgb_validation_std = torch.tensor(log_loss_rgb_validation_std)
+# log_same_model_cos = torch.tensor(log_same_model_cos)
+# log_same_model_cos_std = torch.tensor(log_same_model_cos_std)
+# log_diff_model_cos = torch.tensor(log_diff_model_cos)
+# log_diff_model_cos_std = torch.tensor(log_diff_model_cos_std)
+# log_cosine_distance_validation = torch.tensor(log_cosine_distance_validation)
+# log_cosine_distance_validation_std = torch.tensor(log_cosine_distance_validation_std)
+# log_same_model_l2 = torch.tensor(log_same_model_l2)
+# log_same_model_l2_std = torch.tensor(log_same_model_l2_std)
+# log_diff_model_l2 = torch.tensor(log_diff_model_l2)
+# log_diff_model_l2_std = torch.tensor(log_diff_model_l2_std)
+# log_loss_pred_validation = torch.tensor(log_loss_pred_validation)
+# log_loss_pred_validation_std = torch.tensor(log_loss_pred_validation_std)
+# log_loss_sdf_validation = torch.tensor(log_loss_sdf_validation)
+# log_loss_sdf_validation_std = torch.tensor(log_loss_sdf_validation_std)
+# log_loss_rgb_validation = torch.tensor(log_loss_rgb_validation)
+# log_loss_rgb_validation_std = torch.tensor(log_loss_rgb_validation_std)
 
-log_norm_prediction_validation = torch.tensor(log_norm_prediction_validation)
-log_norm_prediction_validation_std = torch.tensor(log_norm_prediction_validation_std)
-log_norm_target_validation = torch.tensor(log_norm_target_validation)
-log_norm_target_validation_std = torch.tensor(log_norm_target_validation_std)
+# log_norm_prediction_validation = torch.tensor(log_norm_prediction_validation)
+# log_norm_prediction_validation_std = torch.tensor(log_norm_prediction_validation_std)
+# log_norm_target_validation = torch.tensor(log_norm_target_validation)
+# log_norm_target_validation_std = torch.tensor(log_norm_target_validation_std)
 
-plt.figure()
-plt.title("Latent code cosine distance Validation")
-plt.xlabel("Number of images shown")
-plt.ylabel("cosine distance")
-plt.plot(np.arange(len(log_same_model_cos)) * (num_model_seen_between_validation), log_same_model_cos[:], 'b', label = "same models")
-# plt.plot(np.arange(len(log_same_model_cos)) * (num_model_seen_between_validation), log_same_model_cos[:] + log_same_model_cos_std[:], 'b--')
-# plt.plot(np.arange(len(log_same_model_cos)) * (num_model_seen_between_validation), log_same_model_cos[:] - log_same_model_cos_std[:], 'b--')
-plt.plot(np.arange(len(log_diff_model_cos)) * (num_model_seen_between_validation), log_diff_model_cos[:], 'r', label = "differents models")
-# plt.plot(np.arange(len(log_diff_model_cos)) * (num_model_seen_between_validation), log_diff_model_cos[:] + log_diff_model_cos_std[:], 'r--')
-# plt.plot(np.arange(len(log_diff_model_cos)) * (num_model_seen_between_validation), log_diff_model_cos[:] - log_diff_model_cos_std[:], 'r--')
-plt.plot(np.arange(len(log_cosine_distance_validation)) * (num_model_seen_between_validation), log_cosine_distance_validation[:], 'g', label = "target and prediction")
-# plt.plot(np.arange(len(log_cosine_distance_validation)) * (num_model_seen_between_validation), log_cosine_distance_validation[:] + log_cosine_distance_validation_std[:], 'g--')
-# plt.plot(np.arange(len(log_cosine_distance_validation)) * (num_model_seen_between_validation), log_cosine_distance_validation[:] - log_cosine_distance_validation_std[:], 'g--')
-plt.legend()
-plt.savefig("../../image2sdf/logs/log_cosine_distance_validation")
-
-
-plt.figure()
-plt.title("Latent code l2 distance Validation")
-plt.xlabel("Number of images shown")
-plt.ylabel("l2 distance")
-plt.plot(np.arange(len(log_same_model_l2)) * (num_model_seen_between_validation), log_same_model_l2[:], 'b', label = "same models")
-# plt.plot(np.arange(len(log_same_model_l2)) * (num_model_seen_between_validation), log_same_model_l2[:] + log_same_model_l2_std[:], 'b--')
-# plt.plot(np.arange(len(log_same_model_l2)) * (num_model_seen_between_validation), log_same_model_l2[:] - log_same_model_l2_std[:], 'b--')
-plt.plot(np.arange(len(log_diff_model_l2)) * (num_model_seen_between_validation), log_diff_model_l2[:], 'r', label = "differents models")
-# plt.plot(np.arange(len(log_diff_model_l2)) * (num_model_seen_between_validation), log_diff_model_l2[:] + log_diff_model_l2_std[:], 'r--')
-# plt.plot(np.arange(len(log_diff_model_l2)) * (num_model_seen_between_validation), log_diff_model_l2[:] - log_diff_model_l2_std[:], 'r--')
-plt.plot(np.arange(len(log_loss_pred_validation)) * (num_model_seen_between_validation), log_loss_pred_validation[:], 'g', label = "target and prediction")
-# plt.plot(np.arange(len(log_loss_pred_validation)) * (num_model_seen_between_validation), log_loss_pred_validation[:] + log_loss_pred_validation_std[:], 'g--')
-# plt.plot(np.arange(len(log_loss_pred_validation)) * (num_model_seen_between_validation), log_loss_pred_validation[:] - log_loss_pred_validation_std[:], 'g--')
-plt.legend()
-plt.savefig("../../image2sdf/logs/log_l2_distance_validation")
-
-plt.figure()
-plt.title("SDF Error (mean distance error per sample)")
-plt.xlabel("Number of images shown")
-plt.ylabel("SDF Error")
-plt.plot(np.arange(len(log_loss_sdf_validation)) * (num_model_seen_between_validation), log_loss_sdf_validation[:], 'b', label = "validation samples")
-# plt.plot(np.arange(len(log_loss_sdf_validation)) * (num_model_seen_between_validation), log_loss_sdf_validation[:] + log_loss_sdf_validation_std[:], 'b--')
-# plt.plot(np.arange(len(log_loss_sdf_validation)) * (num_model_seen_between_validation), log_loss_sdf_validation[:] - log_loss_sdf_validation_std[:], 'b--')
-plt.legend()
-plt.savefig("../../image2sdf/logs/log_sdf_validation")
-
-plt.figure()
-plt.title("RGB Error (mean pixel value error per sample)")
-plt.xlabel("Number of images shown")
-plt.ylabel("RGB Error")
-plt.plot(np.arange(len(log_loss_rgb_validation)) * (num_model_seen_between_validation), log_loss_rgb_validation[:], 'b', label = "validation samples")
-# plt.plot(np.arange(len(log_loss_rgb_validation)) * (num_model_seen_between_validation), log_loss_rgb_validation[:] + log_loss_rgb_validation_std, 'b--')
-# plt.plot(np.arange(len(log_loss_rgb_validation)) * (num_model_seen_between_validation), log_loss_rgb_validation[:] - log_loss_rgb_validation_std, 'b--')
-plt.legend()
-plt.savefig("../../image2sdf/logs/log_rgb_validation")
+# plt.figure()
+# plt.title("Latent code cosine distance Validation")
+# plt.xlabel("Number of images shown")
+# plt.ylabel("cosine distance")
+# plt.plot(np.arange(len(log_same_model_cos)) * (num_model_seen_between_validation), log_same_model_cos[:], 'b', label = "same models")
+# # plt.plot(np.arange(len(log_same_model_cos)) * (num_model_seen_between_validation), log_same_model_cos[:] + log_same_model_cos_std[:], 'b--')
+# # plt.plot(np.arange(len(log_same_model_cos)) * (num_model_seen_between_validation), log_same_model_cos[:] - log_same_model_cos_std[:], 'b--')
+# plt.plot(np.arange(len(log_diff_model_cos)) * (num_model_seen_between_validation), log_diff_model_cos[:], 'r', label = "differents models")
+# # plt.plot(np.arange(len(log_diff_model_cos)) * (num_model_seen_between_validation), log_diff_model_cos[:] + log_diff_model_cos_std[:], 'r--')
+# # plt.plot(np.arange(len(log_diff_model_cos)) * (num_model_seen_between_validation), log_diff_model_cos[:] - log_diff_model_cos_std[:], 'r--')
+# plt.plot(np.arange(len(log_cosine_distance_validation)) * (num_model_seen_between_validation), log_cosine_distance_validation[:], 'g', label = "target and prediction")
+# # plt.plot(np.arange(len(log_cosine_distance_validation)) * (num_model_seen_between_validation), log_cosine_distance_validation[:] + log_cosine_distance_validation_std[:], 'g--')
+# # plt.plot(np.arange(len(log_cosine_distance_validation)) * (num_model_seen_between_validation), log_cosine_distance_validation[:] - log_cosine_distance_validation_std[:], 'g--')
+# plt.legend()
+# plt.savefig("../../image2sdf/logs/log_cosine_distance_validation")
 
 
-plt.figure()
-plt.title("Norm of predicted and targeted code")
-plt.xlabel("Number of images shown")
-plt.ylabel("Norm")
-plt.plot(np.arange(len(log_norm_prediction_validation)) * (num_model_seen_between_validation), log_norm_prediction_validation[:], 'b', label = "predicted code")
-# plt.plot(np.arange(len(log_norm_prediction_validation)) * (num_model_seen_between_validation), log_norm_prediction_validation[:] + log_norm_prediction_validation_std[:], 'b--')
-# plt.plot(np.arange(len(log_norm_prediction_validation)) * (num_model_seen_between_validation), log_norm_prediction_validation[:] - log_norm_prediction_validation_std[:], 'b--')
-plt.plot(np.arange(len(log_norm_target_validation)) * (num_model_seen_between_validation), log_norm_target_validation[:], 'r', label = "targeted code")
-# plt.plot(np.arange(len(log_norm_target_validation)) * (num_model_seen_between_validation), log_norm_target_validation[:] + log_norm_target_validation_std[:], 'r--')
-# plt.plot(np.arange(len(log_norm_target_validation)) * (num_model_seen_between_validation), log_norm_target_validation[:] - log_norm_target_validation_std[:], 'r--')
-plt.legend()
-plt.savefig("../../image2sdf/logs/log_norms")
+# plt.figure()
+# plt.title("Latent code l2 distance Validation")
+# plt.xlabel("Number of images shown")
+# plt.ylabel("l2 distance")
+# plt.plot(np.arange(len(log_same_model_l2)) * (num_model_seen_between_validation), log_same_model_l2[:], 'b', label = "same models")
+# # plt.plot(np.arange(len(log_same_model_l2)) * (num_model_seen_between_validation), log_same_model_l2[:] + log_same_model_l2_std[:], 'b--')
+# # plt.plot(np.arange(len(log_same_model_l2)) * (num_model_seen_between_validation), log_same_model_l2[:] - log_same_model_l2_std[:], 'b--')
+# plt.plot(np.arange(len(log_diff_model_l2)) * (num_model_seen_between_validation), log_diff_model_l2[:], 'r', label = "differents models")
+# # plt.plot(np.arange(len(log_diff_model_l2)) * (num_model_seen_between_validation), log_diff_model_l2[:] + log_diff_model_l2_std[:], 'r--')
+# # plt.plot(np.arange(len(log_diff_model_l2)) * (num_model_seen_between_validation), log_diff_model_l2[:] - log_diff_model_l2_std[:], 'r--')
+# plt.plot(np.arange(len(log_loss_pred_validation)) * (num_model_seen_between_validation), log_loss_pred_validation[:], 'g', label = "target and prediction")
+# # plt.plot(np.arange(len(log_loss_pred_validation)) * (num_model_seen_between_validation), log_loss_pred_validation[:] + log_loss_pred_validation_std[:], 'g--')
+# # plt.plot(np.arange(len(log_loss_pred_validation)) * (num_model_seen_between_validation), log_loss_pred_validation[:] - log_loss_pred_validation_std[:], 'g--')
+# plt.legend()
+# plt.savefig("../../image2sdf/logs/log_l2_distance_validation")
 
-with open("../../image2sdf/logs/log.txt", "wb") as fp:
-    pickle.dump(avrg_loss, fp)
+# plt.figure()
+# plt.title("SDF Error (mean distance error per sample)")
+# plt.xlabel("Number of images shown")
+# plt.ylabel("SDF Error")
+# plt.plot(np.arange(len(log_loss_sdf_validation)) * (num_model_seen_between_validation), log_loss_sdf_validation[:], 'b', label = "validation samples")
+# # plt.plot(np.arange(len(log_loss_sdf_validation)) * (num_model_seen_between_validation), log_loss_sdf_validation[:] + log_loss_sdf_validation_std[:], 'b--')
+# # plt.plot(np.arange(len(log_loss_sdf_validation)) * (num_model_seen_between_validation), log_loss_sdf_validation[:] - log_loss_sdf_validation_std[:], 'b--')
+# plt.legend()
+# plt.savefig("../../image2sdf/logs/log_sdf_validation")
 
-# with open("../../image2sdf/logs/log_cos.txt", "wb") as fp:
-#     pickle.dump(log_same_model_cos, fp)
+# plt.figure()
+# plt.title("RGB Error (mean pixel value error per sample)")
+# plt.xlabel("Number of images shown")
+# plt.ylabel("RGB Error")
+# plt.plot(np.arange(len(log_loss_rgb_validation)) * (num_model_seen_between_validation), log_loss_rgb_validation[:], 'b', label = "validation samples")
+# # plt.plot(np.arange(len(log_loss_rgb_validation)) * (num_model_seen_between_validation), log_loss_rgb_validation[:] + log_loss_rgb_validation_std, 'b--')
+# # plt.plot(np.arange(len(log_loss_rgb_validation)) * (num_model_seen_between_validation), log_loss_rgb_validation[:] - log_loss_rgb_validation_std, 'b--')
+# plt.legend()
+# plt.savefig("../../image2sdf/logs/log_rgb_validation")
 
-# with open("../../image2sdf/logs/log_l2.txt", "wb") as fp:
-#     pickle.dump(log_same_model_l2, fp)
+
+# plt.figure()
+# plt.title("Norm of predicted and targeted code")
+# plt.xlabel("Number of images shown")
+# plt.ylabel("Norm")
+# plt.plot(np.arange(len(log_norm_prediction_validation)) * (num_model_seen_between_validation), log_norm_prediction_validation[:], 'b', label = "predicted code")
+# # plt.plot(np.arange(len(log_norm_prediction_validation)) * (num_model_seen_between_validation), log_norm_prediction_validation[:] + log_norm_prediction_validation_std[:], 'b--')
+# # plt.plot(np.arange(len(log_norm_prediction_validation)) * (num_model_seen_between_validation), log_norm_prediction_validation[:] - log_norm_prediction_validation_std[:], 'b--')
+# plt.plot(np.arange(len(log_norm_target_validation)) * (num_model_seen_between_validation), log_norm_target_validation[:], 'r', label = "targeted code")
+# # plt.plot(np.arange(len(log_norm_target_validation)) * (num_model_seen_between_validation), log_norm_target_validation[:] + log_norm_target_validation_std[:], 'r--')
+# # plt.plot(np.arange(len(log_norm_target_validation)) * (num_model_seen_between_validation), log_norm_target_validation[:] - log_norm_target_validation_std[:], 'r--')
+# plt.legend()
+# plt.savefig("../../image2sdf/logs/log_norms")
+
+# with open("../../image2sdf/logs/log.txt", "wb") as fp:
+#     pickle.dump(avrg_loss, fp)
+
+# # with open("../../image2sdf/logs/log_cos.txt", "wb") as fp:
+# #     pickle.dump(log_same_model_cos, fp)
+
+# # with open("../../image2sdf/logs/log_l2.txt", "wb") as fp:
+# #     pickle.dump(log_same_model_l2, fp)
 
 print("Done")
