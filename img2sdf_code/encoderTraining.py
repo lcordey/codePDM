@@ -11,11 +11,13 @@ from dataLoader import DatasetGrid
 import IPython
 
 
+###################################### change ######################################
 DECODER_PATH = "../old_img2sdf_ML/models_pth/decoderSDF.pth"
 # DECODER_PATH = "models_and_codes/decoder.pth"
-LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
 LATENT_VECS_TARGET_PATH = "../old_img2sdf_ML/models_pth/latent_vecs_target.pth"
+###################################### change ######################################
 
+LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
 ENCODER_PATH = "models_and_codes/encoderGrid.pth"
 PARAM_FILE = "config/param.json"
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
@@ -86,12 +88,18 @@ if __name__ == '__main__':
 
     num_model = len(list_hash)
 
+###################################### change ######################################
     dict_hash_2_idx = dict()
     for hash, i in zip(annotations.keys(), range(num_model)):
         dict_hash_2_idx[hash] = i
+###################################### change ######################################
 
     num_images_per_model = len(annotations[list_hash[0]])
-    latent_size = dict_hash_2_code[list_hash[0]].shape[0]
+
+###################################### change ######################################
+    # latent_size = dict_hash_2_code[list_hash[0]].shape[0]
+    latent_size = latent_code[0].shape[0]
+###################################### change ######################################
 
     # Init training dataset
     training_set = DatasetGrid(list_hash, annotations, num_images_per_model, param["image"], param["network"], IMAGES_PATH, MATRIX_PATH)
@@ -130,8 +138,10 @@ if __name__ == '__main__':
             # get target code
             target_code = torch.empty([batch_size, latent_size]).cuda()
             for model_hash, i in zip(batch_model_hash, range(batch_size)):
+###################################### change ######################################
                 # target_code = dict_hash_2_code[model_hash].cuda()
                 target_code = latent_code[dict_hash_2_idx[model_hash]]
+###################################### change ######################################
 
 
             predicted_code = encoder(batch_images)
