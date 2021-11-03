@@ -2,12 +2,12 @@
     "decoder" :{
 
         "latent_size" : 8,
-        "num_epoch" : 100,
+        "num_epoch" : 50,
         
         "lambda_variance": 1.0,
         "lambda_sdf": 1,
         "lambda_rgb": 0.01,
-        "lambda_kl": 0.002,
+        "lambda_kl": 0.001,
 
         "dataLoader" :{
             "batch_size" : 10000,
@@ -15,16 +15,16 @@
             "num_workers": 42
         },
         "optimizer":{
-            "eta_decoder" : 1e-3,
+            "eta_decoder" : 1e-4,
             "eta_latent_space_mu" : 5e-3,
             "eta_latent_space_std" : 1e-2,
-            "gammaLR" : 0.95
+            "gammaLR" : 0.9
         }
     },
 
     "encoder": {
 
-        "num_epoch" : 3,
+        "num_epoch" : 1,
 
         "image":{
             "width": 300,

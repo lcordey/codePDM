@@ -59,11 +59,11 @@ class DatasetDecoder(torch.utils.data.Dataset):
 
 class DatasetGrid(torch.utils.data.Dataset):
     "Characterizes a dataset for PyTorch"
-    def __init__(self, list_hash, annotations, num_image_per_model, param_image, param_network, image_path, matrix_path):
+    def __init__(self, list_hash, annotations, num_images_per_model, param_image, param_network, image_path, matrix_path):
         'Initialization'
         self.list_hash = list_hash
         self.annotations = annotations
-        self.num_image_per_model = num_image_per_model
+        self.num_images_per_model = num_images_per_model
         self.width_image = param_image["width"]
         self.height_image = param_image["height"]
         self.num_slices = param_network["num_slices"]
@@ -74,14 +74,14 @@ class DatasetGrid(torch.utils.data.Dataset):
 
     def __len__(self):
         'Denotes the total number of samples'
-        return len(self.list_hash) * self.num_image_per_model
+        return len(self.list_hash) * self.num_images_per_model
 
     def __getitem__(self, index):
         'Generates one sample of data'
 
         # Select sample
-        image_id = index%self.num_image_per_model
-        model_hash = self.list_hash[(int)((index - image_id) / self.num_image_per_model)]
+        image_id = index%self.num_images_per_model
+        model_hash = self.list_hash[(int)((index - image_id) / self.num_images_per_model)]
 
         # Load data and get label
         image_pth = self.image_path + model_hash + '/' + str(image_id) + '.png'

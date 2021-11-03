@@ -1,12 +1,14 @@
 import numpy as np
 import torch
+import torch.nn as nn
 import json
 import pickle
+import time
 
-from networks import *
+from networks import EncoderGrid
 from dataLoader import DatasetGrid
-from marching_cubes_rgb import *
 
+import IPython
 
 
 DECODER_PATH = "models_and_codes/decoder.pth"
@@ -44,6 +46,17 @@ def init_opt_sched(encoder, param):
 
     return optimizer, scheduler
 
+def compute_time_left(time_start, samples_count, num_model, num_images_per_model, epoch, num_epoch):
+    """ Compute time left until the end of training """
+    time_passed = time.time() - time_start
+    num_samples_seen = epoch * num_model * num_images_per_model + samples_count
+    time_per_sample = time_passed/num_samples_seen
+    estimate_total_time = time_per_sample * num_epoch * num_model * num_images_per_model
+    estimate_time_left = estimate_total_time - time_passed
+
+    return estimate_time_left
+
+
 
 if __name__ == '__main__':
     print("Loading parameters...")
@@ -68,14 +81,12 @@ if __name__ == '__main__':
 
     num_model = len(list_hash)
 
-    num_image_per_model = len(annotations[list_hash[0]])
+    num_images_per_model = len(annotations[list_hash[0]])
     latent_size = dict_hash_2_code[list_hash[0]].shape[0]
 
     # Init training dataset
-    training_set = DatasetGrid(list_hash, annotations, num_image_per_model, param["image"], param["network"], IMAGES_PATH, MATRIX_PATH)
+    training_set = DatasetGrid(list_hash, annotations, num_images_per_model, param["image"], param["network"], IMAGES_PATH, MATRIX_PATH)
     training_generator= torch.utils.data.DataLoader(training_set, **param["dataLoader"])
-
-    IPython.embed()
 
     # Init Encoder
     encoder = EncoderGrid(latent_size).cuda()
@@ -83,3 +94,47 @@ if __name__ == '__main__':
 
     # initialize optimizer and scheduler
     optimizer, scheduler = init_opt_sched(encoder, param["optimizer"])
+    loss = torch.nn.MSELoss()
+
+
+
+    # logs
+    logs = dict()
+    logs["training"] = []
+
+
+
+    encoder.train()
+    print("Start trainging...")
+
+    time_start = time.time()
+    
+    for epoch in range(param["num_epoch"]):
+        samples_count = 0
+        for batch_images, model_hash in training_generator:
+            optimizer.zero_grad()
+            batch_size = len(batch_images)
+
+            batch_images, target_code = batch_images.cuda(), dict_hash_2_code[model_hash].cuda()
+            predicted_code = encoder(batch_images)
+
+            # compute loss
+            loss_training = loss(predicted_code, target_code)
+            logs["training"].append(loss_training.detach().cpu())
+
+            #update weights
+            loss_training.backward()
+            optimizer.step()
+
+            # compute time left
+            samples_count += batch_size
+            time_left = compute_time_left(time_start, samples_count, num_model, num_images_per_model, epoch, param["num_epoch"])
+
+            # print everyl X model seen
+            if samples_count%(10 * batch_size) == 0:
+                print("epoch: {}/{:.2f}%, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f},\
+                    mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(\
+                    epoch, 100 * samples_count / (num_model * num_images_per_model), loss_training, \
+                    abs(predicted_code - target_code).mean(), abs(predicted_code).mean(), abs(target_code).mean(),\
+                    optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
+
