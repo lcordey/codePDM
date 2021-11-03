@@ -11,7 +11,7 @@ import IPython
 
 DEFAULT_RENDER = True
 DEFAULT_RENDER_RESOLUTION = 64
-DEFAULT_MAX_MODEL_2_RENDER = 10
+DEFAULT_MAX_MODEL_2_RENDER = 3
 DEFAULT_LOGS = True
 
 DECODER_PATH = "models_and_codes/decoder.pth"
@@ -58,17 +58,17 @@ def convert_w2c(matrix_world_to_camera, frame, point):
     return np.array([x,y,z])
 
 
-def load_grid(list_hash, annotations, num_model_2_render, param):
+def load_grid(list_hash, annotations, num_model_2_render, param_image, param_network):
 
     matrix_world_to_camera = pickle.load(open(MATRIX_PATH, 'rb'))
 
     num_model = len(list_hash)
 
-    width_network = param["width_network"]
-    height_network = param["height_network"]
-    num_slices = param["num_slices"]
-    width_image = param["width_image"]
-    height_image = param["height_image"]
+    width_image = param_image["width"]
+    height_image = param_image["height"]
+    width_network = param_network["width"]
+    height_network = param_network["height"]
+    num_slices = param_network["num_slices"]
 
     
     all_grid = torch.empty([num_model, num_model_2_render, 3, num_slices, width_network, height_network], dtype=torch.float)
@@ -180,7 +180,7 @@ if __name__ == '__main__':
         resolution = args.resolution
 
         # compute latent codes
-        grid = load_grid(list_hash, annotations, num_model_2_render, param["network"])
+        grid = load_grid(list_hash, annotations, num_model_2_render, param["image"], param["network"])
         latent_code = get_code_from_grid(grid, param_all["latent_size"])
 
         
@@ -191,7 +191,7 @@ if __name__ == '__main__':
         decoder = torch.load(DECODER_PATH).cuda()
         decoder.eval()
 
-        for model_hash, scene_id in zip(list_hash, range(num_model)):
+        for model_hash, model_id in zip(list_hash, range(num_model)):
             for j in range(num_model_2_render):
             
                 # decode
@@ -199,7 +199,7 @@ if __name__ == '__main__':
 
                 for x in range(resolution):
 
-                    sdf_pred = decoder(latent_code[scene_id,j,:].repeat(resolution * resolution, 1),xyz[x * resolution * resolution: (x+1) * resolution * resolution]).detach()
+                    sdf_pred = decoder(latent_code[model_id,j,:].repeat(resolution * resolution, 1),xyz[x * resolution * resolution: (x+1) * resolution * resolution]).detach()
 
                     sdf_pred[:,0] = sdf_pred[:,0] * resolution
                     sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
@@ -213,9 +213,9 @@ if __name__ == '__main__':
                     vertices, faces = marching_cubes(sdf_result[:,:,:,0])
                     colors_v = exctract_colors_v(vertices, sdf_result)
                     colors_f = exctract_colors_f(colors_v, faces)
-                    off_file = '../../image2sdf/%s/%s_%d.off' %(OUTPUT_DIR, model_hash, j)
+                    off_file = '%s/%s_%d.off' %(OUTPUT_DIR, model_hash, j)
                     write_off(off_file, vertices, faces, colors_f)
-                    # print('Wrote %s.' % off_file)
+                    print('Wrote %s_%d.off' % (model_hash, j))
                 else:
                     print("surface level: 0, should be comprise in between the minimum and maximum value")
 
