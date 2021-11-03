@@ -88,7 +88,7 @@ if __name__ == '__main__':
     training_generator= torch.utils.data.DataLoader(training_set, **param["dataLoader"])
 
     # Init Encoder
-    encoder = EncoderGrid(latent_size).cuda()
+    encoder = EncoderGrid(latent_size, param["network"]).cuda()
     encoder.apply(init_weights)
 
     # initialize optimizer and scheduler
