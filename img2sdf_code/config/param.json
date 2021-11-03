@@ -43,7 +43,7 @@
             "num_slices": 48,
             "width": 24,
             "height" : 24,
-            "num_conv_layer": 4,
+            "num_conv_layer": 3,
             "num_fc_layer": 3
         }
 
