@@ -5,14 +5,17 @@ import json
 import pickle
 import time
 
-from networks import EncoderGrid
+from networks_NEW import EncoderGrid
 from dataLoader import DatasetGrid
 
 import IPython
 
 
-DECODER_PATH = "models_and_codes/decoder.pth"
+DECODER_PATH = "../old_img2sdf_ML/models_pth/decoderSDF.pth"
+# DECODER_PATH = "models_and_codes/decoder.pth"
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
+LATENT_VECS_TARGET_PATH = "../old_img2sdf_ML/models_pth/latent_vecs_target.pth"
+
 ENCODER_PATH = "models_and_codes/encoderGrid.pth"
 PARAM_FILE = "config/param.json"
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
@@ -70,16 +73,22 @@ if __name__ == '__main__':
 
     # load codes and annotations
     dict_hash_2_code = pickle.load(open(LATENT_CODE_PATH, 'rb'))
+    latent_code = torch.load(LATENT_VECS_TARGET_PATH).cuda()
+
     annotations = pickle.load(open(ANNOTATIONS_PATH, 'rb'))
 
 
     # Only consider model which appear in both annotation and code
     list_hash = []
-    for hash in dict_hash_2_code.keys():
-        if hash in annotations.keys():
+    for hash in annotations.keys():
+        if hash in dict_hash_2_code.keys():
             list_hash.append(hash)
 
     num_model = len(list_hash)
+
+    dict_hash_2_idx = dict()
+    for hash, i in zip(annotations.keys(), range(num_model)):
+        dict_hash_2_idx[hash] = i
 
     num_images_per_model = len(annotations[list_hash[0]])
     latent_size = dict_hash_2_code[list_hash[0]].shape[0]
@@ -121,7 +130,8 @@ if __name__ == '__main__':
             # get target code
             target_code = torch.empty([batch_size, latent_size]).cuda()
             for model_hash, i in zip(batch_model_hash, range(batch_size)):
-                target_code = dict_hash_2_code[model_hash].cuda()
+                # target_code = dict_hash_2_code[model_hash].cuda()
+                target_code = latent_code[dict_hash_2_idx[model_hash]]
 
 
             predicted_code = encoder(batch_images)
