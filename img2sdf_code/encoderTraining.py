@@ -130,6 +130,8 @@ if __name__ == '__main__':
 
     logs["validation"] = dict()
     logs["validation"]["l2"] = []
+    logs["validation"]["sdf"] = []
+    logs["validation"]["rgb"] = []
 
 
     encoder.train()
@@ -202,12 +204,9 @@ if __name__ == '__main__':
                     loss_val= loss(predicted_code_val, target_code_val)
                     logs["validation"]["l2"].append(loss_val.detach().cpu())
 
-                    # compute the sdf from codes
+                    # compute the sdf from codes -> unsqueeze(0) because there's only one sample in the batch
                     sdf_validation = decoder(predicted_code_val.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
-
-                    IPython.embed()
-
-                    sdf_target= decoder(target_code_val.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
+                    sdf_target= decoder(target_code_val.unsqueeze(0).repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
 
                     # assign weight of 0 for easy samples that are well trained
                     threshold_precision = 1/resolution
