@@ -139,8 +139,8 @@ if __name__ == '__main__':
             target_code = torch.empty([batch_size, latent_size]).cuda()
             for model_hash, i in zip(batch_model_hash, range(batch_size)):
 ###################################### change ######################################
-                # target_code = dict_hash_2_code[model_hash].cuda()
-                target_code = latent_code[dict_hash_2_idx[model_hash]]
+                # target_code[i] = dict_hash_2_code[model_hash]
+                target_code[i] = latent_code[dict_hash_2_idx[model_hash]]
 ###################################### change ######################################
 
 
