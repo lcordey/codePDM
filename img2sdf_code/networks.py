@@ -74,7 +74,7 @@ class Decoder(nn.Module):
         return x 
 
 class EncoderGrid(nn.Module):
-    def __init__(self,latent_size, batch_norm_conv=False, batch_norm_fc=FALSE):
+    def __init__(self,latent_size, batch_norm_conv=False, batch_norm_fc=False):
         super(EncoderGrid, self).__init__()
 
         features_encoder = 64
