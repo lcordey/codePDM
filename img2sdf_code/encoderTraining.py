@@ -204,6 +204,9 @@ if __name__ == '__main__':
 
                     # compute the sdf from codes
                     sdf_validation = decoder(predicted_code_val.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
+
+                    IPython.embed()
+
                     sdf_target= decoder(target_code_val.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
 
                     # assign weight of 0 for easy samples that are well trained
