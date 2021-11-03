@@ -84,6 +84,7 @@ if __name__ == '__main__':
 
     # Load decoder
     decoder = torch.load(DECODER_PATH).cuda()
+    decoder.eval()
 
     # load codes and annotations
     dict_hash_2_code = pickle.load(open(LATENT_CODE_PATH, 'rb'))
