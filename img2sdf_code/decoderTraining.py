@@ -118,8 +118,8 @@ if __name__ == '__main__':
     # load parameters
     param_all = json.load(open(PARAM_FILE))
     param = param_all["decoder"]
+    resolution = param_all["resolution_used_for_training"]
 
-    resolution = param["resolution_used_for_training"]
     threshold_precision = 1.0/resolution
     num_samples_per_model = resolution * resolution * resolution
 

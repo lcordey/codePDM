@@ -1,6 +1,5 @@
 {
     "resolution_used_for_training": 64,
-    
     "latent_size" : 8,
 
     "decoder" :{
