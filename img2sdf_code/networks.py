@@ -122,6 +122,8 @@ class EncoderGrid(nn.Module):
 
         features = self.features_extraction(image)
 
+        IPython.embed()
+
         latent_code = self.regression_from_features(features.view(features.size(0), -1))
 
         return latent_code
