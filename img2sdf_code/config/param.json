@@ -41,8 +41,8 @@
         },
         "network" :{
             "num_slices": 64,
-            "width": 64,
-            "height" : 64,
+            "width": 32,
+            "height" : 32,
             "num_conv_layer": 4,
             "num_fc_layer": 3
         }
