@@ -104,6 +104,7 @@ for model_hash, i in zip(list_hash, range(num_scene)):
     if model_hash in annotations.keys():
         target_vecs[i] = dict_hash_2_code[model_hash].cuda()
 
+num_scene = target_vecs.shape[0]
 
 num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
 # num_scene, latent_size = target_vecs.shape
