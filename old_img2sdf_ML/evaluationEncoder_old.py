@@ -135,7 +135,7 @@ def load_grid(annotations, argument_num_image):
             loc_slice_2d = np.empty_like(loc_slice_3d)
             for i in range(num_slices):
                 for j in range(4):
-                        loc_slice_2d[i,j,:] = convert_w2c(matrix_world_to_camera, frame, loc_slice_3d[i,j,:]) 
+                    loc_slice_2d[i,j,:] = convert_w2c(matrix_world_to_camera, frame, loc_slice_3d[i,j,:]) 
 
             ###### y coordinate is inverted + rescaling #####
             loc_slice_2d[:,:,1] = 1 - loc_slice_2d[:,:,1]
@@ -315,7 +315,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Peform marching cubes.')
     parser.add_argument('--type', type=str, help='grid or face', default= DEFAULT_TYPE)
-    parser.add_argument('--output_images', type=bool, help='num max images per scene', default= DEFAUT_OUTPUT_IMAGES)
+    parser.add_argument('--output_images', type=bool, help='bool -> output off model', default= DEFAUT_OUTPUT_IMAGES)
     parser.add_argument('--resolution', type=int, help='resolution', default= DEFAULT_RESOLUTION)
     parser.add_argument('--num_image', type=int, help='num max images per scene', default= DEFAULT_NUM_IMAGE)
     args = parser.parse_args()

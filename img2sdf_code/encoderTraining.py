@@ -103,7 +103,6 @@ if __name__ == '__main__':
 
     num_model = len(list_hash)
     num_images_per_model = len(annotations[list_hash[0]])
-    latent_size = dict_hash_2_code[list_hash[0]].shape[0]
 
     # Init training dataset
     training_set = DatasetGrid(list_hash, annotations, num_images_per_model, param["image"], param["network"], IMAGES_PATH, MATRIX_PATH)
@@ -113,7 +112,7 @@ if __name__ == '__main__':
     validation_generator= torch.utils.data.DataLoader(validation_set, **param["dataLoaderValidation"])
 
     # Init Encoder
-    encoder = EncoderGrid(latent_size, param["network"]).cuda()
+    encoder = EncoderGrid(param_all["latent_size"], param["network"]).cuda()
     encoder.apply(init_weights)
 
     # initialize optimizer and scheduler
@@ -155,7 +154,7 @@ if __name__ == '__main__':
             batch_images = batch_images.cuda()
 
             # get target code
-            target_code = torch.empty([batch_size, latent_size]).cuda()
+            target_code = torch.empty([batch_size, param_all["latent_size"]]).cuda()
             for model_hash, i in zip(batch_model_hash, range(batch_size)):
                 target_code[i] = dict_hash_2_code[model_hash]
 

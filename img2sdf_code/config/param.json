@@ -1,9 +1,10 @@
 {
     "resolution_used_for_training": 64,
+    
+    "latent_size" : 8,
 
     "decoder" :{
 
-        "latent_size" : 8,
         "num_epoch" : 50,
         
         "lambda_variance": 1.0,
@@ -37,7 +38,7 @@
             "height": 300
         },
         "dataLoader" :{
-            "batch_size" : 25,
+            "batch_size" : 20,
             "shuffle": 1,
             "num_workers": 42
         },

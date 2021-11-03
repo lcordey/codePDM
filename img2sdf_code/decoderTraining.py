@@ -133,7 +133,7 @@ if __name__ == '__main__':
     num_model = len(list_model_hash)
 
     # initialize a random latent code for each models
-    lat_code_mu, lat_code_log_std = init_lat_vecs(num_model, param["latent_size"])
+    lat_code_mu, lat_code_log_std = init_lat_vecs(num_model, param_all["latent_size"])
 
     # create a dictionary going from an hash to a corresponding index
     idx = torch.arange(num_model).type(torch.LongTensor)
@@ -172,7 +172,7 @@ if __name__ == '__main__':
     training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader"])
 
     # initialize decoder
-    decoder = Decoder(param["latent_size"], batch_norm=True).cuda()
+    decoder = Decoder(param_all["latent_size"], batch_norm=True).cuda()
 
     # initialize optimizer and scheduler
     optimizer, scheduler = init_opt_sched(decoder, lat_code_mu, lat_code_log_std, param["optimizer"])
@@ -206,7 +206,7 @@ if __name__ == '__main__':
             model_idx = torch.tensor(model_idx).cuda()
             xyz_idx = torch.tensor(xyz_idx)
 
-            coeff_std = torch.empty(batch_size, param["latent_size"]).normal_().cuda()
+            coeff_std = torch.empty(batch_size, param_all["latent_size"]).normal_().cuda()
             latent_code = coeff_std * lat_code_log_std(model_idx).exp() * param["lambda_variance"] + lat_code_mu(model_idx)
 
             pred = decoder(latent_code, xyz[xyz_idx])

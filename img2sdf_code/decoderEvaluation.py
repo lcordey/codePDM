@@ -12,7 +12,6 @@ DEFAULT_MAX_MODEL_2_RENDER = 10
 DEFAULT_LOGS = True
 
 
-RESOLUTION_USED_IN_TRAINING = 64
 DECODER_PATH = "models_and_codes/decoder.pth"
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
 OUTPUT_DIR = "../../image2sdf/decoder_output/evaluation"
@@ -104,7 +103,7 @@ if __name__ == '__main__':
         for model_hash in list_hash:
             list_norm.append(dict_hash_2_code[model_hash].norm())
 
-        num_batch_per_epoch = RESOLUTION_USED_IN_TRAINING **3 * num_model/ param["dataLoader"]["batch_size"]
+        num_batch_per_epoch = param_all["resolution_used_for_training"] **3 * num_model/ param["dataLoader"]["batch_size"]
         x_timestamp = np.arange(len(logs["sdf"])) / num_batch_per_epoch
 
         # let's plots :)
