@@ -31,7 +31,7 @@
             "height": 300
         },
         "dataLoader" :{
-            "batch_size" : 25,
+            "batch_size" : 10,
             "shuffle": 1,
             "num_workers": 42
         },
