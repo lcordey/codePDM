@@ -44,6 +44,8 @@ def fc_block(num_fc_layer, num_features, num_features_extracted, latent_size, ba
         layers += [fc_layer(num_features, num_features, batch_norm=batch_norm)]
     layers += [nn.Linear(num_features, latent_size)]
 
+    return nn.Sequential(*layers)
+
 
 class Decoder(nn.Module):
     def __init__(self, latent_size, batch_norm=False):
@@ -120,10 +122,11 @@ class EncoderGrid(nn.Module):
 
         # latent_code = self.fc4(self.fc3(self.fc2(self.fc1(features.view(features.size(0), -1)))))
 
+        # extract features from conv layer
         features = self.features_extraction(image)
-
-        IPython.embed()
-
-        latent_code = self.regression_from_features(features.view(features.size(0), -1))
+        # flatten features
+        features = features.view(features.size(0), -1)
+        # get code from features
+        latent_code = self.regression_from_features(features)
 
         return latent_code
