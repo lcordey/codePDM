@@ -31,7 +31,7 @@
             "height": 300
         },
         "dataLoader" :{
-            "batch_size" : 10,
+            "batch_size" : 50,
             "shuffle": 1,
             "num_workers": 42
         },
@@ -40,9 +40,9 @@
             "gammaLR" : 0.75
         },
         "network" :{
-            "num_slices": 64,
-            "width": 32,
-            "height" : 32,
+            "num_slices": 48,
+            "width": 24,
+            "height" : 24,
             "num_conv_layer": 4,
             "num_fc_layer": 3
         }
