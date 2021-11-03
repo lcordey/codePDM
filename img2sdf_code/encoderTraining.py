@@ -190,12 +190,13 @@ if __name__ == '__main__':
 
                 log_sdf = []
                 log_rgb = []
+                num_validation_samples = 100
 
-                for images_val, model_hash_val in validation_generator:
+                for images_val, model_hash_val, i in zip(validation_generator, range(num_validation_samples)):
 
                     # transfer to gpu
                     images_val = images_val.cuda()
-                    target_code_val = dict_hash_2_code[model_hash_val[0]].cuda() # -> [0] because batch size should always be 1 for validation
+                    target_code_val = dict_hash_2_code[model_hash_val[0]].unsqueeze(0).cuda() # -> [0] because batch size should always be 1 for validation
 
                     # compute predicted code
                     predicted_code_val = encoder(images_val)
@@ -204,9 +205,9 @@ if __name__ == '__main__':
                     loss_val= loss(predicted_code_val, target_code_val)
                     logs["validation"]["l2"].append(loss_val.detach().cpu())
 
-                    # compute the sdf from codes -> unsqueeze(0) because there's only one sample in the batch
+                    # compute the sdf from codes 
                     sdf_validation = decoder(predicted_code_val.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
-                    sdf_target= decoder(target_code_val.unsqueeze(0).repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
+                    sdf_target= decoder(target_code_val.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
 
                     # assign weight of 0 for easy samples that are well trained
                     threshold_precision = 1/resolution
