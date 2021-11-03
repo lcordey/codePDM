@@ -192,11 +192,11 @@ if __name__ == '__main__':
                 for images_val, model_hash_val in validation_generator:
 
                     # transfer to gpu
-                    batch_images_val = batch_images_val.cuda()
+                    images_val = images_val.cuda()
                     target_code_val = dict_hash_2_code[model_hash_val]
 
                     # compute predicted code
-                    predicted_code_val = encoder(batch_images_val)
+                    predicted_code_val = encoder(images_val)
 
                     # compute loss
                     loss_val= loss(predicted_code_val, target_code_val)
