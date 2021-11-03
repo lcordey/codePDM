@@ -18,7 +18,8 @@ import time
 # from networks import DecoderSDF, EncoderSDF, EncoderGrid, EncoderGrid2, EncoderFace
 # from dataLoader import DatasetGrid, DatasetFace
 
-from networks_old import EncoderGrid2
+# from networks_old import EncoderGrid2
+from networks import EncoderGrid
 from dataLoader_old import DatasetGrid
 from marching_cubes_rgb import *
 
@@ -190,7 +191,7 @@ validation_generator_grid = torch.utils.data.DataLoader(validation_set_grid, **p
 
 # encoder
 if NEWTORK == 'grid':
-    encoder = EncoderGrid2(latent_size).cuda()
+    encoder = EncoderGrid(latent_size).cuda()
 # elif NEWTORK == 'face':
 #     encoder = EncoderFace(latent_size).cuda()
 
