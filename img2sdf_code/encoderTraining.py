@@ -20,7 +20,7 @@ DECODER_PATH = "models_and_codes/decoder.pth"
 ###################################### change ######################################
 
 ###################################### change ######################################
-LATENT_VECS_TARGET_PATH = "../old_img2sdf_ML/models_pth/latent_vecs_target.pth"
+# LATENT_VECS_TARGET_PATH = "../old_img2sdf_ML/models_pth/latent_vecs_target.pth"
 ###################################### change ######################################
 
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
@@ -81,7 +81,7 @@ if __name__ == '__main__':
 
     # load codes and annotations
     dict_hash_2_code = pickle.load(open(LATENT_CODE_PATH, 'rb'))
-    latent_code = torch.load(LATENT_VECS_TARGET_PATH).cuda()
+    # latent_code = torch.load(LATENT_VECS_TARGET_PATH).cuda()
 
     annotations = pickle.load(open(ANNOTATIONS_PATH, 'rb'))
 

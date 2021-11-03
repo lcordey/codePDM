@@ -4,10 +4,10 @@
         "latent_size" : 8,
         "num_epoch" : 5,
         
-        "lambda_variance": 0.1,
+        "lambda_variance": 1.0,
         "lambda_sdf": 1,
         "lambda_rgb": 0.01,
-        "lambda_kl": 0.01,
+        "lambda_kl": 0.001,
 
         "dataLoader" :{
             "batch_size" : 10000,
@@ -40,9 +40,9 @@
             "gammaLR" : 0.9
         },
         "network" :{
-            "num_slices": 48,
-            "width": 24,
-            "height" : 24
+            "num_slices": 32,
+            "width": 16,
+            "height" : 16
         }
 
     }
