@@ -15,8 +15,11 @@ import imageio
 import random
 import time
 
-from networks import DecoderSDF, EncoderSDF, EncoderGrid, EncoderGrid2, EncoderFace
-from dataLoader import DatasetGrid, DatasetFace
+# from networks import DecoderSDF, EncoderSDF, EncoderGrid, EncoderGrid2, EncoderFace
+# from dataLoader import DatasetGrid, DatasetFace
+
+from networks import EncoderGrid
+from dataLoader import DatasetGrid
 from marching_cubes_rgb import *
 
 ###### parameter #####
@@ -123,19 +126,19 @@ training_set_grid = DatasetGrid(list_scene_training,
 training_generator_grid = torch.utils.data.DataLoader(training_set_grid, **params)
 
 
-training_set_face = DatasetFace(list_scene_training,
-                       dict_scene_2_code,
-                       target_vecs.cpu(),
-                       annotations,
-                       0,
-                       num_image_per_scene,
-                       width_input_image,
-                       height_input_image,
-                       width_input_network_face,
-                       height_input_network_face,
-                       depth_input_network)
+# training_set_face = DatasetFace(list_scene_training,
+#                        dict_scene_2_code,
+#                        target_vecs.cpu(),
+#                        annotations,
+#                        0,
+#                        num_image_per_scene,
+#                        width_input_image,
+#                        height_input_image,
+#                        width_input_network_face,
+#                        height_input_network_face,
+#                        depth_input_network)
 
-training_generator_face = torch.utils.data.DataLoader(training_set_face, **params)
+# training_generator_face = torch.utils.data.DataLoader(training_set_face, **params)
 
 
 validation_set_grid = DatasetGrid(list_scene_validation,
@@ -153,25 +156,25 @@ validation_set_grid = DatasetGrid(list_scene_validation,
 validation_generator_grid = torch.utils.data.DataLoader(validation_set_grid, **params_validation)
 
 
-validation_set_face = DatasetFace(list_scene_validation,
-                       dict_scene_2_code,
-                       target_vecs.cpu(),
-                       annotations,
-                       0,
-                       num_image_per_scene,
-                       width_input_image,
-                       height_input_image,
-                       width_input_network_face,
-                       height_input_network_face,
-                       depth_input_network)
+# validation_set_face = DatasetFace(list_scene_validation,
+#                        dict_scene_2_code,
+#                        target_vecs.cpu(),
+#                        annotations,
+#                        0,
+#                        num_image_per_scene,
+#                        width_input_image,
+#                        height_input_image,
+#                        width_input_network_face,
+#                        height_input_network_face,
+#                        depth_input_network)
 
-validation_generator_face = torch.utils.data.DataLoader(validation_set_face, **params_validation)
+# validation_generator_face = torch.utils.data.DataLoader(validation_set_face, **params_validation)
 
 # encoder
 if NEWTORK == 'grid':
-    encoder = EncoderGrid2(latent_size).cuda()
-elif NEWTORK == 'face':
-    encoder = EncoderFace(latent_size).cuda()
+    encoder = EncoderGrid(latent_size).cuda()
+# elif NEWTORK == 'face':
+#     encoder = EncoderFace(latent_size).cuda()
 
 encoder.apply(init_weights)
 
