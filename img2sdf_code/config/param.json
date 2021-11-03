@@ -36,13 +36,13 @@
             "num_workers": 42
         },
         "optimizer":{
-            "eta_encoder" : 5e-5,
+            "eta_encoder" : 1e-3,
             "gammaLR" : 0.9
         },
         "network" :{
-            "num_slices": 32,
-            "width": 16,
-            "height" : 16
+            "num_slices": 48,
+            "width": 24,
+            "height" : 24
         }
 
     }
