@@ -230,15 +230,18 @@ if __name__ == '__main__':
         param_all = json.load(open(PARAM_FILE))
         param = param_all["encoder"]
 
-        num_batch_per_epoch = num_model * num_images_per_model / param["dataLoader"]["batch_size"]
+        # num_batch_per_epoch = num_model * num_images_per_model / param["dataLoader"]["batch_size"]
+        num_batch_per_epoch = 226 * 1000 / param["dataLoader"]["batch_size"]
         num_validation_per_epoch = num_batch_per_epoch / param["num_batch_between_validation"]
-        x_timestamp = np.arange(len(logs["training"])) / num_validation_per_epoch
+        x_timestamp_training = np.arange(len(logs["training"])) / num_batch_per_epoch
+        x_timestamp_validation = np.arange(len(logs["validation"]["l2"])) / (num_validation_per_epoch + 1)
+        x_timestamp_validation_temp = np.arange(len(logs["validation"]["sdf"])) / (num_validation_per_epoch + 1)
 
         # let's plots :)
         # sdf
         plt.figure()
         plt.title("logs loss training")
-        plt.semilogy(x_timestamp,logs["training"])
+        plt.semilogy(x_timestamp_training,logs["training"])
         plt.ylabel("loss l2")
         plt.xlabel("epoch")
         plt.savefig(PLOT_PATH + "training.png")
@@ -246,21 +249,21 @@ if __name__ == '__main__':
 
         plt.figure()
         plt.title("logs loss l2 validation")
-        plt.semilogy(x_timestamp,logs["validation"]["l2"])
+        plt.semilogy(x_timestamp_validation,logs["validation"]["l2"])
         plt.ylabel("loss l2")
         plt.xlabel("epoch")
         plt.savefig(PLOT_PATH + "l2_val.png")
 
         plt.figure()
         plt.title("logs loss sdf validation")
-        plt.semilogy(x_timestamp,logs["validation"]["sdf"])
+        plt.semilogy(x_timestamp_validation_temp,logs["validation"]["sdf"])
         plt.ylabel("error sdf")
         plt.xlabel("epoch")
         plt.savefig(PLOT_PATH + "sdf_val.png")
 
         plt.figure()
         plt.title("logs loss rgb validation")
-        plt.semilogy(x_timestamp,logs["validation"]["rgb"])
+        plt.semilogy(x_timestamp_validation_temp,logs["validation"]["rgb"])
         plt.ylabel("error rgb")
         plt.xlabel("epoch")
         plt.savefig(PLOT_PATH + "rgb_val.png")

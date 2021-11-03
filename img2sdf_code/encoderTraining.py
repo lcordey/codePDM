@@ -188,6 +188,7 @@ if __name__ == '__main__':
             if samples_count%(param["num_batch_between_validation"] * batch_size) == 0 or samples_count == batch_size:
                 encoder.eval()
 
+                log_l2_val = []
                 log_sdf = []
                 log_rgb = []
 
@@ -202,8 +203,8 @@ if __name__ == '__main__':
                     predicted_code_val = encoder(images_val)
 
                     # compute loss
-                    loss_val= loss(predicted_code_val, target_code_val)
-                    logs["validation"]["l2"].append(loss_val.detach().cpu())
+                    loss_l2= loss(predicted_code_val, target_code_val)
+                    log_l2_val.append(loss_l2.detach().cpu())
 
                     # compute the sdf from codes 
                     sdf_validation = decoder(predicted_code_val.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
@@ -225,6 +226,7 @@ if __name__ == '__main__':
                     loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
                     loss_rgb *= 255
 
+
                     log_sdf.append(loss_sdf.detach().cpu())
                     log_rgb.append(loss_rgb.detach().cpu())
 
@@ -232,16 +234,18 @@ if __name__ == '__main__':
                     if samples_count_val == param["num_images_validation"] :
                         break
 
+                loss_l2_val = torch.tensor(log_l2_val).mean()
                 loss_sdf_val = torch.tensor(log_sdf).mean()
                 loss_rgb_val = torch.tensor(log_rgb).mean()
 
                 logs["validation"]["sdf"].append(loss_sdf_val)
                 logs["validation"]["rgb"].append(loss_rgb_val)
+                logs["validation"]["l2"].append(loss_l2_val)
 
 
                 print("\n****************************** VALIDATION ******************************")
 
-                print(f"l2 predicted code error: {loss_val:.5f}")
+                print(f"l2 predicted code error: {loss_l2_val:.5f}")
                 print(f"sdf error: {loss_sdf_val:2.5f}")
                 print(f"rgb error: {loss_rgb_val:2.5f}")
 
