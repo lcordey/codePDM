@@ -81,9 +81,6 @@ if __name__ == '__main__':
 
     num_model = len(list_hash)
     num_images_per_model = len(annotations[list_hash[0]])
-###################################### change ######################################
-    num_images_per_model = 300
-###################################### change ######################################
     latent_size = dict_hash_2_code[list_hash[0]].shape[0]
 
     # Init training dataset
