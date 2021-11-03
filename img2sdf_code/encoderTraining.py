@@ -190,9 +190,10 @@ if __name__ == '__main__':
 
                 log_sdf = []
                 log_rgb = []
-                num_validation_samples = 100
+                num_validation_samples = 10
 
-                for images_val, model_hash_val, i in zip(validation_generator, range(num_validation_samples)):
+                samples_count_val = 0
+                for images_val, model_hash_val in validation_generator:
 
                     # transfer to gpu
                     images_val = images_val.cuda()
@@ -227,6 +228,10 @@ if __name__ == '__main__':
 
                     log_sdf.append(loss_sdf.detach().cpu())
                     log_rgb.append(loss_rgb.detach().cpu())
+
+                    samples_count_val += 1
+                    if samples_count_val >= num_validation_samples * len(list_hash_validation):
+                        break
 
                 loss_sdf_val = torch.tensor(log_sdf).mean()
                 loss_rgb_val = torch.tensor(log_rgb).mean()
