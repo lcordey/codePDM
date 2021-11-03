@@ -31,12 +31,12 @@
             "height": 300
         },
         "dataLoader" :{
-            "batch_size" : 10,
+            "batch_size" : 30,
             "shuffle": 1,
             "num_workers": 42
         },
         "optimizer":{
-            "eta_encoder" : 1e-5,
+            "eta_encoder" : 1e-4,
             "gammaLR" : 0.9
         },
         "network" :{

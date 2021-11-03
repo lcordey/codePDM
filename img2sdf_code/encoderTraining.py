@@ -11,12 +11,12 @@ from dataLoader import DatasetGrid
 import IPython
 
 
-DECODER_PATH = "models_and_codes/decoder.pth"
-
-LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
 ENCODER_PATH = "models_and_codes/encoderGrid.pth"
+DECODER_PATH = "models_and_codes/decoder.pth"
+LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
 PARAM_FILE = "config/param.json"
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
+LOGS_PATH = "../../image2sdf/logs/log.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
 MATRIX_PATH = "../../image2sdf/input_images/matrix_w2c.pkl"
 
@@ -146,4 +146,18 @@ if __name__ == '__main__':
                     epoch, 100 * samples_count / (num_model * num_images_per_model), loss_training, \
                     abs(predicted_code - target_code).mean(), abs(predicted_code).mean(), abs(target_code).mean(),\
                     optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
+        scheduler.step()
+
+
+    print(f"Training finish in {(int)((time.time() - time_start) / 60)} min")
+
+
+    ###### Saving eNcoder ######
+    # save encoder
+    torch.save(encoder, ENCODER_PATH)
+
+    # save logs
+    with open(LOGS_PATH, "wb") as fp:
+        pickle.dump(logs, fp)
+        
 
