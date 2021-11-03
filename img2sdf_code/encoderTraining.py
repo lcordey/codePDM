@@ -112,9 +112,9 @@ if __name__ == '__main__':
         samples_count = 0
         for batch_images, batch_model_hash in training_generator:
 
-            time_loading = time.time() - time_start
-            print(f"Time to load the data: {time_loading}")
-            time_start = time.time()
+            # time_loading = time.time() - time_start
+            # print(f"Time to load the data: {time_loading}")
+            # time_start = time.time()
 
             optimizer.zero_grad()
             batch_size = len(batch_images)
@@ -149,8 +149,8 @@ if __name__ == '__main__':
                     abs(predicted_code - target_code).mean(), abs(predicted_code).mean(), abs(target_code).mean(),\
                     optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
 
-            print(f"Time for network pass: {time.time() - time_start}")
-            time_start = time.time()
+            # print(f"Time for network pass: {time.time() - time_start}")
+            # time_start = time.time()
 
         scheduler.step()
 
