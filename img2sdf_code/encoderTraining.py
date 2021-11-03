@@ -12,8 +12,11 @@ import IPython
 
 
 ###################################### change ######################################
-DECODER_PATH = "../old_img2sdf_ML/models_pth/decoderSDF.pth"
-# DECODER_PATH = "models_and_codes/decoder.pth"
+# DECODER_PATH = "../old_img2sdf_ML/models_pth/decoderSDF.pth"
+DECODER_PATH = "models_and_codes/decoder.pth"
+###################################### change ######################################
+
+###################################### change ######################################
 LATENT_VECS_TARGET_PATH = "../old_img2sdf_ML/models_pth/latent_vecs_target.pth"
 ###################################### change ######################################
 
@@ -97,8 +100,8 @@ if __name__ == '__main__':
     num_images_per_model = len(annotations[list_hash[0]])
 
 ###################################### change ######################################
-    # latent_size = dict_hash_2_code[list_hash[0]].shape[0]
-    latent_size = latent_code[0].shape[0]
+    latent_size = dict_hash_2_code[list_hash[0]].shape[0]
+    # latent_size = latent_code[0].shape[0]
 ###################################### change ######################################
 
     # Init training dataset
@@ -139,8 +142,8 @@ if __name__ == '__main__':
             target_code = torch.empty([batch_size, latent_size]).cuda()
             for model_hash, i in zip(batch_model_hash, range(batch_size)):
 ###################################### change ######################################
-                # target_code[i] = dict_hash_2_code[model_hash]
-                target_code[i] = latent_code[dict_hash_2_idx[model_hash]]
+                target_code[i] = dict_hash_2_code[model_hash]
+                # target_code[i] = latent_code[dict_hash_2_idx[model_hash]]
 ###################################### change ######################################
 
 
