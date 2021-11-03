@@ -90,6 +90,9 @@ def cosine_distance(a,b):
 decoder = torch.load(DECODER_PATH).cuda()
 decoder.eval()
 
+annotations_file = open(ANNOTATIONS_PATH, "rb")
+annotations = pickle.load(annotations_file)
+
 # target_vecs = torch.load(LATENT_VECS_TARGET_PATH).cuda()
 
 dict_hash_2_code = pickle.load(open(LATENT_CODE_PATH, 'rb'))
@@ -98,10 +101,9 @@ num_scene  = len(list_hash)
 latent_size = 8
 target_vecs = torch.empty([num_scene, latent_size]).cuda()
 for model_hash, i in zip(list_hash, range(num_scene)):
-    target_vecs[i] = dict_hash_2_code[model_hash].cuda()
+    if model_hash in annotations.keys():
+        target_vecs[i] = dict_hash_2_code[model_hash].cuda()
 
-annotations_file = open(ANNOTATIONS_PATH, "rb")
-annotations = pickle.load(annotations_file)
 
 num_image_per_scene = len(annotations[next(iter(annotations.keys()))])
 # num_scene, latent_size = target_vecs.shape
