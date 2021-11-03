@@ -37,12 +37,14 @@
         },
         "optimizer":{
             "eta_encoder" : 1e-4,
-            "gammaLR" : 0.9
+            "gammaLR" : 0.75
         },
         "network" :{
             "num_slices": 48,
             "width": 24,
-            "height" : 24
+            "height" : 24,
+            "num_conv_layer": 3,
+            "num_fc_layer": 3
         }
 
     }
