@@ -5,7 +5,10 @@ import json
 import pickle
 import time
 
-from networks_NEW import EncoderGrid
+###################################### change ######################################
+# from networks_NEW import EncoderGrid
+from networks import EncoderGrid
+###################################### change ######################################
 from dataLoader import DatasetGrid
 
 import IPython
