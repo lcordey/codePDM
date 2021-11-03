@@ -1,29 +1,36 @@
+from pickle import FALSE
 import torch.nn as nn
 import torch
 
 import IPython
 
 
-def conv_layer3D(chann_in, chann_out, k_size, p_size):
-    layer = nn.Sequential(
-        nn.Conv3d(chann_in, chann_out, kernel_size=k_size, padding=p_size),
-        # nn.BatchNorm3d(chann_out),
-        nn.ReLU()
-    )
-    return layer
+def conv_layer3D(chann_in, chann_out, k_size, p_size, batch_norm):
+    # layer = nn.Sequential(
+    #     nn.Conv3d(chann_in, chann_out, kernel_size=k_size, padding=p_size),
+    #     # nn.BatchNorm3d(chann_out),
+    #     nn.ReLU()
+    # )
 
-def conv_block3D(in_list, out_list, k_list, p_list, pooling_k):
+    layers = [nn.Conv3d(chann_in, chann_out, kernel_size=k_size, padding=p_size)]
+    if batch_norm:
+        layers += [nn.BatchNorm3d(chann_out)]
+    layers += [nn.ReLU()]
+    # return layer
+    return nn.Sequential(*layers)
 
-    layers = [ conv_layer3D(in_list[i], out_list[i], k_list[i], p_list[i]) for i in range(len(in_list)) ]
+def conv_block3D(in_list, out_list, k_list, p_list, pooling_k, batch_norm=FALSE):
+
+    layers = [ conv_layer3D(in_list[i], out_list[i], k_list[i], p_list[i], batch_norm) for i in range(len(in_list)) ]
     layers += [ nn.MaxPool3d(kernel_size = pooling_k)]
     return nn.Sequential(*layers)
 
 
-def fc_layer(size_in, size_out, batch_norm=False):
+def fc_layer(chann_in, chann_out, batch_norm=False):
 
-    layers = [nn.Linear(size_in, size_out)]
+    layers = [nn.Linear(chann_in, chann_out)]
     if batch_norm:
-        layers += [nn.BatchNorm1d(size_out)]
+        layers += [nn.BatchNorm1d(chann_out)]
     layers += [nn.ReLU()]
 
     return nn.Sequential(*layers)
@@ -67,18 +74,18 @@ class Decoder(nn.Module):
         return x 
 
 class EncoderGrid(nn.Module):
-    def __init__(self,latent_size):
+    def __init__(self,latent_size, batch_norm_conv=False, batch_norm_fc=FALSE):
         super(EncoderGrid, self).__init__()
 
         features_encoder = 64
 
-        self.block1 = conv_block3D([3,features_encoder], [features_encoder,features_encoder], [3,3], [1,1], 2)
-        self.block2 = conv_block3D([features_encoder,features_encoder], [features_encoder,features_encoder], [3,3], [1,1], 2)
-        self.block3 = conv_block3D([features_encoder,2 * features_encoder], [2 * features_encoder, 2 * features_encoder], [3,3], [1,1], 2)
+        self.block1 = conv_block3D([3,features_encoder], [features_encoder,features_encoder], [3,3], [1,1], 2, batch_norm=batch_norm_conv)
+        self.block2 = conv_block3D([features_encoder,features_encoder], [features_encoder,features_encoder], [3,3], [1,1], 2, batch_norm=batch_norm_conv)
+        self.block3 = conv_block3D([features_encoder,2 * features_encoder], [2 * features_encoder, 2 * features_encoder], [3,3], [1,1], 2, batch_norm=batch_norm_conv)
 
-        self.fc1 = fc_layer(6*3*3*features_encoder * 2, features_encoder)
-        self.fc2 = fc_layer(features_encoder, features_encoder)
-        self.fc3 = fc_layer(features_encoder, features_encoder)
+        self.fc1 = fc_layer(6*3*3*features_encoder * 2, features_encoder, batch_norm=batch_norm_fc)
+        self.fc2 = fc_layer(features_encoder, features_encoder, batch_norm=batch_norm_fc)
+        self.fc3 = fc_layer(features_encoder, features_encoder, batch_norm=batch_norm_fc)
         self.fc4 = nn.Linear(features_encoder, latent_size)
 
     def forward(self, image):

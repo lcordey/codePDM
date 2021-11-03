@@ -146,8 +146,8 @@ if __name__ == '__main__':
                     epoch, 100 * samples_count / (num_model * num_images_per_model), loss_training, \
                     abs(predicted_code - target_code).mean(), abs(predicted_code).mean(), abs(target_code).mean(),\
                     optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
-        scheduler.step()
 
+        scheduler.step()
 
     print(f"Training finish in {(int)((time.time() - time_start) / 60)} min")
 
