@@ -1,8 +1,10 @@
 {
+    "resolution_used_for_training": 64,
+    
     "decoder" :{
 
         "latent_size" : 8,
-        "num_epoch" : 5,
+        "num_epoch" : 50,
         
         "lambda_variance": 1.0,
         "lambda_sdf": 1,
@@ -18,21 +20,26 @@
             "eta_decoder" : 1e-3,
             "eta_latent_space_mu" : 5e-3,
             "eta_latent_space_std" : 1e-2,
-            "gammaLR" : 0.9
+            "gammaLR" : 0.95
         }
     },
 
     "encoder": {
 
-        "num_epoch" : 1,
+        "num_epoch" : 3,
 
         "image":{
             "width": 300,
             "height": 300
         },
         "dataLoader" :{
-            "batch_size" : 50,
+            "batch_size" : 25,
             "shuffle": 1,
+            "num_workers": 42
+        },
+        "dataLoaderValidation" :{
+            "batch_size" : 1,
+            "shuffle": 0,
             "num_workers": 42
         },
         "optimizer":{

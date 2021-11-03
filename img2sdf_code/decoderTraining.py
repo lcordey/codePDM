@@ -21,7 +21,6 @@ LOGS_PATH = "../../image2sdf/logs/log.pkl"
 PARAM_FILE = "config/param.json"
 
 SDF_DIR = MAIN_DIR + "sdf/"
-RESOLUTION = 64
 
 
 
@@ -120,7 +119,7 @@ if __name__ == '__main__':
     param_all = json.load(open(PARAM_FILE))
     param = param_all["decoder"]
 
-    resolution = RESOLUTION
+    resolution = param["resolution_used_for_training"]
     threshold_precision = 1.0/resolution
     num_samples_per_model = resolution * resolution * resolution
 
@@ -217,7 +216,6 @@ if __name__ == '__main__':
             loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, threshold_precision, param)
 
             loss_total = loss_sdf + loss_rgb + loss_kl
-            # loss_total = loss_sdf + loss_rgb
 
             #log
             logs["total"].append(loss_total.detach().cpu())

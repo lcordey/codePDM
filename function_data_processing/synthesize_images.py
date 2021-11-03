@@ -18,14 +18,14 @@ import time
 
 from random import random, randrange, choice
 
-DEFAULT_MODE = 'validation'
+DEFAULT_MODE = 'test'
 NUM_SCENE_TRAINING = 1000
-NUM_SCENE_VALIDATION = 1
+NUM_SCENE_TEST = 5
 
 # import IPython
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--mode', type=str, dest='mode', default= DEFAULT_MODE, help='training or validation images')
+parser.add_argument('--mode', type=str, dest='mode', default= DEFAULT_MODE, help='training or test')
 parser.add_argument('--venv', dest='venv_path', default='/home/loic/venvs/blender/lib/python3.7/site-packages',
                     help = 'path to the site-packages folder of the virtual environment')
 parser.add_argument('--shapenet_path', dest='shapenet_path', default='/home/loic/data/vehicle',
@@ -159,12 +159,12 @@ def render_to_file(rendered_image_path: str):
     bpy.ops.render.render(write_still = True)
 
 
-def get_shape_dirs(path: str, whitelist: set) -> list:
-    def is_whitelisted(model_dir: str) -> bool:
+def get_shape_dirs(path: str, vehicle_list: set) -> list:
+    def is_listed(model_dir: str) -> bool:
         shape_hash = os.path.split(model_dir)[-1]
-        return shape_hash in whitelist
+        return shape_hash in vehicle_list
 
-    return list(filter(is_whitelisted, glob.glob(f'{path}/*')))
+    return list(filter(is_listed, glob.glob(f'{path}/*')))
 
 
 def generate_white_background(w: int, h: int) -> Image:
@@ -191,19 +191,23 @@ def update_camera(camera, focus_point=mathutils.Vector((0.0, 0.0, 0.0)), distanc
     camera.location = rot_quat @ mathutils.Vector((0.0, 0.0, distance))
 
 
-assert(args.mode == 'training' or args.mode == 'validation'), "please give either training or validation as mode"
+assert(args.mode == 'training' or args.mode == 'test'), "please give either training or test as mode"
 
 #create folder and annotation file
 assert os.path.isdir(args.directory_path), f"main directory does not exists: {args.directory_path}"
 
 if args.mode == 'training':
     output_path = args.directory_path + 'input_images'
-    whitelist_path = '/home/loic/MasterPDM/image2sdf/vehicle_whitelist.txt'
+    vehicle_list_path = '/home/loic/MasterPDM/codePDM/img2sdf_code/config/vehicle_list_all.txt'
     num_scenes_per_vehicule = NUM_SCENE_TRAINING
 else:
-    output_path = args.directory_path + 'input_images_validation'
-    whitelist_path = '/home/loic/MasterPDM/image2sdf/vehicle_whitelist_validation.txt'
-    num_scenes_per_vehicule = NUM_SCENE_VALIDATION
+    output_path = args.directory_path + 'input_images_test'
+    vehicle_list_path = '/home/loic/MasterPDM/codePDM/img2sdf_code/config/vehicle_list_all.txt'
+    num_scenes_per_vehicule = NUM_SCENE_TEST
+
+
+if not os.path.isdir(output_path) :
+    os.mkdir(output_path)
 
 if not os.path.isdir(f'{output_path}/images') :
     os.mkdir(f'{output_path}/images')
@@ -215,11 +219,11 @@ w, h = args.width, args.height
 
 init_blender()
 
-with open(whitelist_path) as f:
-    whitelisted_vehicles = f.read().splitlines()
+with open(vehicle_list_path) as f:
+    vehicle_list = f.read().splitlines()
 
-whitelisted_vehicles = set(whitelisted_vehicles)
-vehicle_pool = get_shape_dirs(args.shapenet_path, whitelisted_vehicles)
+vehicle_list = set(vehicle_list)
+vehicle_pool = get_shape_dirs(args.shapenet_path, vehicle_list)
 
 
 # update camera location
