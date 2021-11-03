@@ -215,6 +215,8 @@ if __name__ == '__main__':
                     weight_sdf = ~((sdf_validation[:,0] > threshold_precision).squeeze() * (sdf_target[:,0] > threshold_precision).squeeze()) \
                         * ~((sdf_validation[:,0] < -threshold_precision).squeeze() * (sdf_target[:,0] < -threshold_precision).squeeze())
 
+                    print(weight_sdf.numel())
+
                     # loss l1 in distance error per samples
                     loss_sdf = torch.nn.L1Loss(reduction='none')(sdf_validation[:,0].squeeze(), sdf_target[:,0])
                     loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
@@ -243,8 +245,8 @@ if __name__ == '__main__':
                 print("\n****************************** VALIDATION ******************************")
 
                 print(f"l2 predicted code error: {loss_val:.5f}")
-                print(f"sdf error: {loss_sdf_val:2.2f}")
-                print(f"rgb error: {loss_rgb_val:2.2f}")
+                print(f"sdf error: {loss_sdf_val:2.5f}")
+                print(f"rgb error: {loss_rgb_val:2.5f}")
 
                 print("****************************** VALIDATION ******************************\n")
 

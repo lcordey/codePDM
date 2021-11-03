@@ -2,7 +2,6 @@ import torch
 import pickle
 import json
 import matplotlib.pyplot as plt
-from decoderTraining import RESOLUTION
 
 from marching_cubes_rgb import *
 import IPython
