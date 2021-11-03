@@ -42,7 +42,7 @@ def fc_block(num_fc_layer, num_features, num_features_extracted, latent_size, ba
     layers = [fc_layer(num_features_extracted * num_features, num_features, batch_norm=batch_norm)]
     for i in range(1, num_fc_layer):
         layers += [fc_layer(num_features, num_features, batch_norm=batch_norm)]
-    layers += nn.Linear(num_features, latent_size)
+    layers += [nn.Linear(num_features, latent_size)]
 
 
 class Decoder(nn.Module):
