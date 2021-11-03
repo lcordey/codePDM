@@ -193,7 +193,7 @@ if __name__ == '__main__':
 
                     # transfer to gpu
                     images_val = images_val.cuda()
-                    target_code_val = dict_hash_2_code[model_hash_val]
+                    target_code_val = dict_hash_2_code[model_hash_val.squeeze()]
 
                     # compute predicted code
                     predicted_code_val = encoder(images_val)
