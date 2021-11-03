@@ -40,11 +40,11 @@
             "gammaLR" : 0.75
         },
         "network" :{
-            "num_slices": 32,
+            "num_slices": 64,
             "width": 24,
             "height" : 24,
             "num_conv_layer": 3,
-            "num_fc_layer": 2
+            "num_fc_layer": 3
         }
 
     }
