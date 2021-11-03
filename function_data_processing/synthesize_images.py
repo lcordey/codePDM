@@ -18,14 +18,14 @@ import time
 
 from random import random, randrange, choice
 
-DEFAULT_MODE = 'test'
-NUM_SCENE_TRAINING = 1000
-NUM_SCENE_TEST = 5
+DEFAULT_MODE = 'validation'
+NUM_SCENE_TRAINING = 300
+NUM_SCENE_VALIDATION = 5
 
 # import IPython
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--mode', type=str, dest='mode', default= DEFAULT_MODE, help='training or test')
+parser.add_argument('--mode', type=str, dest='mode', default= DEFAULT_MODE, help='training or validation')
 parser.add_argument('--venv', dest='venv_path', default='/home/loic/venvs/blender/lib/python3.7/site-packages',
                     help = 'path to the site-packages folder of the virtual environment')
 parser.add_argument('--shapenet_path', dest='shapenet_path', default='/home/loic/data/vehicle',
@@ -33,8 +33,6 @@ parser.add_argument('--shapenet_path', dest='shapenet_path', default='/home/loic
 parser.add_argument('--directory_path', dest='directory_path', default='/home/loic/MasterPDM/image2sdf/', help='path to the folder directory')
 parser.add_argument('--height', type=int, dest='height', default=300)
 parser.add_argument('--width', type=int, dest='width', default=300)
-# parser.add_argument('--num_images', type=int, dest='num_images', default=100, help='number of output images')
-# parser.add_argument('--image_name', dest='image_name', default='synth_image', help='name of the output images')
 
 args = parser.parse_args(args=sys.argv[5:])
 
@@ -191,7 +189,7 @@ def update_camera(camera, focus_point=mathutils.Vector((0.0, 0.0, 0.0)), distanc
     camera.location = rot_quat @ mathutils.Vector((0.0, 0.0, distance))
 
 
-assert(args.mode == 'training' or args.mode == 'test'), "please give either training or test as mode"
+assert(args.mode == 'training' or args.mode == 'validation'), "please give either training or validation as mode"
 
 #create folder and annotation file
 assert os.path.isdir(args.directory_path), f"main directory does not exists: {args.directory_path}"
@@ -201,9 +199,9 @@ if args.mode == 'training':
     vehicle_list_path = '/home/loic/MasterPDM/codePDM/img2sdf_code/config/vehicle_list_all.txt'
     num_scenes_per_vehicule = NUM_SCENE_TRAINING
 else:
-    output_path = args.directory_path + 'input_images_test'
-    vehicle_list_path = '/home/loic/MasterPDM/codePDM/img2sdf_code/config/vehicle_list_all.txt'
-    num_scenes_per_vehicule = NUM_SCENE_TEST
+    output_path = args.directory_path + 'input_images_validation'
+    vehicle_list_path = '/home/loic/MasterPDM/codePDM/img2sdf_code/config/vehicle_validation.txt'
+    num_scenes_per_vehicule = NUM_SCENE_VALIDATION
 
 
 if not os.path.isdir(output_path) :

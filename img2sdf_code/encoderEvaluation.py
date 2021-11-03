@@ -18,9 +18,9 @@ DECODER_PATH = "models_and_codes/decoder.pth"
 ENCODER_PATH = "models_and_codes/encoderGrid.pth"
 PARAM_FILE = "config/param.json"
 VEHICLE_VALIDATION_PATH = "config/vehicle_validation.txt"
-MATRIX_PATH = "../../image2sdf/input_images/matrix_w2c.pkl"
-ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
-IMAGES_PATH = "../../image2sdf/input_images/images/"
+MATRIX_PATH = "../../image2sdf/input_images_validation/matrix_w2c.pkl"
+ANNOTATIONS_PATH = "../../image2sdf/input_images_validation/annotations.pkl"
+IMAGES_PATH = "../../image2sdf/input_images_validation/images/"
 OUTPUT_DIR = "../../image2sdf/encoder_output/evaluation"
 LOGS_PATH = "../../image2sdf/logs/encoder/log.pkl"
 PLOT_PATH = "../../image2sdf/plots/encoder/"
@@ -175,7 +175,8 @@ if __name__ == '__main__':
                 list_hash.append(hash)
 
         num_model = len(list_hash)
-        num_model_2_render= min(num_model, args.num_image)
+        num_images_per_model = len(annotations[list_hash[0]])
+        num_model_2_render= min(num_images_per_model, args.num_image)
 
         resolution = args.resolution
 
@@ -225,6 +226,44 @@ if __name__ == '__main__':
 
         # load parameters
         logs = pickle.load(open(LOGS_PATH, 'rb'))
+
+        param_all = json.load(open(PARAM_FILE))
+        param = param_all["encoder"]
+
+        num_batch_per_epoch = num_model * num_images_per_model / param["dataLoader"]["batch_size"]
+        num_validation_per_epoch = num_batch_per_epoch / param["num_batch_between_validation"]
+        x_timestamp = np.arange(len(logs["training"])) / num_validation_per_epoch
+
+        # let's plots :)
+        # sdf
+        plt.figure()
+        plt.title("logs loss training")
+        plt.semilogy(x_timestamp,logs["training"])
+        plt.ylabel("loss l2")
+        plt.xlabel("epoch")
+        plt.savefig(PLOT_PATH + "training.png")
+
+
+        plt.figure()
+        plt.title("logs loss l2 validation")
+        plt.semilogy(x_timestamp,logs["validation"]["l2"])
+        plt.ylabel("loss l2")
+        plt.xlabel("epoch")
+        plt.savefig(PLOT_PATH + "l2_val.png")
+
+        plt.figure()
+        plt.title("logs loss sdf validation")
+        plt.semilogy(x_timestamp,logs["validation"]["sdf"])
+        plt.ylabel("error sdf")
+        plt.xlabel("epoch")
+        plt.savefig(PLOT_PATH + "sdf_val.png")
+
+        plt.figure()
+        plt.title("logs loss rgb validation")
+        plt.semilogy(x_timestamp,logs["validation"]["rgb"])
+        plt.ylabel("error rgb")
+        plt.xlabel("epoch")
+        plt.savefig(PLOT_PATH + "rgb_val.png")
 
     print("done")
 
