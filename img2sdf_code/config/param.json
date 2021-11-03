@@ -1,6 +1,6 @@
 {
     "resolution_used_for_training": 64,
-    
+
     "decoder" :{
 
         "latent_size" : 8,
@@ -27,6 +27,10 @@
     "encoder": {
 
         "num_epoch" : 3,
+
+        "num_batch_between_print": 10,
+        "num_batch_between_validation": 100,
+        "num_images_validation": 100,
 
         "image":{
             "width": 300,

@@ -27,7 +27,7 @@ MATRIX_PATH = "../../image2sdf/input_images/matrix_w2c.pkl"
 
 def init_weights(m):
     if isinstance(m, (nn.Linear, nn.Conv2d, nn.Conv3d)):
-        torch.nn.init.xavier_uniform(m.weight)
+        torch.nn.init.xavier_uniform_(m.weight)
         m.bias.data.fill_(0.01)
 
 def cosine_distance(a,b):
@@ -175,7 +175,7 @@ if __name__ == '__main__':
             time_left = compute_time_left(time_start, samples_count, num_model, num_images_per_model, epoch, param["num_epoch"])
 
             # print everyl X model seen
-            if samples_count%(10 * batch_size) == 0:
+            if samples_count%(param["num_batch_between_print"] * batch_size) == 0:
                 print("epoch: {}/{:.2f}%, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(\
                     epoch, 100 * samples_count / (num_model * num_images_per_model), loss_training, \
                     abs(predicted_code - target_code).mean(), abs(predicted_code).mean(), abs(target_code).mean(),\
@@ -186,12 +186,11 @@ if __name__ == '__main__':
 
 
             # validation 
-            if samples_count%(100*batch_size) == 0 or samples_count == batch_size:
+            if samples_count%(param["num_batch_between_validation"] * batch_size) == 0 or samples_count == batch_size:
                 encoder.eval()
 
                 log_sdf = []
                 log_rgb = []
-                num_validation_samples = 10
 
                 samples_count_val = 0
                 for images_val, model_hash_val in validation_generator:
@@ -231,7 +230,7 @@ if __name__ == '__main__':
                     log_rgb.append(loss_rgb.detach().cpu())
 
                     samples_count_val += 1
-                    if samples_count_val >= num_validation_samples * len(list_hash_validation):
+                    if samples_count_val == param["num_images_validation"] :
                         break
 
                 loss_sdf_val = torch.tensor(log_sdf).mean()
