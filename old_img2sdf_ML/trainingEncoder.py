@@ -38,7 +38,7 @@ from marching_cubes_rgb import *
 
 DECODER_PATH = "../img2sdf_code/models_and_codes/decoder.pth"
 ENCODER_GRID_PATH = "../img2sdf_code/models_and_codes/encoderGrid.pth"
-LATENT_CODE_PATH = "../img2sdf_code/models_and_codes/latent_code.pk."
+LATENT_CODE_PATH = "../img2sdf_code/models_and_codes/latent_code.pkl."
 
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
