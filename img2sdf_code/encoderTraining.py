@@ -111,11 +111,19 @@ if __name__ == '__main__':
     
     for epoch in range(param["num_epoch"]):
         samples_count = 0
-        for batch_images, model_hash in training_generator:
+        for batch_images, batch_model_hash in training_generator:
             optimizer.zero_grad()
             batch_size = len(batch_images)
 
-            batch_images, target_code = batch_images.cuda(), dict_hash_2_code[model_hash].cuda()
+            # transfer to gpu
+            batch_images = batch_images.cuda()
+
+            # get target code
+            target_code = torch.empty([batch_size, latent_size]).cuda()
+            for model_hash, i in zip(batch_model_hash, range(batch_size)):
+                target_code = dict_hash_2_code[model_hash].cuda()
+
+
             predicted_code = encoder(batch_images)
 
             # compute loss
@@ -132,8 +140,7 @@ if __name__ == '__main__':
 
             # print everyl X model seen
             if samples_count%(10 * batch_size) == 0:
-                print("epoch: {}/{:.2f}%, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f},\
-                    mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(\
+                print("epoch: {}/{:.2f}%, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(\
                     epoch, 100 * samples_count / (num_model * num_images_per_model), loss_training, \
                     abs(predicted_code - target_code).mean(), abs(predicted_code).mean(), abs(target_code).mean(),\
                     optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
