@@ -27,7 +27,7 @@
 
     "encoder": {
 
-        "num_epoch" : 10,
+        "num_epoch" : 20,
 
         "num_batch_between_print": 100,
         "num_batch_between_validation": 1000,
@@ -49,7 +49,7 @@
         },
         "optimizer":{
             "eta_encoder" : 1e-4,
-            "gammaLR" : 0.8
+            "gammaLR" : 0.85
         },
         "network" :{
             "num_slices": 48,
@@ -57,6 +57,28 @@
             "height" : 24,
             "num_conv_layer": 3,
             "num_fc_layer": 3
+        }
+
+    },
+
+    "vae":{
+
+        "num_epoch" : 1,
+
+        "optimizer":{
+            "eta_encoder" : 1e-4,
+            "eta_decoder" : 1e-3,
+            "gammaLR" : 0.8
+        },
+        "dataLoader" :{
+            "batch_size" : 20,
+            "shuffle": 1,
+            "num_workers": 7
+        },
+        "dataLoaderValidation" :{
+            "batch_size" : 1,
+            "shuffle": 0,
+            "num_workers": 1
         }
 
     }

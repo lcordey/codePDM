@@ -8,7 +8,8 @@ import h5py
 import glob
 import os
 
-from networks import EncoderGrid
+from dataLoader import DatasetVAE
+from networks import Decoder, EncoderGrid
 
 import IPython
 
@@ -26,6 +27,10 @@ SDF_DIR = "../../image2sdf/sdf/"
 
 
 
+def init_weights(m):
+    if isinstance(m, (nn.Linear, nn.Conv2d, nn.Conv3d)):
+        torch.nn.init.xavier_uniform_(m.weight)
+        m.bias.data.fill_(0.01)
 
 def init_xyz(resolution):
     """ fill 3d grid representing 3d location to give as input to the decoder """
@@ -39,14 +44,78 @@ def init_xyz(resolution):
     return xyz
 
 
+def init_opt_sched(encoder, decoder, param):
+    """ initialize optimizer and scheduler"""
+
+    optimizer = torch.optim.Adam(
+        [
+            {
+                "params": encoder.parameters(),
+                "lr": param["eta_encoder"],
+            },
+            {
+                "params": decoder.parameters(),
+                "lr": param["eta_decoder"],
+            }
+        ]
+    )
+
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=param["gammaLR"])
+
+    return optimizer, scheduler
+
+
+# def compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, lat_code_mu, lat_code_log_std, threshold_precision, param):
+def compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, predicted_code, threshold_precision, param):
+    """ compute sdf, rgb and regression loss """
+
+    loss = torch.nn.MSELoss(reduction='none')
+
+    # assign weight of 0 for easy samples that are well trained
+    weight_sdf = ~((pred_sdf > threshold_precision).squeeze() * (sdf_gt > threshold_precision).squeeze()) \
+        * ~((pred_sdf < -threshold_precision).squeeze() * (sdf_gt < -threshold_precision).squeeze())
+
+    #L2 loss, only for hard samples
+    loss_sdf = loss(pred_sdf.squeeze(), sdf_gt)
+    loss_sdf = (loss_sdf * weight_sdf).sum()/weight_sdf.count_nonzero()
+    loss_sdf *= param["lambda_sdf"]
+
+    # loss rgb
+    loss_rgb = loss(pred_rgb, rgb_gt)
+    loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).sum()/weight_sdf.count_nonzero()
+    loss_rgb *= param["lambda_rgb"]
+    
+    # regularization loss
+    # loss_kl = (-0.5 * (1 + lat_code_log_std.weight - lat_code_mu.weight.pow(2) - lat_code_log_std.weight.exp())).mean()
+    loss_kl = (-0.5 * (1 + 0 - predicted_code.pow(2) - 1)).mean()
+    loss_kl *= param["lambda_kl"]
+
+    return loss_sdf, loss_rgb, loss_kl
+
+
+def compute_time_left(time_start, samples_count, num_model, num_samples_per_model, num_images_per_model, epoch, num_epoch):
+    """ Compute time left until the end of training """
+    time_passed = time.time() - time_start
+    num_samples_seen = epoch * num_model * num_samples_per_model * num_images_per_model + samples_count
+    time_per_sample = time_passed/num_samples_seen
+    estimate_total_time = time_per_sample * num_epoch * num_model * num_samples_per_model * num_images_per_model
+    estimate_time_left = estimate_total_time - time_passed
+
+    return estimate_time_left
+
 
 if __name__ == '__main__':
     print("Loading parameters...")
 
+    exit()
+
     # load parameters
     param_all = json.load(open(PARAM_FILE))
-    param = param_all["decoder"]
+    param_dec = param_all["decoder"]
+    param_enc = param_all["encoder"]
+    param_vae = param_all["vae"]
     resolution = param_all["resolution_used_for_training"]
+    latent_size = param_all["latent_size"]
 
     threshold_precision = 1.0/resolution
     num_samples_per_model = resolution * resolution * resolution
@@ -65,7 +134,12 @@ if __name__ == '__main__':
             if model_hash in annotations.keys(): # check that we have annotation for this model
                 list_model_hash.append(model_hash)
 
+    ######################################## only used for testing ########################################
+    list_model_hash = list_model_hash[:5]
+    ######################################## only used for testing ########################################
+
     num_model = len(list_model_hash)
+    num_images_per_model = len(annotations[list_model_hash[0]])
 
     # load every models
     print("Loading models...")
@@ -94,11 +168,64 @@ if __name__ == '__main__':
         dict_gt_data["rgb"][model_hash] = rgb_gt
 
 
-
-
-
+    # Init training dataset
+    training_set = DatasetVAE(list_model_hash, dict_gt_data, annotations, num_images_per_model, num_samples_per_model, param_enc["image"], param_enc["network"], IMAGES_PATH, MATRIX_PATH)
+    training_generator= torch.utils.data.DataLoader(training_set, **param_vae["dataLoader"])
 
     
-
     # fill a xyz grid to give as input to the decoder 
     xyz = init_xyz(resolution)
+
+    # Init decoder and encoder
+    encoder = EncoderGrid(latent_size, param_enc["network"]).cuda()
+    decoder = Decoder(latent_size, batch_norm=False)
+
+    encoder.apply(init_weights)
+    decoder.apply(init_weights)
+
+    # initialize optimizer and scheduler
+    optimizer, scheduler = init_opt_sched(encoder, decoder, param_vae["optimizer"])
+
+
+    encoder.train()
+    decoder.train()
+
+    print(f"Start trainging... with {num_model} models")
+
+    time_start = time.time()
+    
+    for epoch in range(param_vae["num_epoch"]):
+        samples_count = 0
+        for batch_grid, batch_sdf_gt, batch_rgb_gt, batch_xyz_idx in training_generator:
+            optimizer.zero_grad()
+
+            batch_size = len(batch_grid)
+
+            # transfer to gpu
+            batch_grid = batch_grid.cuda()
+            sdf_gt = sdf_gt.cuda()
+            rgb_gt = rgb_gt.cuda()
+            xyz_idx = torch.tensor(xyz_idx)
+
+
+            predicted_code = encoder(batch_grid)
+
+            pred = decoder(predicted_code, xyz[xyz_idx])
+            pred_sdf = pred[:,0]
+            pred_rgb = pred[:,1:]
+
+            loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, predicted_code, threshold_precision, param_dec)
+            # loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, predicted_code, predicted_code_log_std, threshold_precision, param_dec)
+
+            loss_total = loss_sdf + loss_rgb + loss_kl
+
+
+            #update weights
+            loss_total.backward()
+            optimizer.step()
+
+            # estime time left
+            samples_count += batch_size
+            time_left = compute_time_left(time_start, samples_count, num_model, num_samples_per_model, num_images_per_model, epoch, param_vae["num_epoch"])
+
+            print("hey")

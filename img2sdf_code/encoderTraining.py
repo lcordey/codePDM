@@ -141,17 +141,17 @@ if __name__ == '__main__':
     
     for epoch in range(param["num_epoch"]):
         samples_count = 0
-        for batch_images, batch_model_hash in training_generator:
+        for batch_grid, batch_model_hash in training_generator:
 
             # time_loading = time.time() - time_start
             # print(f"Time to load the data: {time_loading}")
             # time_start = time.time()
 
             optimizer.zero_grad()
-            batch_size = len(batch_images)
+            batch_size = len(batch_grid)
 
             # transfer to gpu
-            batch_images = batch_images.cuda()
+            batch_grid = batch_grid.cuda()
 
             # get target code
             target_code = torch.empty([batch_size, param_all["latent_size"]]).cuda()
@@ -159,7 +159,7 @@ if __name__ == '__main__':
                 target_code[i] = dict_hash_2_code[model_hash]
 
 
-            predicted_code = encoder(batch_images)
+            predicted_code = encoder(batch_grid)
 
             # compute loss
             loss_training = loss(predicted_code, target_code)

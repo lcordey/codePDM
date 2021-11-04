@@ -83,7 +83,7 @@ def compute_time_left(time_start, samples_count, num_model, num_samples_per_mode
 
     return estimate_time_left
 
-def compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, threshold_precision, param):
+def compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, lat_code_mu, lat_code_log_std, threshold_precision, param):
     """ compute sdf, rgb and regression loss """
 
     loss = torch.nn.MSELoss(reduction='none')
@@ -209,7 +209,7 @@ if __name__ == '__main__':
             pred_sdf = pred[:,0]
             pred_rgb = pred[:,1:]
 
-            loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, threshold_precision, param)
+            loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, lat_code_mu, lat_code_log_std, threshold_precision, param)
 
             loss_total = loss_sdf + loss_rgb + loss_kl
 
