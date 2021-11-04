@@ -149,7 +149,7 @@ if __name__ == '__main__':
 
     for model_hash, i in zip(list_model_hash, range(num_model)):
         if i%25 == 0:
-            print(f"loading models: {i/num_model*100:3.0f}%")
+            print(f"loading models: {i}/{num_model:3.0f}")
 
         # load sdf tensor
         h5f = h5py.File(SDF_DIR + model_hash + '.h5', 'r')
