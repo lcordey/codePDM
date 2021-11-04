@@ -217,12 +217,6 @@ if __name__ == '__main__':
 
             loss_total = loss_sdf + loss_rgb + loss_kl
 
-            #log
-            logs["total"].append(loss_total.detach().cpu())
-            logs["sdf"].append(loss_sdf.detach().cpu())
-            logs["rgb"].append(loss_rgb.detach().cpu())
-            logs["reg"].append(loss_kl.detach().cpu())
-
             #update weights
             loss_total.backward()
             optimizer.step()
@@ -232,7 +226,14 @@ if __name__ == '__main__':
             time_left = compute_time_left(time_start, samples_count, num_model, num_samples_per_model, epoch, param["num_epoch"])
 
             # print everyl X model seen
-            if samples_count%(10 * batch_size) == 0:
+            if samples_count%(param["num_batch_between_print"] * batch_size) == 0:
+
+                #log
+                logs["total"].append(loss_total.detach().cpu())
+                logs["sdf"].append(loss_sdf.detach().cpu())
+                logs["rgb"].append(loss_rgb.detach().cpu())
+                logs["reg"].append(loss_kl.detach().cpu())
+
                 print("Epoch {} / {:.2f}% ,loss: sdf: {:.5f}, rgb: {:.5f}, reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, code std/mu: {:.2f}/{:.2f}, time left: {} min".format(\
                     epoch, 100 * samples_count / (num_model * num_samples_per_model), loss_sdf, loss_rgb, loss_kl, \
                     pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, \

@@ -163,7 +163,6 @@ if __name__ == '__main__':
 
             # compute loss
             loss_training = loss(predicted_code, target_code)
-            logs["training"].append(loss_training.detach().cpu())
 
             #update weights
             loss_training.backward()
@@ -175,6 +174,8 @@ if __name__ == '__main__':
 
             # print everyl X model seen
             if samples_count%(param["num_batch_between_print"] * batch_size) == 0:
+
+                logs["training"].append(loss_training.detach().cpu())
                 print("epoch: {}/{:.2f}%, L2 loss: {:.5f}, L1 loss: {:.5f} mean abs pred: {:.5f}, mean abs target: {:.5f}, LR: {:.6f}, time left: {} min".format(\
                     epoch, 100 * samples_count / (num_model * num_images_per_model), loss_training, \
                     abs(predicted_code - target_code).mean(), abs(predicted_code).mean(), abs(target_code).mean(),\
@@ -186,6 +187,7 @@ if __name__ == '__main__':
 
             # validation 
             if samples_count%(param["num_batch_between_validation"] * batch_size) == 0 or samples_count == batch_size:
+
                 encoder.eval()
 
                 log_l2_val = []

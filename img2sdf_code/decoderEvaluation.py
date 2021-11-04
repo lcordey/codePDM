@@ -103,7 +103,7 @@ if __name__ == '__main__':
         for model_hash in list_hash:
             list_norm.append(dict_hash_2_code[model_hash].norm())
 
-        num_batch_per_epoch = param_all["resolution_used_for_training"] **3 * num_model/ param["dataLoader"]["batch_size"]
+        num_batch_per_epoch = param_all["resolution_used_for_training"] **3 * num_model/ param["dataLoader"]["batch_size"] / param["num_batch_between_print"]
         x_timestamp = np.arange(len(logs["sdf"])) / num_batch_per_epoch
 
         # let's plots :)
