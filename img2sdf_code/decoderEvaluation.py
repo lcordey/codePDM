@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from marching_cubes_rgb import *
 import IPython
 
-DEFAULT_RENDER = False
+DEFAULT_RENDER = True
 DEFAULT_RENDER_RESOLUTION = 64
 DEFAULT_MAX_MODEL_2_RENDER = 10
 DEFAULT_LOGS = True
