@@ -11,16 +11,12 @@ from marching_cubes_rgb import *
 
 import IPython
 
-# directory which contain the SDF input and where all the output will be generated
-MAIN_DIR = "../../image2sdf/"
-# MAIN_DIR = "/home/loic/MasterPDM/image2sdf/"
 
 DECODER_PATH = "models_and_codes/decoder.pth"
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
-LOGS_PATH = "../../image2sdf/logs/log.pkl"
 PARAM_FILE = "config/param.json"
-
-SDF_DIR = MAIN_DIR + "sdf/"
+LOGS_PATH = "../../image2sdf/logs/log.pkl"
+SDF_DIR = "../../image2sdf/sdf/"
 
 
 

@@ -1,6 +1,42 @@
+import numpy as np
+import torch
+import torch.nn as nn
+import json
+import pickle
+import time
+import h5py
+import glob
+import os
+
+from networks import EncoderGrid
+
+import IPython
+
+
+ENCODER_PATH = "models_and_codes/encoderGrid.pth"
+DECODER_PATH = "models_and_codes/decoder.pth"
+LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
+PARAM_FILE = "config/param.json"
+VEHICLE_VALIDATION_PATH = "config/vehicle_validation.txt"
+ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
+LOGS_PATH = "../../image2sdf/logs/log.pkl"
+IMAGES_PATH = "../../image2sdf/input_images/images/"
+MATRIX_PATH = "../../image2sdf/input_images/matrix_w2c.pkl"
+SDF_DIR = "../../image2sdf/sdf/"
 
 
 
+
+def init_xyz(resolution):
+    """ fill 3d grid representing 3d location to give as input to the decoder """
+    xyz = torch.empty(resolution * resolution * resolution, 3).cuda()
+
+    for x in range(resolution):
+        for y in range(resolution):
+            for z in range(resolution):
+                xyz[x * resolution * resolution + y * resolution + z, :] = torch.Tensor([x/(resolution-1)-0.5,y/(resolution-1)-0.5,z/(resolution-1)-0.5])
+
+    return xyz
 
 
 
@@ -15,26 +51,21 @@ if __name__ == '__main__':
     threshold_precision = 1.0/resolution
     num_samples_per_model = resolution * resolution * resolution
 
+    # load annotations and validation hash list
+    annotations = pickle.load(open(ANNOTATIONS_PATH, 'rb'))
+    with open(VEHICLE_VALIDATION_PATH) as f:
+        list_hash_validation = f.read().splitlines()
+    list_hash_validation = list(list_hash_validation)
 
     # get models' hashs
     list_model_hash = []
     for val in glob.glob(SDF_DIR + "*.h5"):
-        list_model_hash.append(os.path.basename(val).split('.')[0])
+        model_hash = os.path.basename(val).split('.')[0]
+        if model_hash not in list_hash_validation: # check that this model is not used for validation
+            if model_hash in annotations.keys(): # check that we have annotation for this model
+                list_model_hash.append(model_hash)
 
-
-
-
-
-    # fill a xyz grid to give as input to the decoder 
-    xyz = init_xyz(resolution)
-
-
-
-    # create a dictionary going from an hash to a corresponding index
-    idx = torch.arange(num_model).type(torch.LongTensor)
-    dict_model_hash_2_idx = dict()
-    for model_hash, i in zip(list_model_hash, range(num_model)):
-        dict_model_hash_2_idx[model_hash] = idx[i]
+    num_model = len(list_model_hash)
 
     # load every models
     print("Loading models...")
@@ -44,7 +75,7 @@ if __name__ == '__main__':
 
     for model_hash, i in zip(list_model_hash, range(num_model)):
         if i%25 == 0:
-            print(f"loading models: {i}/{num_model:3.0f}")
+            print(f"loading models: {i}/{num_model}")
 
         # load sdf tensor
         h5f = h5py.File(SDF_DIR + model_hash + '.h5', 'r')
@@ -61,3 +92,13 @@ if __name__ == '__main__':
         # store in dict
         dict_gt_data["sdf"][model_hash] = sdf_gt
         dict_gt_data["rgb"][model_hash] = rgb_gt
+
+
+
+
+
+
+    
+
+    # fill a xyz grid to give as input to the decoder 
+    xyz = init_xyz(resolution)

@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from marching_cubes_rgb import *
 import IPython
 
-DEFAULT_RENDER = True
+DEFAULT_RENDER = False
 DEFAULT_RENDER_RESOLUTION = 64
 DEFAULT_MAX_MODEL_2_RENDER = 10
 DEFAULT_LOGS = True
@@ -106,21 +106,34 @@ if __name__ == '__main__':
         num_batch_per_epoch = param_all["resolution_used_for_training"] **3 * num_model/ param["dataLoader"]["batch_size"] / param["num_batch_between_print"]
         x_timestamp = np.arange(len(logs["sdf"])) / num_batch_per_epoch
 
+        avrg_time = 10
+        avrg_sdf =[]
+        avrg_rgb =[]
+
+        for i in range(len(x_timestamp)):
+            avrg_sdf.append(torch.tensor(logs["sdf"][i-avrg_time : i + avrg_time]).mean())
+            avrg_rgb.append(torch.tensor(logs["rgb"][i-avrg_time : i + avrg_time]).mean())
+
+
         # let's plots :)
         # sdf
         plt.figure()
         plt.title("logs loss sdf")
-        plt.semilogy(x_timestamp,logs["sdf"])
+        plt.semilogy(x_timestamp, logs["sdf"], 'b', label = 'gt')
+        plt.semilogy(x_timestamp, avrg_sdf, 'r', label = 'avrg')
         plt.ylabel("loss sdf")
         plt.xlabel("epoch")
+        plt.legend()
         plt.savefig(PLOT_PATH + "sdf.png")
 
         # rgb
         plt.figure()
         plt.title("logs loss rgb")
-        plt.semilogy(x_timestamp,logs["rgb"])
+        plt.semilogy(x_timestamp,logs["rgb"], 'b', label = 'gt')
+        plt.semilogy(x_timestamp,avrg_rgb, 'r', label = 'avrg')
         plt.ylabel("loss rgb")
         plt.xlabel("epoch")
+        plt.legend()
         plt.savefig(PLOT_PATH + "rgb.png")
 
         # norms

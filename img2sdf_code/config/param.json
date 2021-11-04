@@ -7,10 +7,10 @@
         "num_epoch" : 10,
         "num_batch_between_print": 100,
         
-        "lambda_variance": 0.2,
+        "lambda_variance": 0.1,
         "lambda_sdf": 1,
         "lambda_rgb": 0.01,
-        "lambda_kl": 0.0001,
+        "lambda_kl": 0.001,
 
         "dataLoader" :{
             "batch_size" : 10000,
@@ -27,7 +27,7 @@
 
     "encoder": {
 
-        "num_epoch" : 4,
+        "num_epoch" : 10,
 
         "num_batch_between_print": 100,
         "num_batch_between_validation": 1000,
@@ -49,7 +49,7 @@
         },
         "optimizer":{
             "eta_encoder" : 1e-4,
-            "gammaLR" : 0.75
+            "gammaLR" : 0.8
         },
         "network" :{
             "num_slices": 48,
