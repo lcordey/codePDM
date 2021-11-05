@@ -18,8 +18,8 @@ with open("/etc/hostname", "r") as f:
     if identity == "loic-laptop\n":
         exit()
 
-ENCODER_PATH = "models_and_codes/encoderGrid.pth"
-DECODER_PATH = "models_and_codes/decoder.pth"
+ENCODER_PATH = "models_and_codes/encoderVAE.pth"
+DECODER_PATH = "models_and_codes/decoderVAE.pth"
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
 PARAM_FILE = "config/param.json"
 VEHICLE_VALIDATION_PATH = "config/vehicle_validation.txt"
@@ -70,7 +70,7 @@ def init_opt_sched(encoder, decoder, param):
 
 
 # def compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, lat_code_mu, lat_code_log_std, threshold_precision, param):
-def compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, predicted_code, threshold_precision, param):
+def compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, predicted_code_mu, predicted_code_log_std, threshold_precision, param):
     """ compute sdf, rgb and regression loss """
 
     loss = torch.nn.MSELoss(reduction='none')
@@ -90,22 +90,11 @@ def compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, predicted_code, threshold_p
     loss_rgb *= param["lambda_rgb"]
     
     # regularization loss
-    # loss_kl = (-0.5 * (1 + lat_code_log_std.weight - lat_code_mu.weight.pow(2) - lat_code_log_std.weight.exp())).mean()
-    loss_kl = (-0.5 * (1 + 0 - predicted_code.pow(2) - 1)).mean()
+    loss_kl = (-0.5 * (1 + predicted_code_log_std - predicted_code_mu.pow(2) - predicted_code_log_std.exp())).mean()
+    # loss_kl = (-0.5 * (1 + 0 - predicted_code.pow(2) - 1)).mean()
     loss_kl *= param["lambda_kl"]
 
     return loss_sdf, loss_rgb, loss_kl
-
-
-# def compute_time_left(time_start, samples_count, num_model, num_samples_per_model, num_images_per_model, epoch, num_epoch):
-#     """ Compute time left until the end of training """
-#     time_passed = time.time() - time_start
-#     num_samples_seen = epoch * num_model * num_samples_per_model * num_images_per_model + samples_count
-#     time_per_sample = time_passed/num_samples_seen
-#     estimate_total_time = time_per_sample * num_epoch * num_model * num_samples_per_model * num_images_per_model
-#     estimate_time_left = estimate_total_time - time_passed
-
-#     return estimate_time_left
 
 def compute_time_left(time_start, samples_count, num_model, num_images_per_model, epoch, num_epoch):
     """ Compute time left until the end of training """
@@ -195,7 +184,7 @@ if __name__ == '__main__':
     xyz = init_xyz(resolution)
 
     # Init decoder and encoder
-    encoder = EncoderGrid(latent_size, param_enc["network"]).cuda()
+    encoder = EncoderGrid(latent_size, param_enc["network"], vae=True).cuda()
     decoder = Decoder(latent_size, batch_norm=True).cuda()
 
     encoder.apply(init_weights)
@@ -204,6 +193,12 @@ if __name__ == '__main__':
     # initialize optimizer and scheduler
     optimizer, scheduler = init_opt_sched(encoder, decoder, param_vae["optimizer"])
 
+    # logs
+    logs = dict()
+    logs["total"] = []
+    logs["sdf"] = []
+    logs["rgb"] = []
+    logs["reg"] = []
 
     encoder.train()
     decoder.train()
@@ -225,15 +220,18 @@ if __name__ == '__main__':
             batch_rgb_gt = batch_rgb_gt.reshape(batch_size * num_position_per_image, 3).cuda()
             batch_xyz_idx = batch_xyz_idx.reshape(batch_size * num_position_per_image)
 
-            predicted_code = encoder(batch_grid)
+            predicted_code_mu, predicted_code_log_std = encoder(batch_grid)
+
+            coeff_std = torch.empty(batch_size, param_all["latent_size"]).normal_().cuda()
+            predicted_code = coeff_std * predicted_code_log_std.exp() * param_vae["lambda_variance"] + predicted_code_mu
 
             pred = decoder(predicted_code.repeat_interleave(num_position_per_image, dim=0), xyz[batch_xyz_idx])
             pred_sdf = pred[:,0]
             pred_rgb = pred[:,1:]
 
 
-            loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, batch_sdf_gt, batch_rgb_gt, predicted_code, threshold_precision, param_dec)
-            # loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, batch_sdf_gt, batch_rgb_gt, predicted_code, predicted_code_log_std, threshold_precision, param_dec)
+            # loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, batch_sdf_gt, batch_rgb_gt, predicted_code, threshold_precision, param_dec)
+            loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, batch_sdf_gt, batch_rgb_gt, predicted_code_mu, predicted_code_log_std, threshold_precision, param_dec)
 
             # loss_total = loss_sdf + loss_rgb + loss_kl
             loss_total = loss_sdf + loss_rgb
@@ -251,11 +249,11 @@ if __name__ == '__main__':
              # print everyl X model seen
             if samples_count%(param_vae["num_batch_between_print"] * batch_size) == 0:
 
-                #log
-                # logs["total"].append(loss_total.detach().cpu())
-                # logs["sdf"].append(loss_sdf.detach().cpu())
-                # logs["rgb"].append(loss_rgb.detach().cpu())
-                # logs["reg"].append(loss_kl.detach().cpu())
+                # log
+                logs["total"].append(loss_total.detach().cpu())
+                logs["sdf"].append(loss_sdf.detach().cpu())
+                logs["rgb"].append(loss_rgb.detach().cpu())
+                logs["reg"].append(loss_kl.detach().cpu())
 
                 # print("Epoch {} / {:.2f}% ,loss: sdf: {:.5f}, rgb: {:.5f}, reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, code std/mu: {:.2f}/{:.2f}, time left: {} min".format(\
                 #     epoch, 100 * samples_count / (num_model * num_images_per_model), loss_sdf, loss_rgb, loss_kl, \
@@ -266,3 +264,20 @@ if __name__ == '__main__':
                     epoch, 100 * samples_count / (num_model * num_images_per_model), loss_sdf, loss_rgb, loss_kl, \
                     pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, \
                     (predicted_code).abs().mean(), (int)(time_left/60)))
+
+
+        scheduler.step()
+
+    print(f"Training finish in {(int)((time.time() - time_start) / 60)} min")
+
+
+
+    ###### Saving models ######
+    torch.save(decoder, DECODER_PATH)
+    torch.save(encoder, ENCODER_PATH)
+
+
+    # save logs
+    with open(LOGS_PATH, "wb") as fp:
+        pickle.dump(logs, fp)
+

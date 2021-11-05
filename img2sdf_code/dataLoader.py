@@ -28,7 +28,7 @@ def convert_w2c(matrix_world_to_camera, frame, point):
     return np.array([x,y,z])
 
 class DatasetDecoder(torch.utils.data.Dataset):
-    'Characterizes a dataset for PyTorch'
+    "One epoch is num_model * num_samples_per_model"
     def __init__(self, list_hash, dict_gt_data, num_samples_per_model, dict_model_hash_2_idx):
         'Initialization'
         self.list_hash = list_hash
@@ -58,7 +58,7 @@ class DatasetDecoder(torch.utils.data.Dataset):
 
 
 class DatasetGrid(torch.utils.data.Dataset):
-    "Characterizes a dataset for PyTorch"
+    "One epoch is num_model * num_image_per_model"
     def __init__(self, list_hash, annotations, num_images_per_model, param_image, param_network, image_path, matrix_path):
         'Initialization'
         self.list_hash = list_hash
@@ -130,7 +130,7 @@ class DatasetGrid(torch.utils.data.Dataset):
 
 
 class DatasetVAE(torch.utils.data.Dataset):
-    "Characterizes a dataset for PyTorch"
+    "One epoch is num_model * num_image_per_model"
     def __init__(self, list_model_hash, dict_gt_data,  annotations, num_images_per_model, num_position_per_image, num_samples_per_model, param_image, param_network, image_path, matrix_path):
         'Initialization'
         self.list_model_hash = list_model_hash
@@ -149,15 +149,10 @@ class DatasetVAE(torch.utils.data.Dataset):
 
     def __len__(self):
         'Denotes the total number of samples'
-        # return len(self.list_model_hash) * self.num_images_per_model * self.num_samples_per_model
         return len(self.list_model_hash) * self.num_images_per_model
 
     def __getitem__(self, index):
         'Generates one sample of data'
-
-        # Select sample
-        # xyz_idx = index%(self.num_samples_per_model)
-        # index = (int)((index - xyz_idx)/self.num_samples_per_model)
 
         xyz_idx = np.random.randint(self.num_samples_per_model, size = self.num_position_per_image)
 

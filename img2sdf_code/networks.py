@@ -42,7 +42,6 @@ def fc_block(num_fc_layer, num_features, num_features_extracted, latent_size, ba
     layers = [fc_layer(num_features_extracted * num_features, num_features, batch_norm=batch_norm)]
     for i in range(1, num_fc_layer):
         layers += [fc_layer(num_features, num_features, batch_norm=batch_norm)]
-    layers += [nn.Linear(num_features, latent_size)]
 
     return nn.Sequential(*layers)
 
@@ -85,48 +84,53 @@ class Decoder(nn.Module):
         return x 
 
 class EncoderGrid(nn.Module):
-    def __init__(self,latent_size, param, batch_norm_conv=False, batch_norm_fc=False):
+    def __init__(self,latent_size, param, vae=False,batch_norm_conv=False, batch_norm_fc=False):
         super(EncoderGrid, self).__init__()
+
+        self.latent_size = latent_size
+        self.vae = vae
 
         features_encoder = 64
 
-        # self.block1 = conv_block3D([3,features_encoder], [features_encoder,features_encoder], [3,3], [1,1], 2, batch_norm=batch_norm_conv)
-        # self.block2 = conv_block3D([features_encoder,features_encoder], [features_encoder,features_encoder], [3,3], [1,1], 2, batch_norm=batch_norm_conv)
-        # self.block3 = conv_block3D([features_encoder,2 * features_encoder], [2 * features_encoder, 2 * features_encoder], [3,3], [1,1], 2, batch_norm=batch_norm_conv)
-
+        # block of multiple convolution layer
         self.features_extraction = features_extraction_conv_block3D(param["num_conv_layer"], features_encoder, [3,3], [1,1], 2, batch_norm=batch_norm_conv)
 
+        # compute size of resulting feature space
         num_slice_features = math.floor(param["num_slices"] / 2**param["num_conv_layer"])
         num_width_features = math.floor(param["width"] / 2**param["num_conv_layer"])
         num_height_features = math.floor(param["height"] / 2**param["num_conv_layer"])
-
-        assert(num_slice_features > 0 and num_width_features > 0 and num_height_features > 0), "too many conv layers"
-
-        num_slice_features = math.floor(param["num_slices"] / 2**param["num_conv_layer"])
         num_features_extracted = num_slice_features * num_width_features * num_height_features
 
+        assert(num_slice_features > 0 and num_width_features > 0 and num_height_features > 0), "too many conv layers"
         print(f"Init Encoder, features size of: {num_slice_features} x {num_width_features} x {num_height_features}")
 
-        self.regression_from_features = fc_block(param["num_fc_layer"], features_encoder, num_features_extracted, latent_size, batch_norm=batch_norm_fc)
+        # MLP
+        self.MLP = fc_block(param["num_fc_layer"], features_encoder, num_features_extracted, latent_size, batch_norm=batch_norm_fc)
 
-        # self.fc1 = fc_layer(6*3*3*features_encoder * 2, features_encoder, batch_norm=batch_norm_fc)
-        # self.fc2 = fc_layer(features_encoder, features_encoder, batch_norm=batch_norm_fc)
-        # self.fc3 = fc_layer(features_encoder, features_encoder, batch_norm=batch_norm_fc)
-        # self.fc4 = nn.Linear(features_encoder, latent_size)
+        # last fc layer used for regression to sdf prediction
+        if not vae:
+            self.classifier= nn.Linear(features_encoder, latent_size)
+        else:
+            self.classifier= nn.Linear(features_encoder, 2 * latent_size)
+
 
     def forward(self, image):
 
-        # temp = self.block1(image)
-        # temp = self.block2(temp)
-        # features = self.block3(temp)
-
-        # latent_code = self.fc4(self.fc3(self.fc2(self.fc1(features.view(features.size(0), -1)))))
-
         # extract features from conv layer
         features = self.features_extraction(image)
+
         # flatten features
         features = features.view(features.size(0), -1)
-        # get code from features
-        latent_code = self.regression_from_features(features)
 
-        return latent_code
+        # get code from features
+        features = self.MLP(features)
+
+        if not self.vae:
+            latent_code = self.classifier(features)
+            return latent_code
+        else:
+            features = self.classifier(features)
+            latent_code_mu = features[:self.latent_size]
+            latent_code_log_std = features[self.latent_size:]
+            return latent_code_mu, latent_code_log_std
+
