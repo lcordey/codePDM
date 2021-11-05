@@ -70,8 +70,8 @@
 
         "optimizer":{
             "eta_encoder" : 1e-5,
-            "eta_decoder" : 1e-3,
-            "gammaLR" : 0.8
+            "eta_decoder" : 1e-4,
+            "gammaLR" : 0.9
         },
         "dataLoader" :{
             "batch_size" : 20,
