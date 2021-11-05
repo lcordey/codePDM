@@ -217,14 +217,14 @@ if __name__ == '__main__':
         for batch_grid, batch_sdf_gt, batch_rgb_gt, batch_xyz_idx in training_generator:
             optimizer.zero_grad()
 
+            IPython.embed()
+
             batch_size = len(batch_grid)
 
             # transfer to gpu
             batch_grid = batch_grid.cuda()
             batch_sdf_gt = batch_sdf_gt.reshape(batch_size * num_position_per_image).cuda()
             batch_rgb_gt = batch_rgb_gt.reshape(batch_size * num_position_per_image, 3).cuda()
-
-            IPython.embed()
 
             batch_xyz_idx = torch.tensor(batch_xyz_idx).reshape(batch_size * num_position_per_image)
 
@@ -261,10 +261,10 @@ if __name__ == '__main__':
                 # logs["reg"].append(loss_kl.detach().cpu())
 
                 # print("Epoch {} / {:.2f}% ,loss: sdf: {:.5f}, rgb: {:.5f}, reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, code std/mu: {:.2f}/{:.2f}, time left: {} min".format(\
-                #     epoch, 100 * samples_count / (num_model * num_samples_per_model), loss_sdf, loss_rgb, loss_kl, \
+                #     epoch, 100 * samples_count / (num_model * num_images_per_model), loss_sdf, loss_rgb, loss_kl, \
                 #     pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, \
                 #     (lat_code_log_std.weight.exp()).mean(), (lat_code_mu.weight).abs().mean(), (int)(time_left/60)))
 
                 print("Epoch {} / {:.2f}% ,loss: sdf: {:.5f}, rgb: {:.5f}, reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, time left: {} min".format(\
-                    epoch, 100 * samples_count / (num_model), loss_sdf, loss_rgb, loss_kl, \
+                    epoch, 100 * samples_count / (num_model* num_images_per_model), loss_sdf, loss_rgb, loss_kl, \
                     pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, (int)(time_left/60)))
