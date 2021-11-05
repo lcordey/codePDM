@@ -13,6 +13,10 @@ from networks import Decoder, EncoderGrid
 
 import IPython
 
+with open("/etc/hostname", "r") as f:
+    identity = f.read()
+    if identity == "loic-laptop\n":
+        exit()
 
 ENCODER_PATH = "models_and_codes/encoderGrid.pth"
 DECODER_PATH = "models_and_codes/decoder.pth"
@@ -107,8 +111,6 @@ def compute_time_left(time_start, samples_count, num_model, num_samples_per_mode
 if __name__ == '__main__':
     print("Loading parameters...")
 
-    exit()
-
     # load parameters
     param_all = json.load(open(PARAM_FILE))
     param_dec = param_all["decoder"]
@@ -140,6 +142,10 @@ if __name__ == '__main__':
 
     num_model = len(list_model_hash)
     num_images_per_model = len(annotations[list_model_hash[0]])
+
+    ######################################## only used for testing ########################################
+    num_images_per_model = 10
+    ######################################## only used for testing ########################################
 
     # load every models
     print("Loading models...")
@@ -198,6 +204,8 @@ if __name__ == '__main__':
         samples_count = 0
         for batch_grid, batch_sdf_gt, batch_rgb_gt, batch_xyz_idx in training_generator:
             optimizer.zero_grad()
+
+            print("start epoch")
 
             batch_size = len(batch_grid)
 

@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from marching_cubes_rgb import *
 import IPython
 
-DEFAULT_RENDER = True
+DEFAULT_RENDER = False
 DEFAULT_RENDER_RESOLUTION = 64
 DEFAULT_MAX_MODEL_2_RENDER = 3
 DEFAULT_LOGS = True
@@ -231,9 +231,8 @@ if __name__ == '__main__':
         param = param_all["encoder"]
 
         # num_batch_per_epoch = num_model * num_images_per_model / param["dataLoader"]["batch_size"]
-        num_batch_per_epoch = 226 * 1000 / param["dataLoader"]["batch_size"]
-        num_print_per_epoch = num_batch_per_epoch / 1
-        # num_print_per_epoch = num_batch_per_epoch / param["num_batch_between_print"]
+        num_batch_per_epoch = 688 * 300 / param["dataLoader"]["batch_size"]
+        num_print_per_epoch = num_batch_per_epoch / param["num_batch_between_print"]
         num_validation_per_epoch = num_batch_per_epoch / param["num_batch_between_validation"]
         x_timestamp_training = np.arange(len(logs["training"])) / num_print_per_epoch 
         x_timestamp_validation = np.arange(len(logs["validation"]["l2"])) / (num_validation_per_epoch + 1)

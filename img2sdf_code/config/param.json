@@ -73,12 +73,12 @@
         "dataLoader" :{
             "batch_size" : 20,
             "shuffle": 1,
-            "num_workers": 7
+            "num_workers": 42
         },
         "dataLoaderValidation" :{
             "batch_size" : 1,
             "shuffle": 0,
-            "num_workers": 1
+            "num_workers": 42
         }
 
     }
