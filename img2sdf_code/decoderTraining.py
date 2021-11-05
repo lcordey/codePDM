@@ -15,7 +15,7 @@ import IPython
 DECODER_PATH = "models_and_codes/decoder.pth"
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
 PARAM_FILE = "config/param.json"
-LOGS_PATH = "../../image2sdf/logs/log.pkl"
+LOGS_PATH = "../../image2sdf/logs/decoder/log.pkl"
 SDF_DIR = "../../image2sdf/sdf/"
 
 

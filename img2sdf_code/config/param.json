@@ -64,15 +64,17 @@
     "vae":{
 
         "num_epoch" : 1,
+        "num_position_per_image": 100,
+        "lambda_variance": 0.1,
         "num_batch_between_print": 1,
 
         "optimizer":{
-            "eta_encoder" : 1e-6,
-            "eta_decoder" : 1e-5,
+            "eta_encoder" : 1e-4,
+            "eta_decoder" : 1e-3,
             "gammaLR" : 0.8
         },
         "dataLoader" :{
-            "batch_size" : 200,
+            "batch_size" : 20,
             "shuffle": 1,
             "num_workers": 42
         },
@@ -97,7 +99,6 @@
         },
 
         "decoder" :{
-            "lambda_variance": 0.1,
             "lambda_sdf": 1,
             "lambda_rgb": 0.01,
             "lambda_kl": 0.001

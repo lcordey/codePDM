@@ -24,7 +24,7 @@ LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
 PARAM_FILE = "config/param.json"
 VEHICLE_VALIDATION_PATH = "config/vehicle_validation.txt"
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
-LOGS_PATH = "../../image2sdf/logs/log.pkl"
+LOGS_PATH = "../../image2sdf/logs/vae/log.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
 MATRIX_PATH = "../../image2sdf/input_images/matrix_w2c.pkl"
 SDF_DIR = "../../image2sdf/sdf/"
@@ -97,12 +97,22 @@ def compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, predicted_code, threshold_p
     return loss_sdf, loss_rgb, loss_kl
 
 
-def compute_time_left(time_start, samples_count, num_model, num_samples_per_model, num_images_per_model, epoch, num_epoch):
+# def compute_time_left(time_start, samples_count, num_model, num_samples_per_model, num_images_per_model, epoch, num_epoch):
+#     """ Compute time left until the end of training """
+#     time_passed = time.time() - time_start
+#     num_samples_seen = epoch * num_model * num_samples_per_model * num_images_per_model + samples_count
+#     time_per_sample = time_passed/num_samples_seen
+#     estimate_total_time = time_per_sample * num_epoch * num_model * num_samples_per_model * num_images_per_model
+#     estimate_time_left = estimate_total_time - time_passed
+
+#     return estimate_time_left
+
+def compute_time_left(time_start, samples_count, num_model, num_images_per_model, epoch, num_epoch):
     """ Compute time left until the end of training """
     time_passed = time.time() - time_start
-    num_samples_seen = epoch * num_model * num_samples_per_model * num_images_per_model + samples_count
+    num_samples_seen = epoch * num_model * num_images_per_model + samples_count
     time_per_sample = time_passed/num_samples_seen
-    estimate_total_time = time_per_sample * num_epoch * num_model * num_samples_per_model * num_images_per_model
+    estimate_total_time = time_per_sample * num_epoch * num_model * num_images_per_model
     estimate_time_left = estimate_total_time - time_passed
 
     return estimate_time_left
@@ -173,9 +183,11 @@ if __name__ == '__main__':
         dict_gt_data["sdf"][model_hash] = sdf_gt
         dict_gt_data["rgb"][model_hash] = rgb_gt
 
+    num_position_per_image = param_vae["num_position_per_image"]
 
     # Init training dataset
-    training_set = DatasetVAE(list_model_hash, dict_gt_data, annotations, num_images_per_model, num_samples_per_model, param_enc["image"], param_enc["network"], IMAGES_PATH, MATRIX_PATH)
+    # training_set = DatasetVAE(list_model_hash, dict_gt_data, annotations, num_images_per_model, num_samples_per_model, param_enc["image"], param_enc["network"], IMAGES_PATH, MATRIX_PATH)
+    training_set = DatasetVAE(list_model_hash, dict_gt_data, annotations, num_images_per_model, num_position_per_image, param_enc["image"], param_enc["network"], IMAGES_PATH, MATRIX_PATH)
     training_generator= torch.utils.data.DataLoader(training_set, **param_vae["dataLoader"])
 
     
@@ -209,9 +221,9 @@ if __name__ == '__main__':
 
             # transfer to gpu
             batch_grid = batch_grid.cuda()
-            batch_sdf_gt = batch_sdf_gt.cuda()
-            batch_rgb_gt = batch_rgb_gt.cuda()
-            batch_xyz_idx = torch.tensor(batch_xyz_idx)
+            batch_sdf_gt = batch_sdf_gt.reshape(batch_size * num_position_per_image).cuda()
+            batch_rgb_gt = batch_rgb_gt.reshape(batch_size * num_position_per_image, 3).cuda()
+            batch_xyz_idx = torch.tensor(batch_xyz_idx).reshape(batch_size * num_position_per_image)
 
 
             predicted_code = encoder(batch_grid)
@@ -233,7 +245,8 @@ if __name__ == '__main__':
 
             # estime time left
             samples_count += batch_size
-            time_left = compute_time_left(time_start, samples_count, num_model, num_samples_per_model, num_images_per_model, epoch, param_vae["num_epoch"])
+            # time_left = compute_time_left(time_start, samples_count, num_model, num_samples_per_model, num_images_per_model, epoch, param_vae["num_epoch"])
+            time_left = compute_time_left(time_start, samples_count, num_model, num_images_per_model, epoch, param_vae["num_epoch"])
 
              # print everyl X model seen
             if samples_count%(param_vae["num_batch_between_print"] * batch_size) == 0:
@@ -250,5 +263,5 @@ if __name__ == '__main__':
                 #     (lat_code_log_std.weight.exp()).mean(), (lat_code_mu.weight).abs().mean(), (int)(time_left/60)))
 
                 print("Epoch {} / {:.2f}% ,loss: sdf: {:.5f}, rgb: {:.5f}, reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, time left: {} min".format(\
-                    epoch, 100 * samples_count / (num_model * num_samples_per_model), loss_sdf, loss_rgb, loss_kl, \
+                    epoch, 100 * samples_count / (num_model), loss_sdf, loss_rgb, loss_kl, \
                     pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, (int)(time_left/60)))

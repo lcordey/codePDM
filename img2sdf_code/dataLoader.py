@@ -131,13 +131,13 @@ class DatasetGrid(torch.utils.data.Dataset):
 
 class DatasetVAE(torch.utils.data.Dataset):
     "Characterizes a dataset for PyTorch"
-    def __init__(self, list_model_hash, dict_gt_data,  annotations, num_images_per_model, num_samples_per_model, param_image, param_network, image_path, matrix_path):
+    def __init__(self, list_model_hash, dict_gt_data,  annotations, num_images_per_model, num_position_per_image, param_image, param_network, image_path, matrix_path):
         'Initialization'
         self.list_model_hash = list_model_hash
         self.dict_gt_data = dict_gt_data
         self.annotations = annotations
         self.num_images_per_model = num_images_per_model
-        self.num_samples_per_model = num_samples_per_model
+        self.num_position_per_image = num_position_per_image
         self.width_image = param_image["width"]
         self.height_image = param_image["height"]
         self.num_slices = param_network["num_slices"]
@@ -148,14 +148,18 @@ class DatasetVAE(torch.utils.data.Dataset):
 
     def __len__(self):
         'Denotes the total number of samples'
-        return len(self.list_model_hash) * self.num_images_per_model * self.num_samples_per_model
+        # return len(self.list_model_hash) * self.num_images_per_model * self.num_samples_per_model
+        return len(self.list_model_hash) * self.num_images_per_model
 
     def __getitem__(self, index):
         'Generates one sample of data'
 
         # Select sample
-        xyz_idx = index%(self.num_samples_per_model)
-        index = (int)((index - xyz_idx)/self.num_samples_per_model)
+        # xyz_idx = index%(self.num_samples_per_model)
+        # index = (int)((index - xyz_idx)/self.num_samples_per_model)
+
+        xyz_idx = np.random.randint(self.num_samples_per_scene, size = self.num_position_per_image)
+
         image_id = index%self.num_images_per_model
         model_hash = self.list_model_hash[(int)((index - image_id) / self.num_images_per_model)]
 

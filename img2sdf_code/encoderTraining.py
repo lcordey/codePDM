@@ -20,7 +20,7 @@ LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
 PARAM_FILE = "config/param.json"
 VEHICLE_VALIDATION_PATH = "config/vehicle_validation.txt"
 ANNOTATIONS_PATH = "../../image2sdf/input_images/annotations.pkl"
-LOGS_PATH = "../../image2sdf/logs/log.pkl"
+LOGS_PATH = "../../image2sdf/logs/encoder/log.pkl"
 IMAGES_PATH = "../../image2sdf/input_images/images/"
 MATRIX_PATH = "../../image2sdf/input_images/matrix_w2c.pkl"
 
