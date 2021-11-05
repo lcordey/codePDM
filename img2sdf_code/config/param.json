@@ -63,7 +63,7 @@
 
     "vae":{
 
-        "num_epoch" : 100,
+        "num_epoch" : 20,
         "num_position_per_image": 500,
         "lambda_variance": 0.1,
         "num_batch_between_print": 1,
