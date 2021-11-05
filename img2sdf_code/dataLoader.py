@@ -154,7 +154,7 @@ class DatasetVAE(torch.utils.data.Dataset):
         'Generates one sample of data'
 
         # Select sample
-        xyz_idx = index%(self.num_samples_per_model * self.num_images_per_model)
+        xyz_idx = index%(self.num_samples_per_model)
         index = (int)((index - xyz_idx)/self.num_samples_per_model)
         image_id = index%self.num_images_per_model
         model_hash = self.list_model_hash[(int)((index - image_id) / self.num_images_per_model)]
