@@ -130,7 +130,7 @@ class EncoderGrid(nn.Module):
             return latent_code
         else:
             features = self.classifier(features)
-            latent_code_mu = features[:self.latent_size]
-            latent_code_log_std = features[self.latent_size:]
+            latent_code_mu = features[:, :self.latent_size]
+            latent_code_log_std = features[:, self.latent_size:]
             return latent_code_mu, latent_code_log_std
 
