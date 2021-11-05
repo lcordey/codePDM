@@ -255,15 +255,15 @@ if __name__ == '__main__':
                 logs["rgb"].append(loss_rgb.detach().cpu())
                 logs["reg"].append(loss_kl.detach().cpu())
 
-                # print("Epoch {} / {:.2f}% ,loss: sdf: {:.5f}, rgb: {:.5f}, reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, code std/mu: {:.2f}/{:.2f}, time left: {} min".format(\
-                #     epoch, 100 * samples_count / (num_model * num_images_per_model), loss_sdf, loss_rgb, loss_kl, \
-                #     pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, \
-                #     (lat_code_log_std.weight.exp()).mean(), (predicted_code).abs().mean(), (int)(time_left/60)))
-                
-                print("Epoch {} / {:.2f}% ,loss: sdf: {:.5f}, rgb: {:.5f}, reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, code mu: {:.2f}, time left: {} min".format(\
+                print("Epoch {} / {:.2f}% ,loss: sdf: {:.5f}, rgb: {:.5f}, reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, code std/mu: {:.2f}/{:.2f}, time left: {} min".format(\
                     epoch, 100 * samples_count / (num_model * num_images_per_model), loss_sdf, loss_rgb, loss_kl, \
                     pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, \
-                    (predicted_code).abs().mean(), (int)(time_left/60)))
+                    (predicted_code_log_std.exp()).mean(), (predicted_code_mu).abs().mean(), (int)(time_left/60)))
+                
+                # print("Epoch {} / {:.2f}% ,loss: sdf: {:.5f}, rgb: {:.5f}, reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, code mu: {:.2f}, time left: {} min".format(\
+                #     epoch, 100 * samples_count / (num_model * num_images_per_model), loss_sdf, loss_rgb, loss_kl, \
+                #     pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, \
+                #     (predicted_code).abs().mean(), (int)(time_left/60)))
 
 
         scheduler.step()
