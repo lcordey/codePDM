@@ -217,17 +217,13 @@ if __name__ == '__main__':
         for batch_grid, batch_sdf_gt, batch_rgb_gt, batch_xyz_idx in training_generator:
             optimizer.zero_grad()
 
-            IPython.embed()
-
             batch_size = len(batch_grid)
 
             # transfer to gpu
             batch_grid = batch_grid.cuda()
             batch_sdf_gt = batch_sdf_gt.reshape(batch_size * num_position_per_image).cuda()
             batch_rgb_gt = batch_rgb_gt.reshape(batch_size * num_position_per_image, 3).cuda()
-
-            batch_xyz_idx = torch.tensor(batch_xyz_idx).reshape(batch_size * num_position_per_image)
-
+            batch_xyz_idx = batch_xyz_idx.reshape(batch_size * num_position_per_image)
 
             predicted_code = encoder(batch_grid)
 

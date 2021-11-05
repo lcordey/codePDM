@@ -199,8 +199,8 @@ if __name__ == '__main__':
             # transfer to gpu
             sdf_gt = sdf_gt.cuda()
             rgb_gt = rgb_gt.cuda()
-            model_idx = torch.tensor(model_idx).cuda()
-            xyz_idx = torch.tensor(xyz_idx)
+            model_idx = model_idx.cuda()
+            xyz_idx = xyz_idx
 
             coeff_std = torch.empty(batch_size, param_all["latent_size"]).normal_().cuda()
             latent_code = coeff_std * lat_code_log_std(model_idx).exp() * param["lambda_variance"] + lat_code_mu(model_idx)
