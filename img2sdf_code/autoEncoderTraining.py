@@ -144,7 +144,7 @@ if __name__ == '__main__':
     num_images_per_model = len(annotations[list_model_hash[0]])
 
     ######################################## only used for testing ########################################
-    num_images_per_model = 10
+    # num_images_per_model = 10
     ######################################## only used for testing ########################################
 
     # load every models
@@ -209,8 +209,8 @@ if __name__ == '__main__':
 
             # transfer to gpu
             batch_grid = batch_grid.cuda()
+            batch_sdf_gt = batch_sdf_gt.cuda()
             batch_rgb_gt = batch_rgb_gt.cuda()
-            rgb_gt = rgb_gt.cuda()
             batch_xyz_idx = torch.tensor(batch_xyz_idx)
 
 
@@ -219,8 +219,6 @@ if __name__ == '__main__':
             pred = decoder(predicted_code, xyz[batch_xyz_idx])
             pred_sdf = pred[:,0]
             pred_rgb = pred[:,1:]
-
-            IPython.embed()
 
 
             loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, batch_sdf_gt, batch_rgb_gt, predicted_code, threshold_precision, param_dec)
