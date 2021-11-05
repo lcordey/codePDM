@@ -40,12 +40,12 @@
         "dataLoader" :{
             "batch_size" : 20,
             "shuffle": 1,
-            "num_workers": 42
+            "num_workers": 21
         },
         "dataLoaderValidation" :{
             "batch_size" : 1,
             "shuffle": 0,
-            "num_workers": 42
+            "num_workers": 21
         },
         "optimizer":{
             "eta_encoder" : 1e-3,
@@ -76,12 +76,12 @@
         "dataLoader" :{
             "batch_size" : 20,
             "shuffle": 1,
-            "num_workers": 42
+            "num_workers": 21
         },
         "dataLoaderValidation" :{
             "batch_size" : 1,
             "shuffle": 0,
-            "num_workers": 42
+            "num_workers": 21
         },
 
         "encoder": {
