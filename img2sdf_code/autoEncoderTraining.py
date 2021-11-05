@@ -184,7 +184,7 @@ if __name__ == '__main__':
 
     # Init decoder and encoder
     encoder = EncoderGrid(latent_size, param_enc["network"]).cuda()
-    decoder = Decoder(latent_size, batch_norm=False).cuda()
+    decoder = Decoder(latent_size, batch_norm=True).cuda()
 
     encoder.apply(init_weights)
     decoder.apply(init_weights)
