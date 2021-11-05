@@ -187,7 +187,7 @@ if __name__ == '__main__':
 
     # Init training dataset
     # training_set = DatasetVAE(list_model_hash, dict_gt_data, annotations, num_images_per_model, num_samples_per_model, param_enc["image"], param_enc["network"], IMAGES_PATH, MATRIX_PATH)
-    training_set = DatasetVAE(list_model_hash, dict_gt_data, annotations, num_images_per_model, num_position_per_image, param_enc["image"], param_enc["network"], IMAGES_PATH, MATRIX_PATH)
+    training_set = DatasetVAE(list_model_hash, dict_gt_data, annotations, num_images_per_model, num_position_per_image, num_samples_per_model, param_enc["image"], param_enc["network"], IMAGES_PATH, MATRIX_PATH)
     training_generator= torch.utils.data.DataLoader(training_set, **param_vae["dataLoader"])
 
     
