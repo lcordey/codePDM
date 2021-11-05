@@ -72,7 +72,7 @@
             "gammaLR" : 0.8
         },
         "dataLoader" :{
-            "batch_size" : 20,
+            "batch_size" : 200,
             "shuffle": 1,
             "num_workers": 42
         },
