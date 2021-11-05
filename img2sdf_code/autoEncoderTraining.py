@@ -209,7 +209,7 @@ if __name__ == '__main__':
 
             # transfer to gpu
             batch_grid = batch_grid.cuda()
-            sdf_gt = sdf_gt.cuda()
+            batch_rgb_gt = batch_rgb_gt.cuda()
             rgb_gt = rgb_gt.cuda()
             batch_xyz_idx = torch.tensor(batch_xyz_idx)
 
@@ -220,10 +220,9 @@ if __name__ == '__main__':
             pred_sdf = pred[:,0]
             pred_rgb = pred[:,1:]
 
-            IPython.embed()
 
-            loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, predicted_code, threshold_precision, param_dec)
-            # loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, predicted_code, predicted_code_log_std, threshold_precision, param_dec)
+            loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, batch_sdf_gt, batch_rgb_gt, predicted_code, threshold_precision, param_dec)
+            # loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, batch_sdf_gt, batch_rgb_gt, predicted_code, predicted_code_log_std, threshold_precision, param_dec)
 
             loss_total = loss_sdf + loss_rgb + loss_kl
 
