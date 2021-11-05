@@ -205,20 +205,18 @@ if __name__ == '__main__':
         for batch_grid, batch_sdf_gt, batch_rgb_gt, batch_xyz_idx in training_generator:
             optimizer.zero_grad()
 
-            print("start epoch")
-
             batch_size = len(batch_grid)
 
             # transfer to gpu
             batch_grid = batch_grid.cuda()
             sdf_gt = sdf_gt.cuda()
             rgb_gt = rgb_gt.cuda()
-            xyz_idx = torch.tensor(xyz_idx)
+            batch_xyz_idx = torch.tensor(batch_xyz_idx)
 
 
             predicted_code = encoder(batch_grid)
 
-            pred = decoder(predicted_code, xyz[xyz_idx])
+            pred = decoder(predicted_code, xyz[batch_xyz_idx])
             pred_sdf = pred[:,0]
             pred_rgb = pred[:,1:]
 
@@ -236,4 +234,20 @@ if __name__ == '__main__':
             samples_count += batch_size
             time_left = compute_time_left(time_start, samples_count, num_model, num_samples_per_model, num_images_per_model, epoch, param_vae["num_epoch"])
 
-            print("hey")
+             # print everyl X model seen
+            if samples_count%(param_vae["num_batch_between_print"] * batch_size) == 0:
+
+                #log
+                # logs["total"].append(loss_total.detach().cpu())
+                # logs["sdf"].append(loss_sdf.detach().cpu())
+                # logs["rgb"].append(loss_rgb.detach().cpu())
+                # logs["reg"].append(loss_kl.detach().cpu())
+
+                # print("Epoch {} / {:.2f}% ,loss: sdf: {:.5f}, rgb: {:.5f}, reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, code std/mu: {:.2f}/{:.2f}, time left: {} min".format(\
+                #     epoch, 100 * samples_count / (num_model * num_samples_per_model), loss_sdf, loss_rgb, loss_kl, \
+                #     pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, \
+                #     (lat_code_log_std.weight.exp()).mean(), (lat_code_mu.weight).abs().mean(), (int)(time_left/60)))
+
+                print("Epoch {} / {:.2f}% ,loss: sdf: {:.5f}, rgb: {:.5f}, reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, time left: {} min".format(\
+                    epoch, 100 * samples_count / (num_model * num_samples_per_model), loss_sdf, loss_rgb, loss_kl, \
+                    pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, (int)(time_left/60)))

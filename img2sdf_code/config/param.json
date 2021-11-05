@@ -64,6 +64,7 @@
     "vae":{
 
         "num_epoch" : 1,
+        "num_batch_between_print": 1,
 
         "optimizer":{
             "eta_encoder" : 1e-4,
