@@ -223,12 +223,15 @@ if __name__ == '__main__':
             batch_grid = batch_grid.cuda()
             batch_sdf_gt = batch_sdf_gt.reshape(batch_size * num_position_per_image).cuda()
             batch_rgb_gt = batch_rgb_gt.reshape(batch_size * num_position_per_image, 3).cuda()
+
+            IPython.embed()
+
             batch_xyz_idx = torch.tensor(batch_xyz_idx).reshape(batch_size * num_position_per_image)
 
 
             predicted_code = encoder(batch_grid)
 
-            pred = decoder(predicted_code, xyz[batch_xyz_idx])
+            pred = decoder(predicted_code.repeat_interleave(num_position_per_image, dim=0), xyz[batch_xyz_idx])
             pred_sdf = pred[:,0]
             pred_rgb = pred[:,1:]
 
