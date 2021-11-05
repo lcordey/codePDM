@@ -69,7 +69,7 @@
         "num_batch_between_print": 1,
 
         "optimizer":{
-            "eta_encoder" : 1e-5,
+            "eta_encoder" : 1e-4,
             "eta_decoder" : 1e-4,
             "gammaLR" : 0.9
         },
