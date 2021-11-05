@@ -113,8 +113,8 @@ if __name__ == '__main__':
 
     # load parameters
     param_all = json.load(open(PARAM_FILE))
-    param_dec = param_all["decoder"]
-    param_enc = param_all["encoder"]
+    param_dec = param_all["vae"]["decoder"]
+    param_enc = param_all["vae"]["encoder"]
     param_vae = param_all["vae"]
     resolution = param_all["resolution_used_for_training"]
     latent_size = param_all["latent_size"]
