@@ -223,6 +223,7 @@ if __name__ == '__main__':
             predicted_code_mu, predicted_code_log_std = encoder(batch_grid)
 
             coeff_std = torch.empty(batch_size, param_all["latent_size"]).normal_().cuda()
+            IPython.embed()
             predicted_code = coeff_std * predicted_code_log_std.exp() * param_vae["lambda_variance"] + predicted_code_mu
 
             pred = decoder(predicted_code.repeat_interleave(num_position_per_image, dim=0), xyz[batch_xyz_idx])
