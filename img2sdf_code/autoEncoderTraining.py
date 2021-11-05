@@ -147,7 +147,7 @@ if __name__ == '__main__':
                 list_model_hash.append(model_hash)
 
     ######################################## only used for testing ########################################
-    list_model_hash = list_model_hash[:5]
+    list_model_hash = list_model_hash[:50]
     ######################################## only used for testing ########################################
 
     num_model = len(list_model_hash)
