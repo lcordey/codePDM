@@ -15,7 +15,7 @@
         "dataLoader" :{
             "batch_size" : 10000,
             "shuffle": 1,
-            "num_workers": 8
+            "num_workers": 42
         },
         "optimizer":{
             "eta_decoder" : 1e-3,
