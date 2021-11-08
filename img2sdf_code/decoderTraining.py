@@ -139,10 +139,10 @@ if __name__ == '__main__':
         list_model_hash_dup.append(model_hash + "_dup")
     ######################################## only used for testing ########################################
 
-    print("list hash:")
-    print(list_model_hash)
-    print("list hash dup:")
-    print(list_model_hash_dup)
+    # print("list hash:")
+    # print(list_model_hash)
+    # print("list hash dup:")
+    # print(list_model_hash_dup)
 
     num_model = len(list_model_hash)
 
@@ -225,6 +225,8 @@ if __name__ == '__main__':
     logs["sdf"] = []
     logs["rgb"] = []
     logs["reg"] = []
+    logs["l2_dup"] = []
+    logs["l2_rand"] = []
 
     print("Start training...")
     decoder.train()
@@ -292,8 +294,12 @@ if __name__ == '__main__':
                                 dist_random.append((lat_code_mu(idx[i].cuda()) - lat_code_mu(idx[j].cuda())).mean().detach().cpu())
 
                 # print(dist_duplicate)
-                print(abs(np.array(dist_duplicate)).mean())
-                print(abs(np.array(dist_random)).mean())
+                l2_dup = abs(np.array(dist_duplicate)).mean()
+                l2_rnd = abs(np.array(dist_random)).mean()
+                print(l2_dup)
+                print(l2_rnd)
+                logs["l2_dup"].append(l2_dup)
+                logs["l2_rand"].append(l2_rnd)
 
 
             # print(f"Time for network pass: {time.time() - time_start}")
