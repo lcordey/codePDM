@@ -31,7 +31,7 @@ def init_xyz(resolution):
 
     return xyz
 
-def init_lat_vecs(num_scenes, latent_size):
+def init_lat_codes(num_scenes, latent_size):
     """initialize random latent code for every model"""
 
     lat_code_mu = torch.nn.Embedding(num_scenes, latent_size).cuda()
@@ -126,10 +126,15 @@ if __name__ == '__main__':
     list_model_hash = []
     for val in glob.glob(SDF_DIR + "*.h5"):
         list_model_hash.append(os.path.basename(val).split('.')[0])
+
+    ######################################## only used for testing ########################################
+    # list_model_hash = list_model_hash[:10]
+    ######################################## only used for testing ########################################
+
     num_model = len(list_model_hash)
 
     # initialize a random latent code for each models
-    lat_code_mu, lat_code_log_std = init_lat_vecs(num_model, param_all["latent_size"])
+    lat_code_mu, lat_code_log_std = init_lat_codes(num_model, param_all["latent_size"])
 
     # create a dictionary going from an hash to a corresponding index
     idx = torch.arange(num_model).type(torch.LongTensor)
@@ -163,7 +168,7 @@ if __name__ == '__main__':
         dict_gt_data["sdf"][model_hash] = sdf_gt
         dict_gt_data["rgb"][model_hash] = rgb_gt
 
-    # list_model_hash = np.repeat(list_model_hash, DATASET_REPETITION)
+    # Init dataset and dataloader
     training_dataset = DatasetDecoder(list_model_hash, dict_gt_data, num_samples_per_model, dict_model_hash_2_idx)
     training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader"])
 
@@ -258,7 +263,6 @@ if __name__ == '__main__':
 
     with open(LATENT_CODE_PATH, "wb") as fp:
         pickle.dump(dict_hash_2_code, fp)
-
 
 
  
