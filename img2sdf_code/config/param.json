@@ -1,6 +1,6 @@
 {
     "resolution_used_for_training": 64,
-    "latent_size" : 8,
+    "latent_size" : 16,
 
     "decoder" :{
 
@@ -21,7 +21,7 @@
             "eta_decoder" : 1e-3,
             "eta_latent_space_mu" : 5e-3,
             "eta_latent_space_std" : 1e-2,
-            "gammaLR" : 0.8
+            "gammaLR" : 0.9
         }
     },
 
