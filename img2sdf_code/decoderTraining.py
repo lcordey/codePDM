@@ -1,3 +1,4 @@
+from PIL.Image import radial_gradient
 import numpy as np
 import torch
 import pickle
@@ -284,14 +285,18 @@ if __name__ == '__main__':
                     (lat_code_log_std.weight.exp()).mean(), (lat_code_mu.weight).abs().mean(), (int)(time_left/60)))
 
                 dist_duplicate = []
-                dist_random = []
-                for i in range((int)(num_model + num_model_duplicate)):
-                    for j in range((int)(num_model + num_model_duplicate)):
-                        if i != j:
-                            if i%num_model == j%num_model:
-                                dist_duplicate.append((lat_code_mu(idx[i].cuda()) - lat_code_mu(idx[j].cuda())).mean().detach().cpu())
+                # dist_random = []
+                # for i in range((int)(num_model + num_model_duplicate)):
+                #     for j in range((int)(num_model + num_model_duplicate)):
+                #         if i != j:
+                #             if i%num_model == j%num_model:
+                #                 dist_duplicate.append((lat_code_mu(idx[i].cuda()) - lat_code_mu(idx[j].cuda())).mean().detach().cpu())
                             # elif:
                                 # dist_random.append((lat_code_mu(idx[i].cuda()) - lat_code_mu(idx[j].cuda())).mean().detach().cpu())
+
+                for i in range(num_model_duplicate):
+                    dist_duplicate.append((lat_code_mu(idx[i].cuda()) - lat_code_mu(idx[i + num_model].cuda())).mean().detach().cpu())
+
 
                 # print(dist_duplicate)
                 l2_dup = abs(np.array(dist_duplicate)).mean()
