@@ -285,7 +285,7 @@ if __name__ == '__main__':
                     (lat_code_log_std.weight.exp()).mean(), (lat_code_mu.weight).abs().mean(), (int)(time_left/60)))
 
                 dist_duplicate = []
-                # dist_random = []
+                dist_random = []
                 # for i in range((int)(num_model + num_model_duplicate)):
                 #     for j in range((int)(num_model + num_model_duplicate)):
                 #         if i != j:
@@ -299,15 +299,15 @@ if __name__ == '__main__':
 
                 for i in range(100):
                     rand = np.random.randint(num_model, size = 2)
-                    dist_duplicate.append((lat_code_mu(idx[rand[0]].cuda()) - lat_code_mu(idx[rand[1]].cuda())).mean().detach().cpu())
+                    dist_random.append((lat_code_mu(idx[rand[0]].cuda()) - lat_code_mu(idx[rand[1]].cuda())).mean().detach().cpu())
 
 
                 # print(dist_duplicate)
                 l2_dup = abs(np.array(dist_duplicate)).mean()
-                # l2_rnd = abs(np.array(dist_random)).mean()
-                l2_rnd = (lat_code_mu.weight).abs().mean().detach().cpu()
+                l2_rnd = abs(np.array(dist_random)).mean()
+                # l2_rnd = (lat_code_mu.weight).abs().mean().detach().cpu()
                 print(l2_dup)
-                # print(l2_rnd)
+                print(l2_rnd)
                 logs["l2_dup"].append(l2_dup)
                 logs["l2_rand"].append(l2_rnd)
 
