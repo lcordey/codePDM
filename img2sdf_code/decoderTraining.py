@@ -168,6 +168,7 @@ if __name__ == '__main__':
         dict_gt_data["sdf"][model_hash] = sdf_gt
         dict_gt_data["rgb"][model_hash] = rgb_gt
 
+    # Init dataset and dataloader
     training_dataset = DatasetDecoder(list_model_hash, dict_gt_data, num_samples_per_model, dict_model_hash_2_idx)
     training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader"])
 
