@@ -290,16 +290,17 @@ if __name__ == '__main__':
                         if i != j:
                             if i%num_model == j%num_model:
                                 dist_duplicate.append((lat_code_mu(idx[i].cuda()) - lat_code_mu(idx[j].cuda())).mean().detach().cpu())
-                            # else:
+                            # elif:
                                 # dist_random.append((lat_code_mu(idx[i].cuda()) - lat_code_mu(idx[j].cuda())).mean().detach().cpu())
 
                 # print(dist_duplicate)
                 l2_dup = abs(np.array(dist_duplicate)).mean()
                 # l2_rnd = abs(np.array(dist_random)).mean()
+                l2_rnd = (lat_code_mu.weight).abs().mean()
                 print(l2_dup)
-                # print(l2_rnd)
+                print(l2_rnd)
                 logs["l2_dup"].append(l2_dup)
-                # logs["l2_rand"].append(l2_rnd)
+                logs["l2_rand"].append(l2_rnd)
 
 
             # print(f"Time for network pass: {time.time() - time_start}")
