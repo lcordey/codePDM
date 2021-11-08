@@ -17,6 +17,9 @@ LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
 PARAM_FILE = "config/param.json"
 LOGS_PATH = "../../image2sdf/logs/decoder/log.pkl"
 SDF_DIR = "../../image2sdf/sdf/"
+# SDF_DIR = "../../image2sdf/sdf_duplicate/"
+
+num_model_duplicate = 20
 
 
 
@@ -128,19 +131,46 @@ if __name__ == '__main__':
         list_model_hash.append(os.path.basename(val).split('.')[0])
 
     ######################################## only used for testing ########################################
-    # list_model_hash = list_model_hash[:10]
+    list_model_hash.sort()
+    # list_model_hash = list_model_hash[:80]
+
+    list_model_hash_dup = []
+    for model_hash, i in zip(list_model_hash, range(num_model_duplicate)):
+        list_model_hash_dup.append(model_hash + "_dup")
     ######################################## only used for testing ########################################
+
+    print("list hash:")
+    print(list_model_hash)
+    print("list hash dup:")
+    print(list_model_hash_dup)
 
     num_model = len(list_model_hash)
 
     # initialize a random latent code for each models
-    lat_code_mu, lat_code_log_std = init_lat_codes(num_model, param_all["latent_size"])
+    # lat_code_mu, lat_code_log_std = init_lat_codes(num_model, param_all["latent_size"])
 
+    ######################################## only used for testing ########################################
+    lat_code_mu, lat_code_log_std = init_lat_codes(num_model + num_model_duplicate, param_all["latent_size"])
+    ######################################## only used for testing ########################################
+
+    # # create a dictionary going from an hash to a corresponding index
+    # idx = torch.arange(num_model).type(torch.LongTensor)
+    # dict_model_hash_2_idx = dict()
+    # for model_hash, i in zip(list_model_hash, range(num_model)):
+    #     dict_model_hash_2_idx[model_hash] = idx[i]
+
+    
+    ######################################## only used for testing ########################################
     # create a dictionary going from an hash to a corresponding index
-    idx = torch.arange(num_model).type(torch.LongTensor)
+    idx = torch.arange(num_model + num_model_duplicate).type(torch.LongTensor)
     dict_model_hash_2_idx = dict()
+
     for model_hash, i in zip(list_model_hash, range(num_model)):
         dict_model_hash_2_idx[model_hash] = idx[i]
+
+    for model_hash_dup, i in zip(list_model_hash_dup, range(num_model_duplicate)):
+        dict_model_hash_2_idx[model_hash_dup] = idx[i + num_model]
+    ######################################## only used for testing ########################################
 
     # load every models
     print("Loading models...")
@@ -168,8 +198,19 @@ if __name__ == '__main__':
         dict_gt_data["sdf"][model_hash] = sdf_gt
         dict_gt_data["rgb"][model_hash] = rgb_gt
 
+
+    ######################################## only used for testing ########################################
+    for model_hash, model_hash_dup, i in zip(list_model_hash, list_model_hash_dup, range(num_model_duplicate)):
+        if i%25 == 0:
+            print(f"loading models: {i}/{num_model_duplicate:3.0f}")
+
+        # store in dict
+        dict_gt_data["sdf"][model_hash_dup] = dict_gt_data["sdf"][model_hash]
+        dict_gt_data["rgb"][model_hash_dup] = dict_gt_data["rgb"][model_hash]
+    ######################################## only used for testing ########################################
+
     # Init dataset and dataloader
-    training_dataset = DatasetDecoder(list_model_hash, dict_gt_data, num_samples_per_model, dict_model_hash_2_idx)
+    training_dataset = DatasetDecoder(list_model_hash + list_model_hash_dup, dict_gt_data, num_samples_per_model, dict_model_hash_2_idx)
     training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader"])
 
     # initialize decoder
@@ -239,6 +280,21 @@ if __name__ == '__main__':
                     epoch, 100 * samples_count / (num_model * num_samples_per_model), loss_sdf, loss_rgb, loss_kl, \
                     pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, \
                     (lat_code_log_std.weight.exp()).mean(), (lat_code_mu.weight).abs().mean(), (int)(time_left/60)))
+
+                dist_duplicate = []
+                dist_random = []
+                for i in range((int)(num_model + num_model_duplicate)):
+                    for j in range((int)(num_model + num_model_duplicate)):
+                        if i != j:
+                            if i%num_model == j%num_model:
+                                dist_duplicate.append((lat_code_mu(idx[i].cuda()) - lat_code_mu(idx[j].cuda())).mean().detach().cpu())
+                            else:
+                                dist_random.append((lat_code_mu(idx[i].cuda()) - lat_code_mu(idx[j].cuda())).mean().detach().cpu())
+
+                # print(dist_duplicate)
+                print(abs(np.array(dist_duplicate)).mean())
+                print(abs(np.array(dist_random)).mean())
+
 
             # print(f"Time for network pass: {time.time() - time_start}")
             # time_start = time.time()

@@ -1,13 +1,13 @@
 {
     "resolution_used_for_training": 64,
-    "latent_size" : 16,
+    "latent_size" : 2,
 
     "decoder" :{
 
-        "num_epoch" : 15,
+        "num_epoch" : 5,
         "num_batch_between_print": 100,
         
-        "lambda_variance": 0.2,
+        "lambda_variance": 1.0,
         "lambda_sdf": 1,
         "lambda_rgb": 0.01,
         "lambda_kl": 0.001,
@@ -15,7 +15,7 @@
         "dataLoader" :{
             "batch_size" : 10000,
             "shuffle": 1,
-            "num_workers": 42
+            "num_workers": 8
         },
         "optimizer":{
             "eta_decoder" : 1e-3,
@@ -103,5 +103,13 @@
             "lambda_rgb": 0.01,
             "lambda_kl": 0.001
         }
+    }
+
+
+    ,"optimizer":{
+        "eta_decoder" : 1e-3,
+        "eta_latent_space_mu" : 5e-3,
+        "eta_latent_space_std" : 1e-2,
+        "gammaLR" : 0.9
     }
 }
