@@ -13,7 +13,7 @@ decoder:
     lambda_kl: 0.001
 
     dataLoader:
-        batch_size: 1000
+        batch_size: 10000
         shuffle: True
         num_workers: 42
     
