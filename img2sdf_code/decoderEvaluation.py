@@ -1,6 +1,7 @@
 import torch
 import pickle
-import json
+# import json
+import yaml
 import matplotlib.pyplot as plt
 
 from marching_cubes_rgb import *
@@ -17,7 +18,8 @@ LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
 OUTPUT_DIR = "../../image2sdf/decoder_output/evaluation"
 LOGS_PATH = "../../image2sdf/logs/decoder/log.pkl"
 PLOT_PATH = "../../image2sdf/plots/decoder/"
-PARAM_FILE = "config/param.json"
+# PARAM_FILE = "config/param.json"
+PARAM_FILE = "config/param_decoder.yaml"
 
 def init_xyz(resolution):
     xyz = torch.empty(resolution * resolution * resolution, 3).cuda()
@@ -93,7 +95,7 @@ if __name__ == '__main__':
         logs = pickle.load(open(LOGS_PATH, 'rb'))
         dict_hash_2_code = pickle.load(open(LATENT_CODE_PATH, 'rb'))
 
-        param_all = json.load(open(PARAM_FILE))
+        param_all = yaml.safe_load(open(PARAM_FILE))
         param = param_all["decoder"]
 
         list_hash = list(dict_hash_2_code.keys())
@@ -142,6 +144,16 @@ if __name__ == '__main__':
         plt.plot(list_norm)
         plt.ylabel("norm")
         plt.savefig(PLOT_PATH + "norms.png")
+
+        # dist same model
+        plt.figure()
+        plt.title("logs dist models")
+        plt.plot(x_timestamp,logs["l2_dup"], 'b', label = 'duplicate')
+        plt.plot(x_timestamp,logs["l2_rnd"], 'r', label = 'differents')
+        plt.ylabel("l2 dist")
+        plt.xlabel("epoch")
+        plt.legend()
+        plt.savefig(PLOT_PATH + "dist_duplicate_models.png")
 
     print("done")
 

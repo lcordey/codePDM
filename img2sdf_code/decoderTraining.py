@@ -59,12 +59,33 @@ def init_lat_codes(num_scenes, latent_size):
 def init_opt_sched(decoder, lat_vecs_mu, lat_vecs_log_std, param):
     """ initialize optimizer and scheduler"""
 
-    optimizer = torch.optim.Adam(
+    # optimizer = torch.optim.Adam(
+    #     [
+    #         {
+    #             "params": decoder.parameters(),
+    #             "lr": param["eta_decoder"],
+    #         },
+    #         {
+    #             "params": lat_vecs_mu.parameters(),
+    #             "lr": param["eta_latent_space_mu"],
+    #         },
+    #         {
+    #             "params": lat_vecs_log_std.parameters(),
+    #             "lr": param["eta_latent_space_std"],
+    #         },
+    #     ]
+    # )
+
+    optimizer_decoder = torch.optim.Adam(
         [
             {
                 "params": decoder.parameters(),
                 "lr": param["eta_decoder"],
             },
+        ]
+    )
+    optimizer_code = torch.optim.Adam(
+        [
             {
                 "params": lat_vecs_mu.parameters(),
                 "lr": param["eta_latent_space_mu"],
@@ -76,9 +97,10 @@ def init_opt_sched(decoder, lat_vecs_mu, lat_vecs_log_std, param):
         ]
     )
 
-    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=param["gammaLR"])
+    scheduler_decoder = torch.optim.lr_scheduler.ExponentialLR(optimizer_decoder, gamma=param["gamma_decoder_LR"])
+    scheduler_code = torch.optim.lr_scheduler.ExponentialLR(optimizer_code, gamma=param["gamma_code_LR"])
 
-    return optimizer, scheduler
+    return optimizer_decoder, optimizer_code, scheduler_decoder, scheduler_code
 
 def compute_time_left(time_start, samples_count, num_model, num_samples_per_model, epoch, num_epoch):
     """ Compute time left until the end of training """
@@ -136,46 +158,31 @@ if __name__ == '__main__':
         list_model_hash.append(os.path.basename(val).split('.')[0])
 
     ######################################## only used for testing ########################################
-    list_model_hash.sort()
     list_model_hash = list_model_hash[:80]
+    ######################################## only used for testing ########################################
 
+    # create duplicated models
     list_model_hash_dup = []
     for model_hash, i in zip(list_model_hash, range(num_model_duplicate)):
         list_model_hash_dup.append(model_hash + "_dup")
-    ######################################## only used for testing ########################################
 
-    # print("list hash:")
-    # print(list_model_hash)
-    # print("list hash dup:")
-    # print(list_model_hash_dup)
-
-    num_model = len(list_model_hash)
-
-    # initialize a random latent code for each models
-    # lat_code_mu, lat_code_log_std = init_lat_codes(num_model, param_all["latent_size"])
-
-    ######################################## only used for testing ########################################
-    lat_code_mu, lat_code_log_std = init_lat_codes(num_model + num_model_duplicate, param_all["latent_size"])
-    ######################################## only used for testing ########################################
-
-    # # create a dictionary going from an hash to a corresponding index
-    # idx = torch.arange(num_model).type(torch.LongTensor)
-    # dict_model_hash_2_idx = dict()
-    # for model_hash, i in zip(list_model_hash, range(num_model)):
-    #     dict_model_hash_2_idx[model_hash] = idx[i]
-
+    num_model_training= len(list_model_hash)
+    num_model_total = num_model_training + num_model_duplicate
     
-    ######################################## only used for testing ########################################
+    # initialize a random latent code for each models
+    lat_code_mu, lat_code_log_std = init_lat_codes(num_model_total, param_all["latent_size"])
+
     # create a dictionary going from an hash to a corresponding index
-    idx = torch.arange(num_model + num_model_duplicate).type(torch.LongTensor)
+    idx = torch.arange(num_model_total).type(torch.LongTensor)
     dict_model_hash_2_idx = dict()
 
-    for model_hash, i in zip(list_model_hash, range(num_model)):
+    # idx for training model
+    for model_hash, i in zip(list_model_hash, range(num_model_training)):
         dict_model_hash_2_idx[model_hash] = idx[i]
 
+    # idx for duplicated models
     for model_hash_dup, i in zip(list_model_hash_dup, range(num_model_duplicate)):
-        dict_model_hash_2_idx[model_hash_dup] = idx[i + num_model]
-    ######################################## only used for testing ########################################
+        dict_model_hash_2_idx[model_hash_dup] = idx[i + num_model_training]
 
     # load every models
     print("Loading models...")
@@ -183,9 +190,10 @@ if __name__ == '__main__':
     dict_gt_data["sdf"] = dict()
     dict_gt_data["rgb"] = dict()
 
-    for model_hash, i in zip(list_model_hash, range(num_model)):
+    # load training data in dict
+    for model_hash, i in zip(list_model_hash, range(num_model_training)):
         if i%25 == 0:
-            print(f"loading models: {i}/{num_model:3.0f}")
+            print(f"loading models: {i}/{num_model_training:3.0f}")
 
         # load sdf tensor
         h5f = h5py.File(SDF_DIR + model_hash + '.h5', 'r')
@@ -203,8 +211,7 @@ if __name__ == '__main__':
         dict_gt_data["sdf"][model_hash] = sdf_gt
         dict_gt_data["rgb"][model_hash] = rgb_gt
 
-
-    ######################################## only used for testing ########################################
+    # load duplicate data in dict
     for model_hash, model_hash_dup, i in zip(list_model_hash, list_model_hash_dup, range(num_model_duplicate)):
         if i%25 == 0:
             print(f"loading models: {i}/{num_model_duplicate:3.0f}")
@@ -212,7 +219,6 @@ if __name__ == '__main__':
         # store in dict
         dict_gt_data["sdf"][model_hash_dup] = dict_gt_data["sdf"][model_hash]
         dict_gt_data["rgb"][model_hash_dup] = dict_gt_data["rgb"][model_hash]
-    ######################################## only used for testing ########################################
 
     # Init dataset and dataloader
     training_dataset = DatasetDecoder(list_model_hash + list_model_hash_dup, dict_gt_data, num_samples_per_model, dict_model_hash_2_idx)
@@ -222,7 +228,8 @@ if __name__ == '__main__':
     decoder = Decoder(param_all["latent_size"], batch_norm=True).cuda()
 
     # initialize optimizer and scheduler
-    optimizer, scheduler = init_opt_sched(decoder, lat_code_mu, lat_code_log_std, param["optimizer"])
+    # optimizer, scheduler = init_opt_sched(decoder, lat_code_mu, lat_code_log_std, param["optimizer"])
+    optimizer_decoder, optimizer_code, scheduler_decoder, scheduler_code = init_opt_sched(decoder, lat_code_mu, lat_code_log_std, param["optimizer"])
 
     # logs
     logs = dict()
@@ -241,7 +248,9 @@ if __name__ == '__main__':
     for epoch in range (param["num_epoch"]):
         samples_count = 0
         for model_idx, sdf_gt, rgb_gt, xyz_idx in training_generator:
-            optimizer.zero_grad()
+        #     optimizer.zero_grad()
+            optimizer_decoder.zero_grad()
+            optimizer_code.zero_grad()
 
             # time_loading = time.time() - time_start
             # print(f"Time to load the data: {time_loading}")
@@ -255,54 +264,46 @@ if __name__ == '__main__':
             model_idx = model_idx.cuda()
             xyz_idx = xyz_idx
 
+            # Compute latent code 
             coeff_std = torch.empty(batch_size, param_all["latent_size"]).normal_().cuda()
             latent_code = coeff_std * lat_code_log_std(model_idx).exp() * param["lambda_variance"] + lat_code_mu(model_idx)
 
+            # get sdf from decoder
             pred = decoder(latent_code, xyz[xyz_idx])
             pred_sdf = pred[:,0]
             pred_rgb = pred[:,1:]
 
+            # compute loss
             loss_sdf, loss_rgb, loss_kl = compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, lat_code_mu, lat_code_log_std, threshold_precision, param)
-
             loss_total = loss_sdf + loss_rgb + loss_kl
 
             #update weights
             loss_total.backward()
-            optimizer.step()
+            # optimizer.step()
+            optimizer_decoder.step()
+            optimizer_code.step()
 
             # estime time left
             samples_count += batch_size
-            time_left = compute_time_left(time_start, samples_count, num_model, num_samples_per_model, epoch, param["num_epoch"])
+            time_left = compute_time_left(time_start, samples_count, num_model_total, num_samples_per_model, epoch, param["num_epoch"])
 
             # print everyl X model seen
             if samples_count%(param["num_batch_between_print"] * batch_size) == 0:
 
-                #log
-                logs["total"].append(loss_total.detach().cpu())
-                logs["sdf"].append(loss_sdf.detach().cpu())
-                logs["rgb"].append(loss_rgb.detach().cpu())
-                logs["reg"].append(loss_kl.detach().cpu())
-
                 print("Epoch {} / {:.2f}% ,loss: sdf: {:.5f}, rgb: {:.5f}, reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, min/max rgb: {:.2f}/{:.2f}, code std/mu: {:.2f}/{:.2f}, time left: {} min".format(\
-                    epoch, 100 * samples_count / (num_model * num_samples_per_model), loss_sdf, loss_rgb, loss_kl, \
+                    epoch, 100 * samples_count / (num_model_total * num_samples_per_model), loss_sdf, loss_rgb, loss_kl, \
                     pred_sdf.min() * resolution, pred_sdf.max() * resolution, pred_rgb.min() * 255, pred_rgb.max() * 255, \
                     (lat_code_log_std.weight.exp()).mean(), (lat_code_mu.weight).abs().mean(), (int)(time_left/60)))
 
+                # compute l2 dist between training models and their duplicate ones
                 dist_duplicate = []
-                dist_random = []
-                # for i in range((int)(num_model + num_model_duplicate)):
-                #     for j in range((int)(num_model + num_model_duplicate)):
-                #         if i != j:
-                #             if i%num_model == j%num_model:
-                #                 dist_duplicate.append((lat_code_mu(idx[i].cuda()) - lat_code_mu(idx[j].cuda())).mean().detach().cpu())
-                            # elif:
-                                # dist_random.append((lat_code_mu(idx[i].cuda()) - lat_code_mu(idx[j].cuda())).mean().detach().cpu())
-
                 for i in range(num_model_duplicate):
-                    dist_duplicate.append((lat_code_mu(idx[i].cuda()) - lat_code_mu(idx[i + num_model].cuda())).mean().detach().cpu())
+                    dist_duplicate.append((lat_code_mu(idx[i].cuda()) - lat_code_mu(idx[i + num_model_training].cuda())).mean().detach().cpu())
 
+                # compute l2 dist between random models
+                dist_random = []
                 for i in range(100):
-                    rand = np.random.randint(num_model, size = 2)
+                    rand = np.random.randint(num_model_training, size = 2)
                     dist_random.append((lat_code_mu(idx[rand[0]].cuda()) - lat_code_mu(idx[rand[1]].cuda())).mean().detach().cpu())
 
 
@@ -311,6 +312,12 @@ if __name__ == '__main__':
                 l2_rnd = abs(np.array(dist_random)).mean()
                 print(f"avrg dist between same models: {l2_dup}")
                 print(f"avrg dist between diff models: {l2_rnd}")
+
+                #log
+                logs["total"].append(loss_total.detach().cpu())
+                logs["sdf"].append(loss_sdf.detach().cpu())
+                logs["rgb"].append(loss_rgb.detach().cpu())
+                logs["reg"].append(loss_kl.detach().cpu())
                 logs["l2_dup"].append(l2_dup)
                 logs["l2_rand"].append(l2_rnd)
 
@@ -318,7 +325,9 @@ if __name__ == '__main__':
             # print(f"Time for network pass: {time.time() - time_start}")
             # time_start = time.time()
 
-        scheduler.step()
+        # scheduler.step()
+        scheduler_decoder.step()
+        scheduler_code.step()
 
     print(f"Training finish in {(int)((time.time() - time_start) / 60)} min")
 
@@ -327,9 +336,11 @@ if __name__ == '__main__':
     # save decoder
     torch.save(decoder, DECODER_PATH)
 
+
     # save logs
     with open(LOGS_PATH, "wb") as file:
         pickle.dump(logs, file)
+    
     
     # save latent code in dict
     dict_hash_2_code = dict()
@@ -339,7 +350,8 @@ if __name__ == '__main__':
     with open(LATENT_CODE_PATH, "wb") as file:
         pickle.dump(dict_hash_2_code, file)
 
-    
+
+    # save param used
     with open(PARAM_SAVE_FILE, 'w') as file:
         yaml.dump(param_all, file)
 
