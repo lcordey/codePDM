@@ -6,6 +6,7 @@ import glob
 # import json
 import yaml
 import time
+from skimage import color
 
 from networks import Decoder
 from dataLoader import DatasetDecoder
@@ -206,10 +207,15 @@ if __name__ == '__main__':
         # normalize
         sdf_gt = sdf_gt / resolution
         rgb_gt = rgb_gt / 255
+        lab_gt = color.rgb2lab(rgb_gt)
+        lab_gt = lab_gt / 100
+        lab_gt = np.clip(lab_gt, -1, 1)
+        
 
         # store in dict
         dict_gt_data["sdf"][model_hash] = sdf_gt
         dict_gt_data["rgb"][model_hash] = rgb_gt
+        dict_gt_data["lab"][model_hash] = lab_gt
 
     # load duplicate data in dict
     for model_hash, model_hash_dup, i in zip(list_model_hash, list_model_hash_dup, range(num_model_duplicate)):
@@ -219,6 +225,7 @@ if __name__ == '__main__':
         # store in dict
         dict_gt_data["sdf"][model_hash_dup] = dict_gt_data["sdf"][model_hash]
         dict_gt_data["rgb"][model_hash_dup] = dict_gt_data["rgb"][model_hash]
+        dict_gt_data["lab"][model_hash_dup] = dict_gt_data["lab"][model_hash]
 
     # Init dataset and dataloader
     training_dataset = DatasetDecoder(list_model_hash + list_model_hash_dup, dict_gt_data, num_samples_per_model, dict_model_hash_2_idx)

@@ -54,7 +54,12 @@ class DatasetDecoder(torch.utils.data.Dataset):
         sdf_gt = self.dict_gt_data["sdf"][model_hash][xyz_idx]
         rgb_gt = self.dict_gt_data["rgb"][model_hash][xyz_idx]
 
-        return model_idx, sdf_gt, rgb_gt, xyz_idx
+    ######################################## only used for testing ########################################
+        lab_gt = self.dict_gt_data["lab"][model_hash][xyz_idx]
+        return model_idx, sdf_gt, lab_gt, xyz_idx
+    ######################################## only used for testing ########################################
+    
+        # return model_idx, sdf_gt, rgb_gt, xyz_idx
 
 
 class DatasetGrid(torch.utils.data.Dataset):
