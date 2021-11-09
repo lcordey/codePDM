@@ -209,8 +209,8 @@ if __name__ == '__main__':
         sdf_gt = sdf_gt / resolution
         rgb_gt = rgb_gt / 255
         lab_gt = color.rgb2lab(rgb_gt)
-        lab_gt = lab_gt / 100
-        lab_gt = np.clip(lab_gt, -1, 1)
+        lab_gt = lab_gt / 200 + 0.5
+        lab_gt = np.clip(lab_gt, 0, 1)
         
 
         # store in dict

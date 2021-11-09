@@ -79,11 +79,11 @@ class Decoder(nn.Module):
         x = self.lnEnd(x)
 
         # activation function, only for rgb values
-        # x[:,1:] = self.sgm(self.lambda_activation * x[:,1:])
+        x[:,1:] = self.sgm(self.lambda_activation * x[:,1:])
 
 
     ######################################## only used for testing ########################################
-        x[:,1:] = self.sgm(self.lambda_activation * x[:,1:]) * 2 - 1 
+        # x[:,1:] = self.sgm(self.lambda_activation * x[:,1:]) * 2 - 1 
     ######################################## only used for testing ########################################
 
         return x 
