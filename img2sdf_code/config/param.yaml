@@ -11,7 +11,7 @@ decoder:
     lambda_variance: 1.0
     lambda_sdf: 1.0
     # lambda_rgb: 0.01
-    lambda_rgb: 0.01
+    lambda_rgb: 0.1
     lambda_kl: 0.001
 
     dataLoader:
