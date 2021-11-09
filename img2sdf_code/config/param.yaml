@@ -29,7 +29,7 @@ decoder:
         gamma_code_LR: 0.95
 
 encoder:
-    num_epoch: 10
+    num_epoch: 5
 
     num_batch_between_print: 100
     num_batch_between_validation: 1000
@@ -51,7 +51,7 @@ encoder:
     
     optimizer:
         eta_encoder: 0.001
-        gammaLR: 0.9
+        gammaLR: 0.75
         
     network:
         num_slices: 48
