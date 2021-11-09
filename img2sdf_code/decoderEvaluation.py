@@ -156,7 +156,7 @@ if __name__ == '__main__':
         # sdf
         plt.figure()
         plt.title("logs loss sdf")
-        plt.semilogy(x_timestamp, logs["sdf"], 'b', label = 'gt')
+        plt.semilogy(x_timestamp, logs["sdf"], 'b', label = 'all data')
         plt.semilogy(x_timestamp, avrg_sdf, 'r', label = 'avrg')
         plt.ylabel("loss sdf")
         plt.xlabel("epoch")
@@ -166,7 +166,7 @@ if __name__ == '__main__':
         # rgb
         plt.figure()
         plt.title("logs loss rgb")
-        plt.semilogy(x_timestamp,logs["rgb"], 'b', label = 'gt')
+        plt.semilogy(x_timestamp,logs["rgb"], 'b', label = 'all data')
         plt.semilogy(x_timestamp,avrg_rgb, 'r', label = 'avrg')
         plt.ylabel("loss rgb")
         plt.xlabel("epoch")

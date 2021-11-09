@@ -59,22 +59,22 @@ def init_lat_codes(num_scenes, latent_size):
 def init_opt_sched(decoder, lat_vecs_mu, lat_vecs_log_std, param):
     """ initialize optimizer and scheduler"""
 
-    # optimizer = torch.optim.Adam(
-    #     [
-    #         {
-    #             "params": decoder.parameters(),
-    #             "lr": param["eta_decoder"],
-    #         },
-    #         {
-    #             "params": lat_vecs_mu.parameters(),
-    #             "lr": param["eta_latent_space_mu"],
-    #         },
-    #         {
-    #             "params": lat_vecs_log_std.parameters(),
-    #             "lr": param["eta_latent_space_std"],
-    #         },
-    #     ]
-    # )
+    optimizer = torch.optim.Adam(
+        [
+            {
+                "params": decoder.parameters(),
+                "lr": param["eta_decoder"],
+            },
+            {
+                "params": lat_vecs_mu.parameters(),
+                "lr": param["eta_latent_space_mu"],
+            },
+            {
+                "params": lat_vecs_log_std.parameters(),
+                "lr": param["eta_latent_space_std"],
+            },
+        ]
+    )
 
     optimizer_decoder = torch.optim.Adam(
         [
@@ -97,10 +97,12 @@ def init_opt_sched(decoder, lat_vecs_mu, lat_vecs_log_std, param):
         ]
     )
 
-    scheduler_decoder = torch.optim.lr_scheduler.ExponentialLR(optimizer_decoder, gamma=param["gamma_decoder_LR"])
-    scheduler_code = torch.optim.lr_scheduler.ExponentialLR(optimizer_code, gamma=param["gamma_code_LR"])
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=param["gamma_decoder_LR"])
+    # scheduler_decoder = torch.optim.lr_scheduler.ExponentialLR(optimizer_decoder, gamma=param["gamma_decoder_LR"])
+    # scheduler_code = torch.optim.lr_scheduler.ExponentialLR(optimizer_code, gamma=param["gamma_code_LR"])
 
-    return optimizer_decoder, optimizer_code, scheduler_decoder, scheduler_code
+    # return optimizer_decoder, optimizer_code, scheduler_decoder, scheduler_code
+    return optimizer, scheduler
 
 def compute_time_left(time_start, samples_count, num_model, num_samples_per_model, epoch, num_epoch):
     """ Compute time left until the end of training """
