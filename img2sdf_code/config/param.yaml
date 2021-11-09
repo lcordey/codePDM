@@ -50,8 +50,8 @@ encoder:
         num_workers: 42
     
     optimizer:
-        eta_encoder: 0.001
-        gammaLR: 0.75
+        eta_encoder: 0.0001
+        gammaLR: 0.9
         
     network:
         num_slices: 48
