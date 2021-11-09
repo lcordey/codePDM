@@ -2,6 +2,7 @@ import torch
 import pickle
 # import json
 import yaml
+from skimage import color
 import matplotlib.pyplot as plt
 
 from marching_cubes_rgb import *
@@ -74,7 +75,13 @@ if __name__ == '__main__':
                 sdf_pred = decoder(latent_code, xyz_sub_sample).detach().cpu()
                 sdf_pred[:,0] = sdf_pred[:,0] * resolution
                 sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
-                sdf_pred[:,1:] = sdf_pred[:,1:] * 255
+                # sdf_pred[:,1:] = sdf_pred[:,1:] * 255
+
+
+    ######################################## only used for testing ########################################
+                sdf_pred[:,1:] = (sdf_pred[:,1:] - 0.5) * 200
+                sdf_pred[:,1:] = color.lab2rgb(sdf_pred[:,1:])
+    ######################################## only used for testing ########################################
 
                 sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:], [resolution, resolution, 4])
 
