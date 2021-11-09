@@ -4,7 +4,7 @@ decoder:
     num_workers: 42
     shuffle: true
   lambda_kl: 0.001
-  lambda_rgb: 0.01
+  lambda_rgb: 0.1
   lambda_sdf: 1.0
   lambda_variance: 1.0
   num_batch_between_print: 100
