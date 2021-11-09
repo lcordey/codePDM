@@ -309,9 +309,8 @@ if __name__ == '__main__':
                 # print(dist_duplicate)
                 l2_dup = abs(np.array(dist_duplicate)).mean()
                 l2_rnd = abs(np.array(dist_random)).mean()
-                # l2_rnd = (lat_code_mu.weight).abs().mean().detach().cpu()
-                print(l2_dup)
-                print(l2_rnd)
+                print(f"avrg dist between same models: {l2_dup}")
+                print(f"avrg dist between diff models: {l2_rnd}")
                 logs["l2_dup"].append(l2_dup)
                 logs["l2_rand"].append(l2_rnd)
 

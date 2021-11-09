@@ -3,8 +3,9 @@ resolution_used_for_training: 64
 latent_size: 6
 
 decoder:
-    num_epoch: 150
-    num_batch_between_print: 10000
+    num_epoch: 10
+    # num_epoch: 150
+    num_batch_between_print: 1000
 
     lambda_variance: 1.0
     lambda_sdf: 1.0
@@ -20,7 +21,8 @@ decoder:
         eta_decoder: 0.001
         eta_latent_space_mu: 0.02
         eta_latent_space_std: 0.01
-        gammaLR: 0.98
+        gammaLR: 0.9
+        # gammaLR: 0.98
 
 
 
