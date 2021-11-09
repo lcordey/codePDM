@@ -250,9 +250,9 @@ if __name__ == '__main__':
     for epoch in range (param["num_epoch"]):
         samples_count = 0
         for model_idx, sdf_gt, rgb_gt, xyz_idx in training_generator:
-        #     optimizer.zero_grad()
-            optimizer_decoder.zero_grad()
-            optimizer_code.zero_grad()
+            optimizer.zero_grad()
+            # optimizer_decoder.zero_grad()
+            # optimizer_code.zero_grad()
 
             # time_loading = time.time() - time_start
             # print(f"Time to load the data: {time_loading}")
@@ -281,9 +281,9 @@ if __name__ == '__main__':
 
             #update weights
             loss_total.backward()
-            # optimizer.step()
-            optimizer_decoder.step()
-            optimizer_code.step()
+            optimizer.step()
+            # optimizer_decoder.step()
+            # optimizer_code.step()
 
             # estime time left
             samples_count += batch_size
@@ -327,9 +327,9 @@ if __name__ == '__main__':
             # print(f"Time for network pass: {time.time() - time_start}")
             # time_start = time.time()
 
-        # scheduler.step()
-        scheduler_decoder.step()
-        scheduler_code.step()
+        scheduler.step()
+        # scheduler_decoder.step()
+        # scheduler_code.step()
 
     print(f"Training finish in {(int)((time.time() - time_start) / 60)} min")
 
