@@ -230,8 +230,8 @@ if __name__ == '__main__':
     decoder = Decoder(param_all["latent_size"], batch_norm=True).cuda()
 
     # initialize optimizer and scheduler
-    # optimizer, scheduler = init_opt_sched(decoder, lat_code_mu, lat_code_log_std, param["optimizer"])
-    optimizer_decoder, optimizer_code, scheduler_decoder, scheduler_code = init_opt_sched(decoder, lat_code_mu, lat_code_log_std, param["optimizer"])
+    optimizer, scheduler = init_opt_sched(decoder, lat_code_mu, lat_code_log_std, param["optimizer"])
+    # optimizer_decoder, optimizer_code, scheduler_decoder, scheduler_code = init_opt_sched(decoder, lat_code_mu, lat_code_log_std, param["optimizer"])
 
     # logs
     logs = dict()
