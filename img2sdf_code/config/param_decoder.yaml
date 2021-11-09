@@ -1,19 +1,44 @@
 decoder:
   dataLoader:
-    batch_size: 1000
+    batch_size: 10000
     num_workers: 42
     shuffle: true
   lambda_kl: 0.001
   lambda_rgb: 0.01
   lambda_sdf: 1.0
   lambda_variance: 1.0
-  num_batch_between_print: 1000
-  num_epoch: 10
+  num_batch_between_print: 100
+  num_epoch: 30
   optimizer:
     eta_decoder: 0.001
     eta_latent_space_mu: 0.02
     eta_latent_space_std: 0.01
-    gamma_code_LR: 0.75
-    gamma_decoder_LR: 0.9
+    gamma_code_LR: 0.85
+    gamma_decoder_LR: 0.94
+encoder:
+  dataLoader:
+    batch_size: 20
+    num_workers: 42
+    shuffle: true
+  dataLoaderValidation:
+    batch_size: 1
+    num_workers: 42
+    shuffle: false
+  image:
+    height: 300
+    width: 300
+  network:
+    height: 24
+    num_conv_layer: 3
+    num_fc_layer: 3
+    num_slices: 48
+    width: 24
+  num_batch_between_print: 100
+  num_batch_between_validation: 1000
+  num_epoch: 20
+  num_images_validation: 100
+  optimizer:
+    eta_encoder: 0.0001
+    gammaLR: 0.95
 latent_size: 6
 resolution_used_for_training: 64
