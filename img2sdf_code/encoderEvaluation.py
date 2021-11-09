@@ -1,6 +1,7 @@
 import torch
 import pickle
-import json
+# import json
+import yaml
 import glob
 import imageio
 import cv2
@@ -9,7 +10,7 @@ import matplotlib.pyplot as plt
 from marching_cubes_rgb import *
 import IPython
 
-DEFAULT_RENDER = False
+DEFAULT_RENDER = True
 DEFAULT_RENDER_RESOLUTION = 64
 DEFAULT_MAX_MODEL_2_RENDER = 3
 DEFAULT_LOGS = True
@@ -18,7 +19,7 @@ DECODER_PATH = "models_and_codes/decoder.pth"
 ENCODER_PATH = "models_and_codes/encoderGrid.pth"
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
 # PARAM_FILE = "config/param.json"
-PARAM_FILE = "config/param.yaml"
+PARAM_FILE = "config/param_encoder.yaml"
 VEHICLE_VALIDATION_PATH = "config/vehicle_validation.txt"
 MATRIX_PATH = "../../image2sdf/input_images_validation/matrix_w2c.pkl"
 ANNOTATIONS_PATH = "../../image2sdf/input_images_validation/annotations.pkl"
@@ -159,7 +160,7 @@ if __name__ == '__main__':
     if args.render:
 
         # load parameters
-        param_all = json.load(open(PARAM_FILE))
+        param_all = yaml.load(open(PARAM_FILE))
         param = param_all["encoder"]
 
         # load annotations
@@ -276,7 +277,7 @@ if __name__ == '__main__':
         # load parameters
         logs = pickle.load(open(LOGS_PATH, 'rb'))
 
-        param_all = json.load(open(PARAM_FILE))
+        param_all = yaml.load(open(PARAM_FILE))
         param = param_all["encoder"]
 
         # num_batch_per_epoch = num_model * num_images_per_model / param["dataLoader"]["batch_size"]
