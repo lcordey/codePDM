@@ -1,3 +1,4 @@
+from numpy.lib.function_base import kaiser
 import torch
 import pickle
 # import json
@@ -12,7 +13,9 @@ import IPython
 
 DEFAULT_RENDER = True
 DEFAULT_RENDER_RESOLUTION = 64
-DEFAULT_MAX_MODEL_2_RENDER = 3
+DEFAULT_MAX_MODEL_2_RENDER = 4
+# DEFAULT_MAX_MODEL_2_RENDER = None
+DEFAULT_IMAGES_PER_MODEL = 2
 DEFAULT_LOGS = True
 
 DECODER_PATH = "models_and_codes/decoder.pth"
@@ -152,7 +155,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Render decoder results')
     parser.add_argument('--render', type=bool, help='render model -> True or False', default= DEFAULT_RENDER)
     parser.add_argument('--resolution', type=int, help='resolution -> int', default= DEFAULT_RENDER_RESOLUTION)
-    parser.add_argument('--num_image', type=int, help='number of images to evaluate -> int', default= DEFAULT_MAX_MODEL_2_RENDER)
+    parser.add_argument('--num_image', type=int, help='number of images to evaluate per model -> int', default= DEFAULT_IMAGES_PER_MODEL)
+    parser.add_argument('--num_model', type=int, help='number of models to evaluate, -> int or None if you want to evaluate them all', default= DEFAULT_MAX_MODEL_2_RENDER)
     parser.add_argument('--logs', type=bool, help='plots logs -> True or False', default= DEFAULT_LOGS)
     args = parser.parse_args()
 
@@ -171,6 +175,9 @@ if __name__ == '__main__':
         with open(VEHICLE_VALIDATION_PATH) as f:
             list_hash_validation = f.read().splitlines()
         list_hash_validation = list(list_hash_validation)
+
+        if args.num_model is not None:
+            list_hash_validation = list_hash_validation[:args.num_model]
 
         # only keep the ones for which with have annotated images
         list_hash = []
