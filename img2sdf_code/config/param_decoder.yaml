@@ -13,6 +13,7 @@ decoder:
     eta_decoder: 0.001
     eta_latent_space_mu: 0.02
     eta_latent_space_std: 0.01
-    gammaLR: 0.9
+    gamma_code_LR: 0.75
+    gamma_decoder_LR: 0.9
 latent_size: 6
 resolution_used_for_training: 64
