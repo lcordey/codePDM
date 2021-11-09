@@ -158,7 +158,7 @@ if __name__ == '__main__':
         list_model_hash.append(os.path.basename(val).split('.')[0])
 
     ######################################## only used for testing ########################################
-    list_model_hash = list_model_hash[:80]
+    # list_model_hash = list_model_hash[:80]
     ######################################## only used for testing ########################################
 
     # create duplicated models
@@ -341,7 +341,7 @@ if __name__ == '__main__':
     with open(LOGS_PATH, "wb") as file:
         pickle.dump(logs, file)
     
-    
+
     # save latent code in dict
     dict_hash_2_code = dict()
     for model_hash in list_model_hash:
