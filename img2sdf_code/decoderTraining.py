@@ -190,6 +190,7 @@ if __name__ == '__main__':
     dict_gt_data = dict()
     dict_gt_data["sdf"] = dict()
     dict_gt_data["rgb"] = dict()
+    dict_gt_data["lab"] = dict()
 
     # load training data in dict
     for model_hash, i in zip(list_model_hash, range(num_model_training)):
