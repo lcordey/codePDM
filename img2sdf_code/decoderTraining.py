@@ -3,7 +3,8 @@ import numpy as np
 import torch
 import pickle
 import glob
-import json
+# import json
+import yaml
 import time
 
 from networks import Decoder
@@ -15,7 +16,9 @@ import IPython
 
 DECODER_PATH = "models_and_codes/decoder.pth"
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
-PARAM_FILE = "config/param.json"
+# PARAM_FILE = "config/param.json"
+PARAM_FILE = "config/param.yaml"
+PARAM_SAVE_FILE = "config/param_decoder.yaml"
 LOGS_PATH = "../../image2sdf/logs/decoder/log.pkl"
 SDF_DIR = "../../image2sdf/sdf/"
 # SDF_DIR = "../../image2sdf/sdf_duplicate/"
@@ -116,7 +119,8 @@ if __name__ == '__main__':
     print("Loading parameters...")
 
     # load parameters
-    param_all = json.load(open(PARAM_FILE))
+    # param_all = json.load(open(PARAM_FILE))
+    param_all = yaml.safe_load(open(PARAM_FILE))
     param = param_all["decoder"]
     resolution = param_all["resolution_used_for_training"]
 
@@ -133,7 +137,7 @@ if __name__ == '__main__':
 
     ######################################## only used for testing ########################################
     list_model_hash.sort()
-    # list_model_hash = list_model_hash[:80]
+    list_model_hash = list_model_hash[:80]
 
     list_model_hash_dup = []
     for model_hash, i in zip(list_model_hash, range(num_model_duplicate)):
@@ -325,16 +329,20 @@ if __name__ == '__main__':
     torch.save(decoder, DECODER_PATH)
 
     # save logs
-    with open(LOGS_PATH, "wb") as fp:
-        pickle.dump(logs, fp)
+    with open(LOGS_PATH, "wb") as file:
+        pickle.dump(logs, file)
     
     # save latent code in dict
     dict_hash_2_code = dict()
     for model_hash in list_model_hash:
         dict_hash_2_code[model_hash] = lat_code_mu(dict_model_hash_2_idx[model_hash].cuda()).detach().cpu()
 
-    with open(LATENT_CODE_PATH, "wb") as fp:
-        pickle.dump(dict_hash_2_code, fp)
+    with open(LATENT_CODE_PATH, "wb") as file:
+        pickle.dump(dict_hash_2_code, file)
+
+    
+    with open(PARAM_SAVE_FILE, 'w') as file:
+        yaml.dump(param_all, file)
 
 
  
