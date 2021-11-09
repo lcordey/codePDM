@@ -5,7 +5,7 @@ latent_size: 6
 decoder:
     # num_epoch: 10
     num_epoch: 100
-    num_batch_between_print: 1000
+    num_batch_between_print: 100
 
     lambda_variance: 1.0
     lambda_sdf: 1.0
