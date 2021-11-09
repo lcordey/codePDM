@@ -78,13 +78,14 @@ if __name__ == '__main__':
                 # sdf_pred[:,1:] = sdf_pred[:,1:] * 255
 
 
-    ######################################## only used for testing ########################################
-                sdf_pred[:,1] = (sdf_pred[:,1]) * 100
-                sdf_pred[:,2:] = (sdf_pred[:,2:] - 0.5) * 200
-
-                IPython.embed()
-
-                sdf_pred[:,1:] = torch.tensor(color.lab2rgb(sdf_pred[:,1:]))
+    # ######################################## only used for testing ########################################
+    #             sdf_pred[:,1] = (sdf_pred[:,1]) * 100
+    #             sdf_pred[:,2:] = (sdf_pred[:,2:] - 0.5) * 200
+    #             # IPython.embed()
+    #             sdf_pred[:,1] = torch.clamp(sdf_pred[:,1],0,100)
+    #             sdf_pred[:,2] = torch.clamp(sdf_pred[:,2],-50,50)
+    #             sdf_pred[:,3] = torch.clamp(sdf_pred[:,3],-50,50)
+    #             sdf_pred[:,1:] = torch.tensor(color.lab2rgb(sdf_pred[:,1:]))
     ######################################## only used for testing ########################################
 
                 sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:], [resolution, resolution, 4])
