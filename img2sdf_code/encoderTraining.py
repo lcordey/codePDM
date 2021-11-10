@@ -263,6 +263,19 @@ if __name__ == '__main__':
 
         scheduler.step()
 
+        if epoch%5==0:
+            # save encoder
+            torch.save(encoder, ENCODER_PATH)
+
+            # save logs
+            with open(LOGS_PATH, "wb") as fp:
+                pickle.dump(logs, fp)
+                
+            # save param used
+            with open(PARAM_SAVE_FILE, 'w') as file:
+                yaml.dump(param_all, file)
+
+
     print(f"Training finish in {(int)((time.time() - time_start) / 60)} min")
 
 
