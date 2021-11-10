@@ -76,18 +76,18 @@ if __name__ == '__main__':
                 sdf_pred = decoder(latent_code, xyz_sub_sample).detach().cpu()
                 sdf_pred[:,0] = sdf_pred[:,0] * resolution
                 sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
-                sdf_pred[:,1:] = sdf_pred[:,1:] * 255
-
-
-    # ######################################## only used for testing ########################################
-                # sdf_pred[:,1] = (sdf_pred[:,1]) * 100
-                # sdf_pred[:,2:] = (sdf_pred[:,2:] - 0.5) * 200
-                # # IPython.embed()
-                # # sdf_pred[:,1] = torch.clamp(sdf_pred[:,1],0,100)
-                # # sdf_pred[:,2] = torch.clamp(sdf_pred[:,2],-50,50)
-                # # sdf_pred[:,3] = torch.clamp(sdf_pred[:,3],-50,50)
-                # sdf_pred[:,1:] = torch.tensor(color.lab2rgb(sdf_pred[:,1:]))
                 # sdf_pred[:,1:] = sdf_pred[:,1:] * 255
+
+
+    ######################################## only used for testing ########################################
+                sdf_pred[:,1] = (sdf_pred[:,1]) * 100
+                sdf_pred[:,2:] = (sdf_pred[:,2:] - 0.5) * 200
+                # IPython.embed()
+                # sdf_pred[:,1] = torch.clamp(sdf_pred[:,1],0,100)
+                # sdf_pred[:,2] = torch.clamp(sdf_pred[:,2],-50,50)
+                # sdf_pred[:,3] = torch.clamp(sdf_pred[:,3],-50,50)
+                sdf_pred[:,1:] = torch.tensor(color.lab2rgb(sdf_pred[:,1:]))
+                sdf_pred[:,1:] = sdf_pred[:,1:] * 255
     ######################################## only used for testing ########################################
 
                 sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:], [resolution, resolution, 4])
@@ -131,7 +131,7 @@ if __name__ == '__main__':
                 vertices, faces = marching_cubes(sdf_gt[:,:,:,0])
                 colors_v = exctract_colors_v(vertices, sdf_gt)
                 colors_f = exctract_colors_f(colors_v, faces)
-                off_file = "%s/%s_gt_test.off" %(OUTPUT_DIR, model_hash)
+                off_file = "%s/%s_gt.off" %(OUTPUT_DIR, model_hash)
                 write_off(off_file, vertices, faces, colors_f)
                 print("Wrote %s_gt.off" % model_hash)
             else:
