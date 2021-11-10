@@ -82,10 +82,6 @@ class Decoder(nn.Module):
         x[:,1:] = self.sgm(self.lambda_activation * x[:,1:])
 
 
-    ######################################## only used for testing ########################################
-        # x[:,1:] = self.sgm(self.lambda_activation * x[:,1:]) * 2 - 1 
-    ######################################## only used for testing ########################################
-
         return x 
 
 class EncoderGrid(nn.Module):
