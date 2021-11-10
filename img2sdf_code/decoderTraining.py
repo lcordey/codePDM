@@ -209,16 +209,16 @@ if __name__ == '__main__':
         sdf_gt = sdf_gt / resolution
         rgb_gt = rgb_gt / 255
 
-        # lab_gt = color.rgb2lab(rgb_gt)
-        # lab_gt[:,0] = lab_gt[:,0] / 100
-        # lab_gt[:,1:] = lab_gt[:,1:] / 200 + 0.5
-        # lab_gt = np.clip(lab_gt, 0, 1)
+        lab_gt = color.rgb2lab(rgb_gt)
+        lab_gt[:,0] = lab_gt[:,0] / 100
+        lab_gt[:,1:] = lab_gt[:,1:] / 200 + 0.5
+        lab_gt = np.clip(lab_gt, 0, 1)
         
 
         # store in dict
         dict_gt_data["sdf"][model_hash] = sdf_gt
         dict_gt_data["rgb"][model_hash] = rgb_gt
-        # dict_gt_data["lab"][model_hash] = lab_gt
+        dict_gt_data["lab"][model_hash] = lab_gt
 
     # load duplicate data in dict
     for model_hash, model_hash_dup, i in zip(list_model_hash, list_model_hash_dup, range(num_model_duplicate)):
