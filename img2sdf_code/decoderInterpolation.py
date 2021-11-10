@@ -4,7 +4,7 @@ import pickle
 from marching_cubes_rgb import *
 import IPython
 
-HASH_CAR_A = "1a0bc9ab92c915167ae33d942430658c"
+HASH_CAR_A = "1a1dcd236a1e6133860800e6696b8284"
 HASH_CAR_B = "1a56d596c77ad5936fa87a658faf1d26"
 
 DEFAULT_NUM_MODELS = 7
