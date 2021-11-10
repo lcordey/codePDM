@@ -71,7 +71,6 @@ if __name__ == '__main__':
             # variable to store results
             sdf_result = np.empty([resolution, resolution, resolution, 4])
 
-
             # loop because it requires too much GPU memory on my computer
             for x in range(resolution):
                 latent_code = dict_hash_2_code[model_hash].repeat(resolution * resolution, 1).cuda()
@@ -82,9 +81,9 @@ if __name__ == '__main__':
                 sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
 
     ######################################## only used for testing ########################################
-                sdf_pred[:,1] = (sdf_pred[:,1]) * 100
-                sdf_pred[:,2:] = (sdf_pred[:,2:] - 0.5) * 200
-                sdf_pred[:,1:] = torch.tensor(color.lab2rgb(sdf_pred[:,1:]))
+                # sdf_pred[:,1] = (sdf_pred[:,1]) * 100
+                # sdf_pred[:,2:] = (sdf_pred[:,2:] - 0.5) * 200
+                # sdf_pred[:,1:] = torch.tensor(color.lab2rgb(sdf_pred[:,1:]))
     ######################################## only used for testing ########################################
 
                 sdf_pred[:,1:] = sdf_pred[:,1:] * 255
@@ -103,27 +102,7 @@ if __name__ == '__main__':
                 print("surface level: 0, should be comprise in between the minimum and maximum value")
 
             h5f = h5py.File(SDF_DIR + model_hash + '.h5', 'r')
-            h5f_tensor = h5f["tensor"][()]
-
-
-            sdf_gt = np.reshape(h5f_tensor[:,:,:,:], [resolution * resolution * resolution , 4])
-
-            # normalize
-
-            # sdf_gt[:,1:] = sdf_gt[:,1:] / 255
-            # sdf_gt[:,1:] = color.rgb2lab(sdf_gt[:,1:])
-            # sdf_gt[:,1] = sdf_gt[:,1] / 100
-            # sdf_gt[:,2:] = sdf_gt[:,2:] / 200 + 0.5
-            # sdf_gt[:,1:] = np.clip(sdf_gt[:,1:], 0, 1)
-
-
-            # sdf_gt[:,1] = (sdf_gt[:,1]) * 100
-            # sdf_gt[:,2:] = (sdf_gt[:,2:] - 0.5) * 200
-            # sdf_gt[:,1:] = torch.tensor(color.lab2rgb(sdf_gt[:,1:]))
-            # sdf_gt[:,1:] = sdf_gt[:,1:] * 255
-
-            sdf_gt = np.reshape(sdf_gt, [resolution, resolution, resolution , 4])
-
+            sdf_gt = h5f["tensor"][()]
 
             # print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result[:,:,:,0]), np.max(sdf_result[:,:,:,0])))
             if(np.min(sdf_gt[:,:,:,0]) < 0 and np.max(sdf_gt[:,:,:,0]) > 0):
@@ -139,8 +118,6 @@ if __name__ == '__main__':
             # compute the sdf from codes 
             sdf_validation = torch.tensor(sdf_result).reshape(resolution * resolution * resolution, 4)
             sdf_target= torch.tensor(sdf_gt).reshape(resolution * resolution * resolution, 4)
-
-
 
 
             # assign weight of 0 for easy samples that are well trained
@@ -160,8 +137,7 @@ if __name__ == '__main__':
             print(f"loss_sdf: {loss_sdf}")
             print(f"loss_rgb: {loss_rgb}")
 
-
-            # lab
+            # lab loss
             sdf_validation[:,1:] = sdf_validation[:,1:] / 255
             sdf_validation[:,1:] = torch.tensor(color.rgb2lab(sdf_validation[:,1:]))
 
@@ -173,8 +149,7 @@ if __name__ == '__main__':
             loss_lab = torch.nn.L1Loss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
             loss_lab = ((loss_lab[:,0] * weight_sdf) + (loss_lab[:,1] * weight_sdf) + (loss_lab[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
 
-
-            print(f"loss_rgb: {loss_lab}")
+            print(f"loss_lab: {loss_lab}")
 
 
     if args.logs:
