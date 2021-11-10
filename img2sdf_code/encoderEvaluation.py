@@ -5,6 +5,7 @@ import pickle
 import yaml
 import glob
 import imageio
+from skimage import color
 import cv2
 import matplotlib.pyplot as plt
 
@@ -268,14 +269,33 @@ if __name__ == '__main__':
                 # loss l1 in distance error per samples
                 loss_sdf = torch.nn.L1Loss(reduction='none')(sdf_validation[:,0].squeeze(), sdf_target[:,0])
                 loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
+
+
+                # weight_rgb = (abs(sdf_validation[:,0]) < threshold_precision).squeeze() * (abs(sdf_target[:,0]) < threshold_precision).squeeze()
             
                 # loss rgb in pixel value difference per color per samples
                 rgb_gt_normalized = sdf_target[:,1:]
                 loss_rgb = torch.nn.L1Loss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
                 loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
+                # loss_rgb = ((loss_rgb[:,0] * weight_rgb) + (loss_rgb[:,1] * weight_rgb) + (loss_rgb[:,2] * weight_rgb)).mean()/3 * weight_rgb.numel()/weight_rgb.count_nonzero()
 
                 print(f"loss_sdf: {loss_sdf}")
                 print(f"loss_rgb: {loss_rgb}")
+
+
+                # lab loss
+                sdf_validation[:,1:] = sdf_validation[:,1:] / 255
+                sdf_validation[:,1:] = torch.tensor(color.rgb2lab(sdf_validation[:,1:]))
+
+                sdf_target[:,1:] = sdf_target[:,1:] / 255
+                sdf_target[:,1:] = torch.tensor(color.rgb2lab(sdf_target[:,1:]))
+
+                # loss rgb in pixel value difference per color per samples
+                rgb_gt_normalized = sdf_target[:,1:]
+                loss_lab = torch.nn.L1Loss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
+                loss_lab = ((loss_lab[:,0] * weight_sdf) + (loss_lab[:,1] * weight_sdf) + (loss_lab[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
+
+                print(f"loss_lab: {loss_lab}")
 
 
     if args.logs:
