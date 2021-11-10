@@ -16,13 +16,12 @@ DEFAULT_RENDER = True
 DEFAULT_RENDER_RESOLUTION = 64
 # DEFAULT_MAX_MODEL_2_RENDER = 4
 DEFAULT_MAX_MODEL_2_RENDER = None
-DEFAULT_IMAGES_PER_MODEL = 10
+DEFAULT_IMAGES_PER_MODEL = 20
 DEFAULT_LOGS = True
 
 DECODER_PATH = "models_and_codes/decoder.pth"
 ENCODER_PATH = "models_and_codes/encoderGrid.pth"
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
-# PARAM_FILE = "config/param.json"
 PARAM_FILE = "config/param_encoder.yaml"
 VEHICLE_VALIDATION_PATH = "config/vehicle_validation.txt"
 MATRIX_PATH = "../../image2sdf/input_images_validation/matrix_w2c.pkl"
@@ -413,14 +412,17 @@ if __name__ == '__main__':
         l2_dist_mean = torch.tensor(l2_dist_mean)
 
 
-        print("\nl2 distance computed between prediction")
-        print(f"max: {l2_dist_each_other.max()}")
-        print(f"mean: {l2_dist_each_other.mean()}")
+        if num_images_per_model > 1:
+            print("\nl2 distance computed between prediction")
+            print(f"max: {l2_dist_each_other.max()}")
+            print(f"mean: {l2_dist_each_other.mean()}")
+            print(f"std: {l2_dist_each_other.std()}")
 
 
-        print("\nl2 distance computed with mean of prediction")
-        print(f"max: {l2_dist_mean.max()}")
-        print(f"mean: {l2_dist_mean.mean()}")
+            print("\nl2 distance computed with mean of prediction")
+            print(f"max: {l2_dist_mean.max()}")
+            print(f"mean: {l2_dist_mean.mean()}")
+            print(f"std: {l2_dist_mean.std()}")
 
 
     if args.logs:
