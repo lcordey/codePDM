@@ -9,6 +9,7 @@ from marching_cubes_rgb import *
 import IPython
 
 DEFAULT_RENDER = True
+# DEFAULT_RENDER = False
 DEFAULT_RENDER_RESOLUTION = 64
 DEFAULT_MAX_MODEL_2_RENDER = 10
 DEFAULT_LOGS = True
@@ -63,44 +64,44 @@ if __name__ == '__main__':
         # loop through the models to render
         for model_hash, i in zip(list_hash, range(num_model_2_render)):
 
-    #         # variable to store results
-    #         sdf_result = np.empty([resolution, resolution, resolution, 4])
+            # variable to store results
+            sdf_result = np.empty([resolution, resolution, resolution, 4])
 
 
-    #         # loop because it requires too much GPU memory on my computer
-    #         for x in range(resolution):
-    #             latent_code = dict_hash_2_code[model_hash].repeat(resolution * resolution, 1).cuda()
-    #             xyz_sub_sample = xyz[x * resolution * resolution: (x+1) * resolution * resolution]
+            # loop because it requires too much GPU memory on my computer
+            for x in range(resolution):
+                latent_code = dict_hash_2_code[model_hash].repeat(resolution * resolution, 1).cuda()
+                xyz_sub_sample = xyz[x * resolution * resolution: (x+1) * resolution * resolution]
 
-    #             sdf_pred = decoder(latent_code, xyz_sub_sample).detach().cpu()
-    #             sdf_pred[:,0] = sdf_pred[:,0] * resolution
-    #             sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
-    #             # sdf_pred[:,1:] = sdf_pred[:,1:] * 255
+                sdf_pred = decoder(latent_code, xyz_sub_sample).detach().cpu()
+                sdf_pred[:,0] = sdf_pred[:,0] * resolution
+                sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
+                sdf_pred[:,1:] = sdf_pred[:,1:] * 255
 
 
-    # # ######################################## only used for testing ########################################
-    #             sdf_pred[:,1] = (sdf_pred[:,1]) * 100
-    #             sdf_pred[:,2:] = (sdf_pred[:,2:] - 0.5) * 200
-    #             # IPython.embed()
-    #             # sdf_pred[:,1] = torch.clamp(sdf_pred[:,1],0,100)
-    #             # sdf_pred[:,2] = torch.clamp(sdf_pred[:,2],-50,50)
-    #             # sdf_pred[:,3] = torch.clamp(sdf_pred[:,3],-50,50)
-    #             sdf_pred[:,1:] = torch.tensor(color.lab2rgb(sdf_pred[:,1:]))
-    #             sdf_pred[:,1:] = sdf_pred[:,1:] * 255
     # ######################################## only used for testing ########################################
+                # sdf_pred[:,1] = (sdf_pred[:,1]) * 100
+                # sdf_pred[:,2:] = (sdf_pred[:,2:] - 0.5) * 200
+                # # IPython.embed()
+                # # sdf_pred[:,1] = torch.clamp(sdf_pred[:,1],0,100)
+                # # sdf_pred[:,2] = torch.clamp(sdf_pred[:,2],-50,50)
+                # # sdf_pred[:,3] = torch.clamp(sdf_pred[:,3],-50,50)
+                # sdf_pred[:,1:] = torch.tensor(color.lab2rgb(sdf_pred[:,1:]))
+                # sdf_pred[:,1:] = sdf_pred[:,1:] * 255
+    ######################################## only used for testing ########################################
 
-    #             sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:], [resolution, resolution, 4])
+                sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:], [resolution, resolution, 4])
 
-    #         # print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result[:,:,:,0]), np.max(sdf_result[:,:,:,0])))
-    #         if(np.min(sdf_result[:,:,:,0]) < 0 and np.max(sdf_result[:,:,:,0]) > 0):
-    #             vertices, faces = marching_cubes(sdf_result[:,:,:,0])
-    #             colors_v = exctract_colors_v(vertices, sdf_result)
-    #             colors_f = exctract_colors_f(colors_v, faces)
-    #             off_file = "%s/%s.off" %(OUTPUT_DIR, model_hash)
-    #             write_off(off_file, vertices, faces, colors_f)
-    #             print("Wrote %s.off" % model_hash)
-    #         else:
-    #             print("surface level: 0, should be comprise in between the minimum and maximum value")
+            # print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result[:,:,:,0]), np.max(sdf_result[:,:,:,0])))
+            if(np.min(sdf_result[:,:,:,0]) < 0 and np.max(sdf_result[:,:,:,0]) > 0):
+                vertices, faces = marching_cubes(sdf_result[:,:,:,0])
+                colors_v = exctract_colors_v(vertices, sdf_result)
+                colors_f = exctract_colors_f(colors_v, faces)
+                off_file = "%s/%s.off" %(OUTPUT_DIR, model_hash)
+                write_off(off_file, vertices, faces, colors_f)
+                print("Wrote %s.off" % model_hash)
+            else:
+                print("surface level: 0, should be comprise in between the minimum and maximum value")
 
             h5f = h5py.File(SDF_DIR + model_hash + '.h5', 'r')
             h5f_tensor = h5f["tensor"][()]
@@ -110,17 +111,17 @@ if __name__ == '__main__':
 
             # normalize
 
-            sdf_gt[:,1:] = sdf_gt[:,1:] / 255
-            sdf_gt[:,1:] = color.rgb2lab(sdf_gt[:,1:])
-            sdf_gt[:,1] = sdf_gt[:,1] / 100
-            sdf_gt[:,2:] = sdf_gt[:,2:] / 200 + 0.5
-            sdf_gt[:,1:] = np.clip(sdf_gt[:,1:], 0, 1)
+            # sdf_gt[:,1:] = sdf_gt[:,1:] / 255
+            # sdf_gt[:,1:] = color.rgb2lab(sdf_gt[:,1:])
+            # sdf_gt[:,1] = sdf_gt[:,1] / 100
+            # sdf_gt[:,2:] = sdf_gt[:,2:] / 200 + 0.5
+            # sdf_gt[:,1:] = np.clip(sdf_gt[:,1:], 0, 1)
 
 
-            sdf_gt[:,1] = (sdf_gt[:,1]) * 100
-            sdf_gt[:,2:] = (sdf_gt[:,2:] - 0.5) * 200
-            sdf_gt[:,1:] = torch.tensor(color.lab2rgb(sdf_gt[:,1:]))
-            sdf_gt[:,1:] = sdf_gt[:,1:] * 255
+            # sdf_gt[:,1] = (sdf_gt[:,1]) * 100
+            # sdf_gt[:,2:] = (sdf_gt[:,2:] - 0.5) * 200
+            # sdf_gt[:,1:] = torch.tensor(color.lab2rgb(sdf_gt[:,1:]))
+            # sdf_gt[:,1:] = sdf_gt[:,1:] * 255
 
             sdf_gt = np.reshape(sdf_gt, [resolution, resolution, resolution , 4])
 
@@ -136,26 +137,26 @@ if __name__ == '__main__':
             else:
                 print("surface level: 0, should be comprise in between the minimum and maximum value")
 
-            # # compute the sdf from codes 
-            # sdf_validation = torch.tensor(sdf_result).reshape(resolution * resolution * resolution, 4)
-            # sdf_target= torch.tensor(sdf_gt).reshape(resolution * resolution * resolution, 4)
+            # compute the sdf from codes 
+            sdf_validation = torch.tensor(sdf_result).reshape(resolution * resolution * resolution, 4)
+            sdf_target= torch.tensor(sdf_gt).reshape(resolution * resolution * resolution, 4)
 
-            # # assign weight of 0 for easy samples that are well trained
-            # threshold_precision = 1/resolution
-            # weight_sdf = ~((sdf_validation[:,0] > threshold_precision).squeeze() * (sdf_target[:,0] > threshold_precision).squeeze()) \
-            #     * ~((sdf_validation[:,0] < -threshold_precision).squeeze() * (sdf_target[:,0] < -threshold_precision).squeeze())
+            # assign weight of 0 for easy samples that are well trained
+            threshold_precision = 1/resolution
+            weight_sdf = ~((sdf_validation[:,0] > threshold_precision).squeeze() * (sdf_target[:,0] > threshold_precision).squeeze()) \
+                * ~((sdf_validation[:,0] < -threshold_precision).squeeze() * (sdf_target[:,0] < -threshold_precision).squeeze())
 
-            # # loss l1 in distance error per samples
-            # loss_sdf = torch.nn.L1Loss(reduction='none')(sdf_validation[:,0].squeeze(), sdf_target[:,0])
-            # loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
+            # loss l1 in distance error per samples
+            loss_sdf = torch.nn.L1Loss(reduction='none')(sdf_validation[:,0].squeeze(), sdf_target[:,0])
+            loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
         
-            # # loss rgb in pixel value difference per color per samples
-            # rgb_gt_normalized = sdf_target[:,1:]
-            # loss_rgb = torch.nn.L1Loss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
-            # loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
+            # loss rgb in pixel value difference per color per samples
+            rgb_gt_normalized = sdf_target[:,1:]
+            loss_rgb = torch.nn.L1Loss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
+            loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
 
-            # print(f"loss_sdf: {loss_sdf}")
-            # print(f"loss_rgb: {loss_rgb}")
+            print(f"loss_sdf: {loss_sdf}")
+            print(f"loss_rgb: {loss_rgb}")
 
     if args.logs:
 
