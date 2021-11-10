@@ -86,6 +86,8 @@ if __name__ == '__main__':
                 # sdf_pred[:,1] = torch.clamp(sdf_pred[:,1],0,100)
                 # sdf_pred[:,2] = torch.clamp(sdf_pred[:,2],-50,50)
                 # sdf_pred[:,3] = torch.clamp(sdf_pred[:,3],-50,50)
+                # sdf_pred[:,1:] = torch.tensor(color.lab2rgb(sdf_pred[:,1:]))
+                IPython.embed()
                 sdf_pred[:,1:] = torch.tensor(color.lab2rgb(sdf_pred[:,1:]))
                 sdf_pred[:,1:] = sdf_pred[:,1:] * 255
     ######################################## only used for testing ########################################
@@ -140,6 +142,15 @@ if __name__ == '__main__':
             # compute the sdf from codes 
             sdf_validation = torch.tensor(sdf_result).reshape(resolution * resolution * resolution, 4)
             sdf_target= torch.tensor(sdf_gt).reshape(resolution * resolution * resolution, 4)
+
+
+            sdf_validation[:,1:] = sdf_validation[:,1:] / 255
+            sdf_validation[:,1:] = color.rgb2lab(sdf_validation[:,1:])
+
+            sdf_target[:,1:] = sdf_target[:,1:] / 255
+            sdf_target[:,1:] = color.rgb2lab(sdf_target[:,1:])
+
+
 
             # assign weight of 0 for easy samples that are well trained
             threshold_precision = 1/resolution
