@@ -1,3 +1,4 @@
+import warnings
 import torch
 import pickle
 # import json
@@ -13,6 +14,9 @@ DEFAULT_RENDER = True
 DEFAULT_RENDER_RESOLUTION = 64
 DEFAULT_MAX_MODEL_2_RENDER = 10
 DEFAULT_LOGS = True
+
+
+warnings.filterwarnings("ignore")
 
 
 DECODER_PATH = "models_and_codes/decoder.pth"
@@ -86,8 +90,6 @@ if __name__ == '__main__':
                 # sdf_pred[:,1] = torch.clamp(sdf_pred[:,1],0,100)
                 # sdf_pred[:,2] = torch.clamp(sdf_pred[:,2],-50,50)
                 # sdf_pred[:,3] = torch.clamp(sdf_pred[:,3],-50,50)
-                # sdf_pred[:,1:] = torch.tensor(color.lab2rgb(sdf_pred[:,1:]))
-                IPython.embed()
                 sdf_pred[:,1:] = torch.tensor(color.lab2rgb(sdf_pred[:,1:]))
                 sdf_pred[:,1:] = sdf_pred[:,1:] * 255
     ######################################## only used for testing ########################################
@@ -99,9 +101,9 @@ if __name__ == '__main__':
                 vertices, faces = marching_cubes(sdf_result[:,:,:,0])
                 colors_v = exctract_colors_v(vertices, sdf_result)
                 colors_f = exctract_colors_f(colors_v, faces)
-                off_file = "%s/%s.off" %(OUTPUT_DIR, model_hash)
+                off_file = "%s/%s_rgb.off" %(OUTPUT_DIR, model_hash)
                 write_off(off_file, vertices, faces, colors_f)
-                print("Wrote %s.off" % model_hash)
+                print("Wrote %s_rgb.off" % model_hash)
             else:
                 print("surface level: 0, should be comprise in between the minimum and maximum value")
 
@@ -145,10 +147,10 @@ if __name__ == '__main__':
 
 
             sdf_validation[:,1:] = sdf_validation[:,1:] / 255
-            sdf_validation[:,1:] = color.rgb2lab(sdf_validation[:,1:])
+            sdf_validation[:,1:] = torch.tensor(color.rgb2lab(sdf_validation[:,1:]))
 
             sdf_target[:,1:] = sdf_target[:,1:] / 255
-            sdf_target[:,1:] = color.rgb2lab(sdf_target[:,1:])
+            sdf_target[:,1:] = torch.tensor(color.rgb2lab(sdf_target[:,1:]))
 
 
 
