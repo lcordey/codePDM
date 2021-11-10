@@ -80,11 +80,11 @@ if __name__ == '__main__':
                 sdf_pred[:,0] = sdf_pred[:,0] * resolution
                 sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
 
-    ######################################## only used for testing ########################################
+    ######################################## used for LAB testing ########################################
                 # sdf_pred[:,1] = (sdf_pred[:,1]) * 100
                 # sdf_pred[:,2:] = (sdf_pred[:,2:] - 0.5) * 200
                 # sdf_pred[:,1:] = torch.tensor(color.lab2rgb(sdf_pred[:,1:]))
-    ######################################## only used for testing ########################################
+    ######################################## used for LAB testing ########################################
 
                 sdf_pred[:,1:] = sdf_pred[:,1:] * 255
 

@@ -2,7 +2,6 @@ from math import log
 import numpy as np
 import torch
 import torch.nn as nn
-# import json
 import yaml
 import pickle
 import time
@@ -18,7 +17,6 @@ import IPython
 ENCODER_PATH = "models_and_codes/encoderGrid.pth"
 DECODER_PATH = "models_and_codes/decoder.pth"
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
-# PARAM_FILE = "config/param.json"
 PARAM_FILE = "config/param.yaml"
 PARAM_SAVE_FILE = "config/param_encoder.yaml"
 VEHICLE_VALIDATION_PATH = "config/vehicle_validation.txt"
@@ -81,7 +79,6 @@ if __name__ == '__main__':
     print("Loading parameters...")
 
     # load parameters
-    # param_all = json.load(open(PARAM_FILE))
     param_all = yaml.safe_load(open(PARAM_FILE))
     resolution = param_all["resolution_used_for_training"]
     param = param_all["encoder"]
@@ -147,10 +144,6 @@ if __name__ == '__main__':
         samples_count = 0
         for batch_grid, batch_model_hash in training_generator:
 
-            # time_loading = time.time() - time_start
-            # print(f"Time to load the data: {time_loading}")
-            # time_start = time.time()
-
             optimizer.zero_grad()
             batch_size = len(batch_grid)
 
@@ -185,9 +178,6 @@ if __name__ == '__main__':
                     abs(predicted_code - target_code).mean(), abs(predicted_code).mean(), abs(target_code).mean(),\
                     optimizer.param_groups[0]['lr'],  (int)(time_left/60) ))
 
-            # print(f"Time for network pass: {time.time() - time_start}")
-            # time_start = time.time()
-
 
             # validation 
             if samples_count%(param["num_batch_between_validation"] * batch_size) == 0 or samples_count == batch_size:
@@ -209,7 +199,7 @@ if __name__ == '__main__':
                     predicted_code_val = encoder(images_val)
 
                     # compute loss
-                    loss_l2= loss(predicted_code_val, target_code_val)
+                    loss_l2= (predicted_code_val-target_code_val).norm()
                     log_l2_val.append(loss_l2.detach().cpu())
 
                     # compute the sdf from codes 

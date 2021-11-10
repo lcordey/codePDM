@@ -17,12 +17,10 @@ import IPython
 
 DECODER_PATH = "models_and_codes/decoder.pth"
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
-# PARAM_FILE = "config/param.json"
 PARAM_FILE = "config/param.yaml"
 PARAM_SAVE_FILE = "config/param_decoder.yaml"
 LOGS_PATH = "../../image2sdf/logs/decoder/log.pkl"
 SDF_DIR = "../../image2sdf/sdf/"
-# SDF_DIR = "../../image2sdf/sdf_duplicate/"
 
 num_model_duplicate = 20
 
@@ -59,23 +57,6 @@ def init_lat_codes(num_scenes, latent_size):
 
 def init_opt_sched(decoder, lat_vecs_mu, lat_vecs_log_std, param):
     """ initialize optimizer and scheduler"""
-
-    # optimizer = torch.optim.Adam(
-    #     [
-    #         {
-    #             "params": decoder.parameters(),
-    #             "lr": param["eta_decoder"],
-    #         },
-    #         {
-    #             "params": lat_vecs_mu.parameters(),
-    #             "lr": param["eta_latent_space_mu"],
-    #         },
-    #         {
-    #             "params": lat_vecs_log_std.parameters(),
-    #             "lr": param["eta_latent_space_std"],
-    #         },
-    #     ]
-    # )
 
     optimizer_decoder = torch.optim.Adam(
         [
@@ -142,7 +123,6 @@ if __name__ == '__main__':
     print("Loading parameters...")
 
     # load parameters
-    # param_all = json.load(open(PARAM_FILE))
     param_all = yaml.safe_load(open(PARAM_FILE))
     param = param_all["decoder"]
     resolution = param_all["resolution_used_for_training"]
@@ -238,7 +218,6 @@ if __name__ == '__main__':
     decoder = Decoder(param_all["latent_size"], batch_norm=True).cuda()
 
     # initialize optimizer and scheduler
-    # optimizer, scheduler = init_opt_sched(decoder, lat_code_mu, lat_code_log_std, param["optimizer"])
     optimizer_decoder, optimizer_code, scheduler_decoder, scheduler_code = init_opt_sched(decoder, lat_code_mu, lat_code_log_std, param["optimizer"])
 
     # logs
@@ -258,13 +237,8 @@ if __name__ == '__main__':
     for epoch in range (param["num_epoch"]):
         samples_count = 0
         for model_idx, sdf_gt, rgb_gt, xyz_idx in training_generator:
-        #     optimizer.zero_grad()
             optimizer_decoder.zero_grad()
             optimizer_code.zero_grad()
-
-            # time_loading = time.time() - time_start
-            # print(f"Time to load the data: {time_loading}")
-            # time_start = time.time()
 
             batch_size = len(model_idx)
 
@@ -308,13 +282,13 @@ if __name__ == '__main__':
                 # compute l2 dist between training models and their duplicate ones
                 dist_duplicate = []
                 for i in range(num_model_duplicate):
-                    dist_duplicate.append((lat_code_mu(idx[i].cuda()) - lat_code_mu(idx[i + num_model_training].cuda())).mean().detach().cpu())
+                    dist_duplicate.append((lat_code_mu(idx[i].cuda()) - lat_code_mu(idx[i + num_model_training].cuda())).norm().detach().cpu())
 
                 # compute l2 dist between random models
                 dist_random = []
                 for i in range(100):
                     rand = np.random.randint(num_model_training, size = 2)
-                    dist_random.append((lat_code_mu(idx[rand[0]].cuda()) - lat_code_mu(idx[rand[1]].cuda())).mean().detach().cpu())
+                    dist_random.append((lat_code_mu(idx[rand[0]].cuda()) - lat_code_mu(idx[rand[1]].cuda())).norm().detach().cpu())
 
 
                 # print(dist_duplicate)
@@ -330,12 +304,8 @@ if __name__ == '__main__':
                 logs["reg"].append(loss_kl.detach().cpu())
                 logs["l2_dup"].append(l2_dup)
                 logs["l2_rand"].append(l2_rnd)
-
-
-            # print(f"Time for network pass: {time.time() - time_start}")
-            # time_start = time.time()
-
-        # scheduler.step()
+                
+                
         scheduler_decoder.step()
         scheduler_code.step()
 
