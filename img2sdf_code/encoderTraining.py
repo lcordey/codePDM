@@ -5,6 +5,7 @@ import torch.nn as nn
 import yaml
 import pickle
 import time
+from skimage import color
 
 from torch.nn.modules.activation import LogSigmoid
 
