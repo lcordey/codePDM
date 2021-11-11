@@ -133,6 +133,7 @@ if __name__ == '__main__':
     logs["validation"]["l2"] = []
     logs["validation"]["sdf"] = []
     logs["validation"]["rgb"] = []
+    logs["validation"]["lab"] = []
 
 
     encoder.train()
@@ -187,6 +188,7 @@ if __name__ == '__main__':
                 log_l2_val = []
                 log_sdf = []
                 log_rgb = []
+                log_lab = []
 
                 samples_count_val = 0
                 for images_val, model_hash_val in validation_generator:
@@ -222,9 +224,22 @@ if __name__ == '__main__':
                     loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
                     loss_rgb *= 255
 
+                    # lab loss
+                    sdf_validation[:,1:] = sdf_validation[:,1:] / 255
+                    sdf_validation[:,1:] = torch.tensor(color.rgb2lab(sdf_validation[:,1:]))
+
+                    sdf_target[:,1:] = sdf_target[:,1:] / 255
+                    sdf_target[:,1:] = torch.tensor(color.rgb2lab(sdf_target[:,1:]))
+
+                    # loss LAB in pixel value difference per color per samples
+                    rgb_gt_normalized = sdf_target[:,1:]
+                    loss_lab = torch.nn.L1Loss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
+                    loss_lab = ((loss_lab[:,0] * weight_sdf) + (loss_lab[:,1] * weight_sdf) + (loss_lab[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
+
 
                     log_sdf.append(loss_sdf.detach().cpu())
                     log_rgb.append(loss_rgb.detach().cpu())
+                    log_lab.append(loss_lab.detach().cpu())
 
                     samples_count_val += 1
                     if samples_count_val == param["num_images_validation"] :
@@ -233,10 +248,12 @@ if __name__ == '__main__':
                 loss_l2_val = torch.tensor(log_l2_val).mean()
                 loss_sdf_val = torch.tensor(log_sdf).mean()
                 loss_rgb_val = torch.tensor(log_rgb).mean()
+                loss_lab_val = torch.tensor(log_lab).mean()
 
+                logs["validation"]["l2"].append(loss_l2_val)
                 logs["validation"]["sdf"].append(loss_sdf_val)
                 logs["validation"]["rgb"].append(loss_rgb_val)
-                logs["validation"]["l2"].append(loss_l2_val)
+                logs["validation"]["lab"].append(loss_lab_val)
 
 
                 print("\n****************************** VALIDATION ******************************")
