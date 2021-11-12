@@ -233,22 +233,23 @@ if __name__ == '__main__':
                     loss_rgb *= 255
 
                     # lab loss
-                    sdf_validation[:,1:] = sdf_validation[:,1:] / 255
-                    sdf_validation[:,1:] = torch.tensor(color.rgb2lab(sdf_validation[:,1:]))
+                    lab_validation = sdf_validation[:,1:] / 255
+                    lab_validation = torch.tensor(color.rgb2lab(lab_validation))
 
-                    sdf_target[:,1:] = sdf_target[:,1:] / 255
-                    sdf_target[:,1:] = torch.tensor(color.rgb2lab(sdf_target[:,1:]))
+                    lab_target = sdf_target[:,1:] / 255
+                    lab_target = torch.tensor(color.rgb2lab(lab_target))
 
                     # loss LAB in pixel value difference per color per samples
-                    rgb_gt_normalized = sdf_target[:,1:]
-                    loss_lab = torch.nn.L1Loss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
+                    loss_lab = torch.nn.L1Loss(reduction='none')(lab_validation, lab_target)
                     loss_lab = ((loss_lab[:,0] * weight_sdf) + (loss_lab[:,1] * weight_sdf) + (loss_lab[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
 
-
+                    # save losses
                     log_sdf.append(loss_sdf.detach().cpu())
                     log_rgb.append(loss_rgb.detach().cpu())
                     log_lab.append(loss_lab.detach().cpu())
 
+
+                    # compute chamfer losses
                     sdf_target = sdf_target.reshape(resolution, resolution, resolution, 4)
                     if(np.min(sdf_target[:,:,:,0]) < 0 and np.max(sdf_target[:,:,:,0]) > 0):
                         vertices_target, faces_target = marching_cubes(sdf_target[:,:,:,0])
