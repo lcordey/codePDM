@@ -10,6 +10,7 @@ import cv2
 import matplotlib.pyplot as plt
 
 from marching_cubes_rgb import *
+from utils import *
 import IPython
 
 DEFAULT_RENDER = True
@@ -40,28 +41,6 @@ def init_xyz(resolution):
                 xyz[x * resolution * resolution + y * resolution + z, :] = torch.Tensor([x/(resolution-1)-0.5,y/(resolution-1)-0.5,z/(resolution-1)-0.5])
 
     return xyz
-
-
-def convert_w2c(matrix_world_to_camera, frame, point):
-
-    point_4d = np.resize(point, 4)
-    point_4d[3] = 1
-    co_local = matrix_world_to_camera.dot(point_4d)
-    z = -co_local[2]
-
-    if z == 0.0:
-            return np.array([0.5, 0.5, 0.0])
-    else:
-        for i in range(3):
-            frame[i] =  -(frame[i] / (frame[i][2]/z))
-
-    min_x, max_x = frame[2][0], frame[1][0]
-    min_y, max_y = frame[1][1], frame[0][1]
-
-    x = (co_local[0] - min_x) / (max_x - min_x)
-    y = (co_local[1] - min_y) / (max_y - min_y)
-
-    return np.array([x,y,z])
 
 
 def load_grid(list_hash, annotations, num_model_2_render, param_image, param_network):
@@ -210,8 +189,13 @@ if __name__ == '__main__':
         list_rgb = []
         list_lab = []
         list_l2 = []
+        list_cham_sdf = []
+        list_cham_rgb = []
+        list_cham_lab = []
 
         for model_hash, model_id in zip(list_hash, range(num_model)):
+
+            print("\n")
 
             # decode
             sdf_target = np.empty([resolution, resolution, resolution, 4])
@@ -228,15 +212,17 @@ if __name__ == '__main__':
 
             # print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_target[:,:,:,0]), np.max(sdf_target[:,:,:,0])))
             if(np.min(sdf_target[:,:,:,0]) < 0 and np.max(sdf_target[:,:,:,0]) > 0):
-                vertices, faces = marching_cubes(sdf_target[:,:,:,0])
-                colors_v = exctract_colors_v(vertices, sdf_target)
-                colors_f = exctract_colors_f(colors_v, faces)
+                vertices_target, faces_target = marching_cubes(sdf_target[:,:,:,0])
+                colors_v_target = exctract_colors_v(vertices_target, sdf_target)
+                colors_f_target = exctract_colors_f(colors_v_target, faces_target)
                 off_file = "%s/%s_target.off" %(OUTPUT_DIR, model_hash)
-                write_off(off_file, vertices, faces, colors_f)
+                write_off(off_file, vertices_target, faces_target, colors_f_target)
                 print("Wrote %s_target.off" % model_hash)
             else:
                 print("surface level: 0, should be comprise in between the minimum and maximum value")
 
+            vertices_target = torch.tensor(vertices_target.copy())
+            colors_v_target = torch.tensor(colors_v_target/255).unsqueeze(0).cuda()
 
             ########################################################### CODE FOR RENDERING ALL IMAGES ############################################################
 
@@ -337,6 +323,9 @@ if __name__ == '__main__':
             else:
                 print("surface level: 0, should be comprise in between the minimum and maximum value")
 
+            vertices = torch.tensor(vertices.copy())
+            colors_v= torch.tensor(colors_v/255).unsqueeze(0).cuda()
+
             # compute the sdf from codes 
             sdf_validation = torch.tensor(sdf_result).reshape(resolution * resolution * resolution, 4)
             sdf_target= torch.tensor(sdf_target).reshape(resolution * resolution * resolution, 4)
@@ -370,20 +359,30 @@ if __name__ == '__main__':
 
             l2_error = (dict_hash_2_code[model_hash].cuda() - mean_code).norm()
 
+
+            cham_sdf, cham_rgb, cham_lab = chamfer_distance_rgb(vertices, vertices_target, colors_x = colors_v, colors_y = colors_v_target)
+
             ################################################# CODE FOR RENDERING ONLY THE MEAN OF ALL PREDICTION #################################################
 
 
 
             # fill list with all the results
             print(f"loss_sdf: {loss_sdf}")
+            print(f"cham_sdf: {cham_sdf}")
             print(f"loss_rgb: {loss_rgb}")
+            print(f"cham_rgb: {cham_rgb}")
             print(f"loss_lab: {loss_lab}")
+            print(f"cham_lab: {cham_lab}")
             print(f"l2_error: {l2_error}")
 
             list_sdf.append(loss_sdf)
             list_rgb.append(loss_rgb)
             list_lab.append(loss_lab)
             list_l2.append(l2_error)
+
+            list_cham_sdf.append(cham_sdf)
+            list_cham_rgb.append(cham_rgb)
+            list_cham_lab.append(cham_lab)
 
 
         # print(f"std loss_sdf: {torch.tensor(list_sdf).std()}")
@@ -394,9 +393,13 @@ if __name__ == '__main__':
         print("\nloss computed with GT")
 
         print(f"mean loss_sdf: {torch.tensor(list_sdf).mean()}")
+        print(f"mean cham_sdf: {torch.tensor(list_cham_sdf).mean()}")
         print(f"mean loss_rgb: {torch.tensor(list_rgb).mean()}")
+        print(f"mean cham_rgb: {torch.tensor(list_cham_rgb).mean()}")
         print(f"mean loss_lab: {torch.tensor(list_lab).mean()}")
+        print(f"mean cham_lab: {torch.tensor(list_cham_lab).mean()}")
         print(f"mean l2_error: {torch.tensor(list_l2).mean()}")
+
 
         l2_dist_each_other = []
         l2_dist_mean = []
