@@ -14,10 +14,10 @@ if need_pytorch3d:
             torch.version.cuda.replace(".",""),
             f"_pyt{torch.__version__[0:5:2]}"
         ])
-        os.system(pip install pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/{version_str}/download.html)
+        os.system("pip install pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/{version_str}/download.html")
     else:
         # We try to install PyTorch3D from source.
-        os.system(curl -LO https://github.com/NVIDIA/cub/archive/1.10.0.tar.gz)
-        os.system(tar xzf 1.10.0.tar.gz)
-        os.environ["CUB_HOME"] = os.getcwd() + "/cub-1.10.0")
-        os.system(pip install 'git+https://github.com/facebookresearch/pytorch3d.git@stable')
+        os.system("curl -LO https://github.com/NVIDIA/cub/archive/1.10.0.tar.gz")
+        os.system("tar xzf 1.10.0.tar.gz")
+        os.environ["CUB_HOME"] = os.getcwd() + "/cub-1.10.0"
+        os.system("pip install 'git+https://github.com/facebookresearch/pytorch3d.git@stable'")
