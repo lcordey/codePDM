@@ -249,7 +249,7 @@ if __name__ == '__main__':
                     log_lab.append(loss_lab.detach().cpu())
 
                     # compute chamfer losses
-                    sdf_target = np.array(sdf_target.reshape(resolution, resolution, resolution, 4)).cpu().numpy()
+                    sdf_target = sdf_target.reshape(resolution, resolution, resolution, 4).cpu().numpy()
                     if(np.min(sdf_target[:,:,:,0]) < 0 and np.max(sdf_target[:,:,:,0]) > 0):
                         vertices_target, faces_target = marching_cubes(sdf_target[:,:,:,0])
                         colors_v_target = exctract_colors_v(vertices_target, sdf_target)
