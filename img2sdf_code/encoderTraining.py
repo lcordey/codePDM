@@ -252,7 +252,7 @@ if __name__ == '__main__':
 
                     # compute chamfer losses
 
-                    sdf_target = sdf_target[:,1:] * 255
+                    sdf_target[:,1:] = sdf_target[:,1:] * 255
                     sdf_target = sdf_target.reshape(resolution, resolution, resolution, 4).cpu().numpy()
                     if(np.min(sdf_target[:,:,:,0]) < 0 and np.max(sdf_target[:,:,:,0]) > 0):
                         vertices_target, faces_target = marching_cubes(sdf_target[:,:,:,0])
@@ -262,7 +262,7 @@ if __name__ == '__main__':
                     colors_v_target = torch.tensor(colors_v_target/255).unsqueeze(0).cuda()
 
 
-                    sdf_validation = sdf_validation[:,1:] * 255
+                    sdf_validation[:,1:] = sdf_validation[:,1:] * 255
                     sdf_validation = sdf_validation.reshape(resolution, resolution, resolution, 4).cpu().numpy()
                     if(np.min(sdf_validation[:,:,:,0]) < 0 and np.max(sdf_validation[:,:,:,0]) > 0):
                         vertices_validation, faces_validation = marching_cubes(sdf_validation[:,:,:,0])
