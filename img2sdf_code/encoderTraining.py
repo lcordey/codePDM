@@ -248,6 +248,7 @@ if __name__ == '__main__':
                     log_rgb.append(loss_rgb.detach().cpu())
                     log_lab.append(loss_lab.detach().cpu())
 
+                    IPython.embed()
 
                     # compute chamfer losses
                     sdf_target = sdf_target.reshape(resolution, resolution, resolution, 4)
@@ -258,7 +259,6 @@ if __name__ == '__main__':
                     vertices_target = torch.tensor(vertices_target.copy())
                     colors_v_target = torch.tensor(colors_v_target/255).unsqueeze(0).cuda()
 
-                    IPython.embed()
 
                     sdf_validation = sdf_validation.reshape(resolution, resolution, resolution, 4)
                     if(np.min(sdf_validation[:,:,:,0]) < 0 and np.max(sdf_validation[:,:,:,0]) > 0):
