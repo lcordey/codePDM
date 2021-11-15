@@ -233,10 +233,10 @@ if __name__ == '__main__':
                     loss_rgb *= 255
 
                     # lab loss
-                    lab_validation = sdf_validation[:,1:] / 255
+                    # lab_validation = sdf_validation[:,1:] / 255
                     lab_validation = torch.tensor(color.rgb2lab(lab_validation.cpu())).cuda()
 
-                    lab_target = sdf_target[:,1:] / 255
+                    # lab_target = sdf_target[:,1:] / 255
                     lab_target = torch.tensor(color.rgb2lab(lab_target.cpu())).cuda()
 
                     # loss LAB in pixel value difference per color per samples
@@ -249,6 +249,8 @@ if __name__ == '__main__':
                     log_lab.append(loss_lab.detach().cpu())
 
                     # compute chamfer losses
+
+                    sdf_target = sdf_target[:,1:] * 255
                     sdf_target = sdf_target.reshape(resolution, resolution, resolution, 4).cpu().numpy()
                     if(np.min(sdf_target[:,:,:,0]) < 0 and np.max(sdf_target[:,:,:,0]) > 0):
                         vertices_target, faces_target = marching_cubes(sdf_target[:,:,:,0])
@@ -258,6 +260,7 @@ if __name__ == '__main__':
                     colors_v_target = torch.tensor(colors_v_target/255).unsqueeze(0).cuda()
 
 
+                    sdf_validation = sdf_validation[:,1:] * 255
                     sdf_validation = sdf_validation.reshape(resolution, resolution, resolution, 4).cpu().numpy()
                     if(np.min(sdf_validation[:,:,:,0]) < 0 and np.max(sdf_validation[:,:,:,0]) > 0):
                         vertices_validation, faces_validation = marching_cubes(sdf_validation[:,:,:,0])
@@ -298,7 +301,7 @@ if __name__ == '__main__':
                 print(f"l2 predicted code error: {loss_l2_val:2.3f}")
                 print(f"sdf error: {loss_sdf_val:2.3f}")
                 print(f"rgb error: {loss_rgb_val:2.3f}")
-                print(f"lab error: {loss_rgb_val:2.3f}")
+                print(f"lab error: {loss_lab_val:2.3f}")
                 print(f"cham sdf error: {error_cham_sdf:2.3f}")
                 print(f"cham rgb error: {error_cham_rgb:2.3f}")
                 print(f"cham lab error: {error_cham_lab:2.3f}")
