@@ -233,10 +233,10 @@ if __name__ == '__main__':
                     loss_rgb *= 255
 
                     # lab loss
-                    lab_validation = sdf_validation[:,1:].copy() / 255
+                    lab_validation = sdf_validation[:,1:] / 255
                     lab_validation = torch.tensor(color.rgb2lab(lab_validation.cpu())).cuda()
 
-                    lab_target = sdf_target[:,1:].copy() / 255
+                    lab_target = sdf_target[:,1:] / 255
                     lab_target = torch.tensor(color.rgb2lab(lab_target.cpu())).cuda()
 
                     # loss LAB in pixel value difference per color per samples
@@ -257,6 +257,8 @@ if __name__ == '__main__':
 
                     vertices_target = torch.tensor(vertices_target.copy())
                     colors_v_target = torch.tensor(colors_v_target/255).unsqueeze(0).cuda()
+
+                    IPython.embed()
 
                     sdf_validation = sdf_validation.reshape(resolution, resolution, resolution, 4)
                     if(np.min(sdf_validation[:,:,:,0]) < 0 and np.max(sdf_validation[:,:,:,0]) > 0):
