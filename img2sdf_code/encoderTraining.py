@@ -234,9 +234,11 @@ if __name__ == '__main__':
 
                     # lab loss
                     # lab_validation = sdf_validation[:,1:] / 255
+                    lab_validation = sdf_validation[:,1:]
                     lab_validation = torch.tensor(color.rgb2lab(lab_validation.cpu())).cuda()
 
                     # lab_target = sdf_target[:,1:] / 255
+                    lab_target = sdf_target[:,1:]
                     lab_target = torch.tensor(color.rgb2lab(lab_target.cpu())).cuda()
 
                     # loss LAB in pixel value difference per color per samples
