@@ -23,7 +23,7 @@ encoder:
   dataLoaderValidation:
     batch_size: 1
     num_workers: 42
-    shuffle: false
+    shuffle: true
   image:
     height: 300
     width: 300
@@ -34,9 +34,9 @@ encoder:
     num_slices: 48
     width: 24
   num_batch_between_print: 100
-  num_batch_between_validation: 1000
+  num_batch_between_validation: 200
   num_epoch: 20
-  num_images_validation: 100
+  num_images_validation: 40
   optimizer:
     eta_encoder: 0.0001
     gammaLR: 0.95
