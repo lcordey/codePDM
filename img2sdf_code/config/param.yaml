@@ -51,7 +51,7 @@ encoder:
 
     dataLoaderValidation:
         batch_size: 1
-        shuffle: False
+        shuffle: True
         num_workers: 42
     
     optimizer:
