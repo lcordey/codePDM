@@ -30,7 +30,7 @@ decoder:
         gamma_code_LR: 0.95
 
 encoder:
-    num_epoch: 20
+    num_epoch: 40
     # num_epoch: 1
 
     num_batch_between_print: 100
@@ -51,7 +51,7 @@ encoder:
 
     dataLoaderValidation:
         batch_size: 1
-        shuffle: False
+        shuffle: True
         num_workers: 42
     
     optimizer:
@@ -64,93 +64,3 @@ encoder:
         height: 24
         num_conv_layer: 3
         num_fc_layer: 3
-
-
-#     "encoder": {
-
-#         "num_epoch" : 100,
-
-#         "num_batch_between_print": 100,
-#         "num_batch_between_validation": 1000,
-#         "num_images_validation": 100,
-
-#         "image":{
-#             "width": 300,
-#             "height": 300
-#         },
-#         "dataLoader" :{
-#             "batch_size" : 20,
-#             "shuffle": 1,
-#             "num_workers": 21
-#         },
-#         "dataLoaderValidation" :{
-#             "batch_size" : 1,
-#             "shuffle": 0,
-#             "num_workers": 21
-#         },
-#         "optimizer":{
-#             "eta_encoder" : 1e-3,
-#             "gammaLR" : 0.99
-#         },
-#         "network" :{
-#             "num_slices": 48,
-#             "width": 24,
-#             "height" : 24,
-#             "num_conv_layer": 3,
-#             "num_fc_layer": 3
-#         }
-
-#     },
-
-#     "vae":{
-
-#         "num_epoch" : 1000,
-#         "num_position_per_image": 500,
-#         "lambda_variance": 0.1,
-#         "num_batch_between_print": 100,
-
-#         "optimizer":{
-#             "eta_encoder" : 1e-4,
-#             "eta_decoder" : 1e-3,
-#             "gammaLR" : 0.995
-#         },
-#         "dataLoader" :{
-#             "batch_size" : 20,
-#             "shuffle": 1,
-#             "num_workers": 21
-#         },
-#         "dataLoaderValidation" :{
-#             "batch_size" : 1,
-#             "shuffle": 0,
-#             "num_workers": 21
-#         },
-
-#         "encoder": {
-#             "image":{
-#                 "width": 300,
-#                 "height": 300
-#             },
-#             "network" :{
-#                 "num_slices": 48,
-#                 "width": 24,
-#                 "height" : 24,
-#                 "num_conv_layer": 3,
-#                 "num_fc_layer": 3
-#             }
-#         },
-
-#         "decoder" :{
-#             "lambda_sdf": 1,
-#             "lambda_rgb": 0.01,
-#             "lambda_kl": 0.001
-#         }
-#     }
-
-
-#     ,"optimizer":{
-#         "eta_decoder" : 1e-3,
-#         "eta_latent_space_mu" : 5e-3,
-#         "eta_latent_space_std" : 1e-2,
-#         "gammaLR" : 0.9
-#     }
-# }

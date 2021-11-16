@@ -17,7 +17,7 @@ DEFAULT_RENDER = True
 DEFAULT_RENDER_RESOLUTION = 64
 # DEFAULT_MAX_MODEL_2_RENDER = 4
 DEFAULT_MAX_MODEL_2_RENDER = None
-DEFAULT_IMAGES_PER_MODEL = 20
+DEFAULT_IMAGES_PER_MODEL = 1
 DEFAULT_LOGS = True
 
 DECODER_PATH = "models_and_codes/decoder.pth"
@@ -415,7 +415,7 @@ if __name__ == '__main__':
         l2_dist_mean = torch.tensor(l2_dist_mean)
 
 
-        if num_images_per_model > 1:
+        if num_model_2_render > 1:
             print("\nl2 distance computed between prediction")
             print(f"max: {l2_dist_each_other.max()}")
             print(f"mean: {l2_dist_each_other.mean()}")
@@ -474,6 +474,35 @@ if __name__ == '__main__':
         plt.ylabel("error rgb")
         plt.xlabel("epoch")
         plt.savefig(PLOT_PATH + "rgb_val.png")
+
+        plt.figure()
+        plt.title("logs loss lab validation")
+        plt.semilogy(x_timestamp_validation_temp,logs["validation"]["lab"])
+        plt.ylabel("error lab")
+        plt.xlabel("epoch")
+        plt.savefig(PLOT_PATH + "lab_val.png")
+
+
+        plt.figure()
+        plt.title("logs error cham sdf validation")
+        plt.semilogy(x_timestamp_validation_temp,logs["validation"]["cham_sdf"])
+        plt.ylabel("error cham sdf")
+        plt.xlabel("epoch")
+        plt.savefig(PLOT_PATH + "cham_sdf_val.png")
+
+        plt.figure()
+        plt.title("logs error cham rgb validation")
+        plt.semilogy(x_timestamp_validation_temp,logs["validation"]["cham_rgb"])
+        plt.ylabel("error cham rgb")
+        plt.xlabel("epoch")
+        plt.savefig(PLOT_PATH + "cham_rgb_val.png")
+
+        plt.figure()
+        plt.title("logs error cham lab validation")
+        plt.semilogy(x_timestamp_validation_temp,logs["validation"]["cham_lab"])
+        plt.ylabel("error cham lab")
+        plt.xlabel("epoch")
+        plt.savefig(PLOT_PATH + "cham_lab_val.png")
 
     print("done")
 
