@@ -35,9 +35,9 @@ encoder:
 
     num_batch_between_print: 100
     # num_batch_between_print: 10
-    num_batch_between_validation: 1000
+    num_batch_between_validation: 200
     # num_batch_between_validation: 100
-    num_images_validation: 100
+    num_images_validation: 40
     # num_images_validation: 10
 
     image:
