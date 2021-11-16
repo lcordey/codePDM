@@ -316,7 +316,7 @@ if __name__ == '__main__':
 
         scheduler.step()
 
-        if epoch%5==0:
+        if epoch%1==0:
             # save encoder
             torch.save(encoder, ENCODER_PATH)
 
