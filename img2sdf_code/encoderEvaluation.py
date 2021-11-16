@@ -298,7 +298,7 @@ if __name__ == '__main__':
             ################################################# CODE FOR RENDERING ONLY THE MEAN OF ALL PREDICTION #################################################
         
             # decode
-            sdf_result = np.empty([resolution, resolution, resolution, 4])
+            sdf_validation = np.empty([resolution, resolution, resolution, 4])
             mean_code = latent_code[model_id,:,:].mean(dim=0)
 
             for x in range(resolution):
@@ -309,13 +309,13 @@ if __name__ == '__main__':
                 sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
                 sdf_pred[:,1:] = sdf_pred[:,1:] * 255
 
-                sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:].cpu(), [resolution, resolution, 4])
+                sdf_validation[x, :, :, :] = np.reshape(sdf_pred[:,:].cpu(), [resolution, resolution, 4])
 
 
-            # print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result[:,:,:,0]), np.max(sdf_result[:,:,:,0])))
-            if(np.min(sdf_result[:,:,:,0]) < 0 and np.max(sdf_result[:,:,:,0]) > 0):
-                vertices, faces = marching_cubes(sdf_result[:,:,:,0])
-                colors_v = exctract_colors_v(vertices, sdf_result)
+            # print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_validation[:,:,:,0]), np.max(sdf_validation[:,:,:,0])))
+            if(np.min(sdf_validation[:,:,:,0]) < 0 and np.max(sdf_validation[:,:,:,0]) > 0):
+                vertices, faces = marching_cubes(sdf_validation[:,:,:,0])
+                colors_v = exctract_colors_v(vertices, sdf_validation)
                 colors_f = exctract_colors_f(colors_v, faces)
                 off_file = '%s/%s_mean.off' %(OUTPUT_DIR, model_hash)
                 write_off(off_file, vertices, faces, colors_f)
@@ -327,11 +327,11 @@ if __name__ == '__main__':
             colors_v= torch.tensor(colors_v/255).unsqueeze(0).cuda()
 
             # compute the sdf from codes 
-            sdf_validation = torch.tensor(sdf_result).reshape(resolution * resolution * resolution, 4)
+            sdf_validation = torch.tensor(sdf_validation).reshape(resolution * resolution * resolution, 4)
             sdf_target= torch.tensor(sdf_target).reshape(resolution * resolution * resolution, 4)
 
             # assign weight of 0 for easy samples that are well trained
-            threshold_precision = 1/resolution
+            threshold_precision = 1
             weight_sdf = ~((sdf_validation[:,0] > threshold_precision).squeeze() * (sdf_target[:,0] > threshold_precision).squeeze()) \
                 * ~((sdf_validation[:,0] < -threshold_precision).squeeze() * (sdf_target[:,0] < -threshold_precision).squeeze())
 
