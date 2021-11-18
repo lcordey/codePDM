@@ -24,6 +24,10 @@ SDF_DIR = "../../image2sdf/sdf/"
 
 num_model_duplicate = 20
 
+######################################## only used for testing ########################################
+num_model_duplicate = 2
+######################################## only used for testing ########################################
+
 
 
 def init_xyz(resolution):
@@ -139,7 +143,7 @@ if __name__ == '__main__':
         list_model_hash.append(os.path.basename(val).split('.')[0])
 
     ######################################## only used for testing ########################################
-    # list_model_hash = list_model_hash[:80]
+    list_model_hash = list_model_hash[:20]
     ######################################## only used for testing ########################################
 
     # create duplicated models
