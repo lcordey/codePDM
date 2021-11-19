@@ -12,7 +12,7 @@ import IPython
 DEFAULT_RENDER = True
 # DEFAULT_RENDER = False
 DEFAULT_RENDER_RESOLUTION = 64
-DEFAULT_MAX_MODEL_2_RENDER = 20
+DEFAULT_MAX_MODEL_2_RENDER = 50
 DEFAULT_LOGS = True
 
 
@@ -95,9 +95,9 @@ if __name__ == '__main__':
                 vertices, faces = marching_cubes(sdf_result[:,:,:,0])
                 colors_v = exctract_colors_v(vertices, sdf_result)
                 colors_f = exctract_colors_f(colors_v, faces)
-                off_file = "%s/%s_lab.off" %(OUTPUT_DIR, model_hash)
+                off_file = "%s/%s_rgb.off" %(OUTPUT_DIR, model_hash)
                 write_off(off_file, vertices, faces, colors_f)
-                print("Wrote %s_lab.off" % model_hash)
+                print("Wrote %s_rgb.off" % model_hash)
             else:
                 print("surface level: 0, should be comprise in between the minimum and maximum value")
 
