@@ -6,8 +6,8 @@ import yaml
 from skimage import color
 import matplotlib.pyplot as plt
 
-from marching_cubes_rgb import *
 from utils import chamfer_distance_rgb
+from marching_cubes_rgb import *
 import IPython
 
 DEFAULT_RENDER = True
@@ -103,7 +103,7 @@ if __name__ == '__main__':
                 colors_f_pred = exctract_colors_f(colors_v_pred, faces_pred)
                 off_file = "%s/%s_rgb.off" %(OUTPUT_DIR, model_hash)
                 # write_off(off_file, vertices_pred, faces_pred, colors_f_pred)
-                # print("Wrote %s_rgb.off" % model_hash)
+                print("Wrote %s_rgb.off" % model_hash)
             else:
                 print("surface level: 0, should be comprise in between the minimum and maximum value")
 
@@ -117,7 +117,7 @@ if __name__ == '__main__':
                 colors_f_gt = exctract_colors_f(colors_v_gt, faces_gt)
                 off_file = "%s/%s_gt.off" %(OUTPUT_DIR, model_hash)
                 # write_off(off_file, vertices_gt, faces_gt, colors_f_gt)
-                # print("Wrote %s_gt.off" % model_hash)
+                print("Wrote %s_gt.off" % model_hash)
             else:
                 print("surface level: 0, should be comprise in between the minimum and maximum value")
 
@@ -157,6 +157,11 @@ if __name__ == '__main__':
 
             print(f"loss_lab: {loss_lab}")
 
+
+            vertices_pred = torch.tensor(vertices_pred.copy())
+            vertices_gt = torch.tensor(vertices_gt.copy())
+            colors_v_pred = torch.tensor(colors_v_pred/255).unsqueeze(0).cuda()
+            colors_v_gt = torch.tensor(colors_v_gt/255).unsqueeze(0).cuda()
 
             cham_sdf, cham_rgb, cham_lab = chamfer_distance_rgb(vertices_pred, vertices_gt, colors_x = colors_v_pred, colors_y = colors_v_gt)
 

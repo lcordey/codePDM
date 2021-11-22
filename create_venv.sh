@@ -10,9 +10,8 @@ source venv/bin/activate
 
 pip install pip --upgrade
 
-pip install torch==1.10
+pip install torch==1.9
 
-curl -LO https://github.com/NVIDIA/cub/archive/1.10.0.tar.gz
-tar xzf 1.10.0.tar.gz && rm 1.10.0.tar.gz
-export CUB_HOME=`pwd`/cub-1.10.0
+pip install pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py39_cu102_pyt190/download.html
+
 pip install -r requirements.txt
