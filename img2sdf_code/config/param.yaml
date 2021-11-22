@@ -32,15 +32,15 @@ decoder:
         gamma_code_LR: 0.95
 
 encoder:
-    num_epoch: 20
-    # num_epoch: 1
+    # num_epoch: 20
+    num_epoch: 1
 
-    num_batch_between_print: 100
-    # num_batch_between_print: 10
-    num_batch_between_validation: 2000
-    # num_batch_between_validation: 100
-    num_images_validation: 100
-    # num_images_validation: 10
+    # num_batch_between_print: 100
+    num_batch_between_print: 10
+    # num_batch_between_validation: 2000
+    num_batch_between_validation: 100
+    # num_images_validation: 100
+    num_images_validation: 50
 
     image:
         width: 300
