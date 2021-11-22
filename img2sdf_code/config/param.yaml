@@ -40,7 +40,7 @@ encoder:
     # num_batch_between_validation: 2000
     num_batch_between_validation: 100
     # num_images_validation: 100
-    num_images_validation: 50
+    num_images_validation: 250
 
     image:
         width: 300

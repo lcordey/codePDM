@@ -7,6 +7,7 @@ from skimage import color
 import matplotlib.pyplot as plt
 
 from marching_cubes_rgb import *
+from utils import chamfer_distance_rgb
 import IPython
 
 DEFAULT_RENDER = True
@@ -51,6 +52,11 @@ if __name__ == '__main__':
 
 
     if args.render:
+
+        list_cham_sdf = []
+        list_cham_rgb = []
+        list_cham_lab = []
+
         # load decoder and codes
         decoder = torch.load(DECODER_PATH).cuda()
         dict_hash_2_code = pickle.load(open(LATENT_CODE_PATH, 'rb'))
@@ -92,12 +98,12 @@ if __name__ == '__main__':
 
             # print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result[:,:,:,0]), np.max(sdf_result[:,:,:,0])))
             if(np.min(sdf_result[:,:,:,0]) < 0 and np.max(sdf_result[:,:,:,0]) > 0):
-                vertices, faces = marching_cubes(sdf_result[:,:,:,0])
-                colors_v = exctract_colors_v(vertices, sdf_result)
-                colors_f = exctract_colors_f(colors_v, faces)
+                vertices_pred, faces_pred = marching_cubes(sdf_result[:,:,:,0])
+                colors_v_pred = exctract_colors_v(vertices_pred, sdf_result)
+                colors_f_pred = exctract_colors_f(colors_v_pred, faces_pred)
                 off_file = "%s/%s_rgb.off" %(OUTPUT_DIR, model_hash)
-                write_off(off_file, vertices, faces, colors_f)
-                print("Wrote %s_rgb.off" % model_hash)
+                # write_off(off_file, vertices_pred, faces_pred, colors_f_pred)
+                # print("Wrote %s_rgb.off" % model_hash)
             else:
                 print("surface level: 0, should be comprise in between the minimum and maximum value")
 
@@ -106,12 +112,12 @@ if __name__ == '__main__':
 
             # print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result[:,:,:,0]), np.max(sdf_result[:,:,:,0])))
             if(np.min(sdf_gt[:,:,:,0]) < 0 and np.max(sdf_gt[:,:,:,0]) > 0):
-                vertices, faces = marching_cubes(sdf_gt[:,:,:,0])
-                colors_v = exctract_colors_v(vertices, sdf_gt)
-                colors_f = exctract_colors_f(colors_v, faces)
+                vertices_gt, faces_gt = marching_cubes(sdf_gt[:,:,:,0])
+                colors_v_gt = exctract_colors_v(vertices_gt, sdf_gt)
+                colors_f_gt = exctract_colors_f(colors_v_gt, faces_gt)
                 off_file = "%s/%s_gt.off" %(OUTPUT_DIR, model_hash)
-                write_off(off_file, vertices, faces, colors_f)
-                print("Wrote %s_gt.off" % model_hash)
+                # write_off(off_file, vertices_gt, faces_gt, colors_f_gt)
+                # print("Wrote %s_gt.off" % model_hash)
             else:
                 print("surface level: 0, should be comprise in between the minimum and maximum value")
 
@@ -150,6 +156,22 @@ if __name__ == '__main__':
             loss_lab = ((loss_lab[:,0] * weight_sdf) + (loss_lab[:,1] * weight_sdf) + (loss_lab[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
 
             print(f"loss_lab: {loss_lab}")
+
+
+            cham_sdf, cham_rgb, cham_lab = chamfer_distance_rgb(vertices_pred, vertices_gt, colors_x = colors_v_pred, colors_y = colors_v_gt)
+
+            print(f"cham sdf: {cham_sdf}")
+            print(f"cham rgb: {cham_rgb}")
+            print(f"cham lab: {cham_lab}")
+
+            list_cham_sdf.append(cham_sdf)
+            list_cham_rgb.append(cham_rgb)
+            list_cham_lab.append(cham_lab)
+
+    
+        print(f"mean cham sdf: {torch.tensor(list_cham_sdf).mean()}")
+        print(f"mean cham rgb: {torch.tensor(list_cham_rgb).mean()}")
+        print(f"mean cham lab: {torch.tensor(list_cham_lab).mean()}")
 
 
     if args.logs:
