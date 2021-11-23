@@ -127,12 +127,6 @@ def get_code_from_grid(grid, latent_size):
 
     return lat_code
 
-
-print(torch.cuda.get_device_properties(0).total_memory)
-print(torch.cuda.memory_reserved(0))
-print(torch.cuda.memory_allocated(0))
-
-
 # load parameters
 param_all = yaml.safe_load(open(PARAM_FILE))
 param = param_all["encoder"]
