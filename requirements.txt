@@ -31,7 +31,7 @@ six==1.16.0
 tabulate==0.8.9
 termcolor==1.1.0
 tifffile==2021.11.2
-torch==1.10
+pytorch3d @ git+https://github.com/facebookresearch/pytorch3d.git@9585a58d10cb2efcd159b058fa4af914203c1d0d
 tqdm==4.62.3
 traitlets==5.1.1
 typing_extensions==4.0.0
