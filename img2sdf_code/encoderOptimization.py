@@ -14,7 +14,7 @@ from utils import *
 import IPython
 
 RANDOM_INIT = False
-NUM_ITER = 100
+NUM_ITER = 50
 DEFAULT_RENDER_RESOLUTION = 64
 # DEFAULT_MAX_MODEL_2_RENDER = 4
 DEFAULT_MAX_MODEL_2_RENDER = None
@@ -191,11 +191,13 @@ for model_hash, model_id in zip(list_hash, range(num_model)):
     [
         {
             "params": code_prediction,
-            "lr": 0.05,
+            "lr": 0.5,
             "eps": 1e-8,
         },
     ]
     )
+
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.95)
 
     for i in range(NUM_ITER):
         optimizer.zero_grad()
