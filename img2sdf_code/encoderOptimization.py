@@ -180,6 +180,7 @@ decoder.eval()
 # model_id = 0
 # model_hash = list_hash[model_id]
 
+print("start evaluation:\n")
 
 for model_hash, model_id in zip(list_hash, range(num_model)):
 
