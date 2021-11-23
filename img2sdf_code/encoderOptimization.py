@@ -14,7 +14,7 @@ from utils import *
 import IPython
 
 RANDOM_INIT = False
-NUM_ITER = 50
+NUM_ITER = 10
 DEFAULT_RENDER_RESOLUTION = 64
 # DEFAULT_MAX_MODEL_2_RENDER = 4
 DEFAULT_MAX_MODEL_2_RENDER = None
@@ -185,49 +185,108 @@ for model_hash, model_id in zip(list_hash, range(num_model)):
     else:
         code_prediction = latent_code[model_id,:,:].mean(dim=0)
 
-    code_prediction.requires_grad = True
+    # code_prediction.requires_grad = True
+
+    # optimizer = torch.optim.Adam(
+    # [
+    #     {
+    #         "params": code_prediction,
+    #         "lr": 0.5,
+    #         "eps": 1e-8,
+    #     },
+    # ]
+    # )
+
+    # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.95)
+
+    # for i in range(NUM_ITER):
+    #     optimizer.zero_grad()
+
+    #     sdf_pred = decoder(code_prediction.repeat(resolution * resolution * resolution, 1).cuda(),xyz)
+    #     sdf_gt = decoder(code_gt.repeat(resolution * resolution * resolution, 1).cuda(),xyz)
+
+    #     # assign weight of 0 for easy samples that are well trained
+    #     threshold_precision = 1
+    #     weight_sdf = ~((sdf_pred[:,0] > threshold_precision).squeeze() * (sdf_gt[:,0] > threshold_precision).squeeze()) \
+    #         * ~((sdf_pred[:,0] < -threshold_precision).squeeze() * (sdf_gt[:,0] < -threshold_precision).squeeze())
+
+    #     # loss l1 in distance error per samples
+    #     loss_sdf = torch.nn.L1Loss(reduction='none')(sdf_pred[:,0].squeeze(), sdf_gt[:,0])
+    #     loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
+
+    #     # loss rgb in pixel value difference per color per samples
+    #     rgb_gt_normalized = sdf_gt[:,1:]
+    #     loss_rgb = torch.nn.L1Loss(reduction='none')(sdf_pred[:,1:], rgb_gt_normalized)
+    #     loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
+
+
+    #     total_loss = loss_sdf + loss_rgb
+
+    #     total_loss.backward()
+    #     optimizer.step()
+
+
+    # print(f"\nmodel {model_id}:")
+    # print(f"total loss: {total_loss}")
+    # print(f"distance to the original code {(code_prediction - code_gt).norm().item()} ")
+
+
+
+    sdf_pred = decoder(code_prediction.repeat(resolution * resolution * resolution, 1).cuda(),xyz)
+    sdf_gt = decoder(code_gt.repeat(resolution * resolution * resolution, 1).cuda(),xyz)
+
+    sdf_pred[:,1:] = sdf_pred[:,1:] * 255
+    sdf_pred = sdf_pred.reshape(resolution, resolution, resolution, 4).cpu().detach().numpy()
+    if(np.min(sdf_pred[:,:,:,0]) < 0 and np.max(sdf_pred[:,:,:,0]) > 0):
+        vertices_pred, faces_pred = marching_cubes(sdf_pred[:,:,:,0])
+        colors_v_pred = exctract_colors_v(vertices_pred, sdf_pred)
+
+    vertices_pred = torch.tensor(vertices_pred.copy())
+    colors_v_pred = torch.tensor(colors_v_pred/255).unsqueeze(0).cuda()
+
+
+    sdf_gt[:,1:] = sdf_gt[:,1:] * 255
+    sdf_gt = sdf_gt.reshape(resolution, resolution, resolution, 4).cpu().detach().numpy()
+    if(np.min(sdf_gt[:,:,:,0]) < 0 and np.max(sdf_gt[:,:,:,0]) > 0):
+        vertices_gt, faces_gt = marching_cubes(sdf_gt[:,:,:,0])
+        colors_v_gt = exctract_colors_v(vertices_gt, sdf_gt)
+
+    vertices_gt = torch.tensor(vertices_gt.copy())
+    colors_v_gt = torch.tensor(colors_v_gt/255).unsqueeze(0).cuda()
+
+    cham_sdf, cham_rgb, cham_lab = chamfer_distance_rgb(vertices_pred, vertices_gt, colors_x = colors_v_pred, colors_y = colors_v_gt)
+
+
+    vertices_pred.requires_grad = True
+    vertices_gt.requires_grad = True
 
     optimizer = torch.optim.Adam(
     [
         {
-            "params": code_prediction,
-            "lr": 0.5,
-            "eps": 1e-8,
+            "params": vertices_pred,
+            "lr": 0.1,
+        },
+
+        {
+            "params": colors_v_pred,
+            "lr": 0.1,
         },
     ]
     )
 
-    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.95)
+    print(f"\nmodel {model_id}:")
+    print(f"cham sdf init: {cham_sdf.item()}")
 
     for i in range(NUM_ITER):
         optimizer.zero_grad()
 
-        sdf_pred = decoder(code_prediction.repeat(resolution * resolution * resolution, 1).cuda(),xyz)
-        sdf_gt = decoder(code_gt.repeat(resolution * resolution * resolution, 1).cuda(),xyz)
+        cham_sdf, cham_rgb, cham_lab = chamfer_distance_rgb(vertices_pred, vertices_gt, colors_x = colors_v_pred, colors_y = colors_v_gt)
 
-        # assign weight of 0 for easy samples that are well trained
-        threshold_precision = 1
-        weight_sdf = ~((sdf_pred[:,0] > threshold_precision).squeeze() * (sdf_gt[:,0] > threshold_precision).squeeze()) \
-            * ~((sdf_pred[:,0] < -threshold_precision).squeeze() * (sdf_gt[:,0] < -threshold_precision).squeeze())
+        # print(cham_rgb.item())
 
-        # loss l1 in distance error per samples
-        loss_sdf = torch.nn.L1Loss(reduction='none')(sdf_pred[:,0].squeeze(), sdf_gt[:,0])
-        loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
+        cham_sdf.backward()
+        # cham_rgb.backward()
 
-        # loss rgb in pixel value difference per color per samples
-        rgb_gt_normalized = sdf_gt[:,1:]
-        loss_rgb = torch.nn.L1Loss(reduction='none')(sdf_pred[:,1:], rgb_gt_normalized)
-        loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
-
-
-        total_loss = loss_sdf + loss_rgb
-
-        total_loss.backward()
         optimizer.step()
-
-
-    print(f"\nmodel {model_id}:")
-    print(f"total loss: {total_loss}")
-    print(f"distance to the original code {(code_prediction - code_gt).norm().item()} ")
-
-
+    
+    print(f"cham sdf final: {cham_sdf.item()}")
