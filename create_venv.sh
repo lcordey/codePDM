@@ -12,6 +12,6 @@ pip install pip --upgrade
 
 pip install torch==1.9
 
-pip install pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py39_cu102_pyt190/download.html
+# pip install pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py39_cu102_pyt190/download.html
 
 pip install -r requirements.txt
