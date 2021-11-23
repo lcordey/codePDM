@@ -14,6 +14,7 @@ from utils import *
 import IPython
 
 RANDOM_INIT = False
+NUM_ITER = 100
 DEFAULT_RENDER_RESOLUTION = 64
 # DEFAULT_MAX_MODEL_2_RENDER = 4
 DEFAULT_MAX_MODEL_2_RENDER = None
@@ -199,7 +200,7 @@ for model_hash, model_id in zip(list_hash, range(num_model)):
     ]
     )
 
-    for i in range(20):
+    for i in range(NUM_ITER):
         optimizer.zero_grad()
 
         sdf_pred = decoder(code_prediction.repeat(resolution * resolution * resolution, 1).cuda(),xyz)
