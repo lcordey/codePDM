@@ -97,9 +97,9 @@ def chamfer_distance_rgb(
 
     if return_cham_colors:
 
-        # get lab colors too
-        colors_x_lab = torch.tensor(color.rgb2lab(colors_x.cpu().numpy())).cuda()
-        colors_y_lab = torch.tensor(color.rgb2lab(colors_y.cpu().numpy())).cuda()
+        # # get lab colors too
+        # colors_x_lab = torch.tensor(color.rgb2lab(colors_x.cpu().numpy())).cuda()
+        # colors_y_lab = torch.tensor(color.rgb2lab(colors_y.cpu().numpy())).cuda()
         
         # find index from knn results
         idx_x = x_nn.idx[..., 0].squeeze()
@@ -113,11 +113,13 @@ def chamfer_distance_rgb(
         cham_colors_rgb = (error_x_rgb + error_y_rgb) / 2
         cham_colors_rgb = cham_colors_rgb * 255
 
-        # compute lab error
-        error_x_lab = torch.nn.L1Loss()(colors_x_lab[:], colors_y_lab[idx_x])
-        error_y_lab = torch.nn.L1Loss()(colors_y_lab[:], colors_x_lab[idx_y])
+        # # compute lab error
+        # error_x_lab = torch.nn.L1Loss()(colors_x_lab[:], colors_y_lab[idx_x])
+        # error_y_lab = torch.nn.L1Loss()(colors_y_lab[:], colors_x_lab[idx_y])
 
-        cham_colors_lab = (error_x_lab + error_y_lab) / 2
+        # cham_colors_lab = (error_x_lab + error_y_lab) / 2
+
+        cham_colors_lab = None
         
     else:
         cham_colors_rgb = None
@@ -134,16 +136,42 @@ def convert_w2c(matrix_world_to_camera, frame, point):
     co_local = matrix_world_to_camera.dot(point_4d)
     z = -co_local[2]
 
+    f = np.empty([3,3])
+
     if z == 0.0:
-            return np.array([0.5, 0.5, 0.0])
+        return np.array([0.5, 0.5, 0.0])
     else:
         for i in range(3):
-            frame[i] =  -(frame[i] / (frame[i][2]/z))
+            f[i] =  -(frame[i] / (frame[i][2]/z))
 
-    min_x, max_x = frame[2][0], frame[1][0]
-    min_y, max_y = frame[1][1], frame[0][1]
+    min_x, max_x = f[2][0], f[1][0]
+    min_y, max_y = f[1][1], f[0][1]
 
     x = (co_local[0] - min_x) / (max_x - min_x)
     y = (co_local[1] - min_y) / (max_y - min_y)
 
     return np.array([x,y,z])
+
+
+def convert_view_to_camera_coordinates(frame, pixel_location):
+
+    x = pixel_location[0]
+    y = pixel_location[1]
+
+    f = np.empty([3,3])
+    camera_coordinate = np.empty([4])
+    camera_coordinate[2] = -1 # z = 1
+    camera_coordinate[3] = 1
+
+
+    for i in range(3):
+        f[i] =  -(frame[i] / (frame[i][2]))
+
+    min_x, max_x = f[2][0], f[1][0]
+    min_y, max_y = f[1][1], f[0][1]
+
+    camera_coordinate[0] = x * (max_x - min_x) + min_x
+    camera_coordinate[1] = y * (max_y - min_y) + min_y
+
+    return camera_coordinate
+

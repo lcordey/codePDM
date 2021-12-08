@@ -137,11 +137,11 @@ def set_fixed_vehicle_placement(temp_filepath: str):
     obj = bpy.data.objects['model']
     r_scale = 1
     # r_scale = 6
-    r_rot = 0.0
+    # r_rot = 0.0
 
     obj.location = (0, 0, 0)
     obj.scale = (r_scale, r_scale, r_scale)
-    obj.rotation_euler.rotate_axis("Y", math.radians(2 * r_rot * 180))
+    # obj.rotation_euler.rotate_axis("Y", math.radians(2 * r_rot * 180))
     # file needs to be saved so that the bounding box information is updated
     bpy.ops.wm.save_as_mainfile(filepath=temp_filepath)
 
@@ -258,11 +258,15 @@ for i in range(len(vehicle_pool)):
     for j in range(num_scenes_per_vehicule):
         
         # rotate the car randomly
-        obj.rotation_euler.rotate_axis("Y", math.radians(2 * random() * 180)) 
+        if j != 0:
+            obj.rotation_euler.rotate_axis("Y", math.radians(2 * random() * 180)) 
+            # obj.rotation_euler.rotate_axis("Y", math.radians(2 * (-0.1) * 180)) 
 
         # add a random rotation to simulate different height of camera 
-        rz = (random() - 0.5) * 2
-        obj.rotation_euler = (mathutils.Matrix.Rotation(math.pi/6 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+        if j != 0:
+            rz = (random() - 0.5) * 2
+            obj.rotation_euler = (mathutils.Matrix.Rotation(math.pi/6 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+            # obj.rotation_euler = (mathutils.Matrix.Rotation(-math.pi/6 * 0.5 * j, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
 
         rendered_image_path = f'images/{model_id}/{j}.png'
         render_to_file(f'{output_path}/{rendered_image_path}')
@@ -272,6 +276,7 @@ for i in range(len(vehicle_pool)):
         annotations[model_id][j]['2d'] = np.array(points_2d)
         annotations[model_id][j]['3d'] = np.array(points_3d)
         annotations[model_id][j]['frame'] = [v for v in np.array(bpy.data.objects['Camera'].data.view_frame(scene=bpy.context.scene)[:3])]
+        annotations[model_id][j]['matrix_object_to_world'] = np.array(bpy.data.objects['model'].matrix_world)
 
         # load the image and apply background if needed
         img = Image.open(f'{output_path}/{rendered_image_path}')
@@ -280,7 +285,9 @@ for i in range(len(vehicle_pool)):
         background_image_crop.save(f'{output_path}/{rendered_image_path}', "PNG")
 
         # replace the camera to the original orientation
-        obj.rotation_euler = (mathutils.Matrix.Rotation(-math.pi/6 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+        if j != 0:
+            obj.rotation_euler = (mathutils.Matrix.Rotation(-math.pi/6 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+            # obj.rotation_euler = (mathutils.Matrix.Rotation(math.pi/6 * 0.5 * j, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
 
     # reload the scene to reduce the memory leak issue
     bpy.ops.wm.read_factory_settings(use_empty=True)
