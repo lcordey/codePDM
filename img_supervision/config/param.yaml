@@ -1,0 +1,90 @@
+
+resolution_used_for_training: 64
+# latent_size: 6
+latent_size: 2
+
+decoder:
+    num_epoch_sdf: 10
+    # num_epoch_sdf: 30
+    # num_epoch_sdf: 100
+
+    num_epoch_rgb: 1
+
+    num_batch_between_print: 100
+
+    lambda_variance: 1.0
+    # lambda_variance: 0.0
+    lambda_sdf: 1.0
+    lambda_rgb: 0.01
+    lambda_kl: 0.001
+
+    dataLoader_sdf:
+        batch_size: 10000
+        shuffle: True
+        # num_workers: 42
+        num_workers: 8
+
+    dataLoader_rgb:
+        batch_size: 2
+        shuffle: True
+        # num_workers: 42
+        num_workers: 8
+    
+    optimizer_sdf: 
+        eta_decoder: 0.001
+        eta_latent_space_mu: 0.02
+        eta_latent_space_std: 0.01
+        gamma_decoder_LR: 0.9
+        # gamma_decoder_LR: 0.94
+        # gamma_decoder_LR: 0.98
+        gamma_code_LR: 0.75
+        # gamma_code_LR: 0.85
+        # gamma_code_LR: 0.95
+
+
+    optimizer_rgb: 
+        eta_decoder: 0.001
+        eta_latent_space_mu: 0.02
+        eta_latent_space_std: 0.01
+        gamma_decoder_LR: 0.9
+        # gamma_decoder_LR: 0.94
+        # gamma_decoder_LR: 0.98
+        gamma_code_LR: 0.75
+        # gamma_code_LR: 0.85
+        # gamma_code_LR: 0.95
+
+encoder:
+    # num_epoch: 20
+    num_epoch: 1
+
+    # num_batch_between_print: 100
+    num_batch_between_print: 10
+    # num_batch_between_validation: 2000
+    num_batch_between_validation: 100
+    # num_images_validation: 100
+    num_images_validation: 250
+
+    image:
+        width: 300
+        height: 300
+    
+    dataLoader:
+        batch_size: 20
+        shuffle: True
+        num_workers: 42
+
+    dataLoaderValidation:
+        batch_size: 1
+        shuffle: True
+        num_workers: 42
+    
+    optimizer:
+        eta_encoder: 0.0001
+        gammaLR: 0.95
+        
+    network:
+        num_slices: 48
+        width: 24
+        height: 24
+        num_conv_layer: 3
+        num_fc_layer: 3

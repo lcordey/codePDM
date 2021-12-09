@@ -1,4 +1,4 @@
-### NEED TO BE RUN WITH: blender -b -P synthesize_images.py -- --venv <path/to/venv/dir>
+### NEED TO BE RUN WITH: blender -b -P synthesize_images.py -- --mode <training or validation> --venv <path/to/venv/dir>
 ###--shapenet_path <path/to/shapenent/dir> --output_path <path/to/output/synthesized_images> 
 
 
@@ -19,8 +19,8 @@ import time
 from random import random, randrange, choice
 
 DEFAULT_MODE = 'validation'
-NUM_SCENE_TRAINING = 300
-NUM_SCENE_VALIDATION = 50
+NUM_SCENE_TRAINING = 100
+NUM_SCENE_VALIDATION = 10
 
 # import IPython
 
@@ -30,7 +30,7 @@ parser.add_argument('--venv', dest='venv_path', default='/home/loic/venvs/blende
                     help = 'path to the site-packages folder of the virtual environment')
 parser.add_argument('--shapenet_path', dest='shapenet_path', default='/home/loic/data/vehicle',
                     help='path to the dataset')
-parser.add_argument('--directory_path', dest='directory_path', default='/home/loic/MasterPDM/image2sdf/', help='path to the folder directory')
+parser.add_argument('--directory_path', dest='directory_path', default='/home/loic/MasterPDM/img_supervision/', help='path to the folder directory')
 parser.add_argument('--height', type=int, dest='height', default=300)
 parser.add_argument('--width', type=int, dest='width', default=300)
 
@@ -196,11 +196,11 @@ assert os.path.isdir(args.directory_path), f"main directory does not exists: {ar
 
 if args.mode == 'training':
     output_path = args.directory_path + 'input_images'
-    vehicle_list_path = '/home/loic/MasterPDM/codePDM/img2sdf_code/config/vehicle_list_all.txt'
+    vehicle_list_path = '/home/loic/MasterPDM/codePDM/img_supervision/config/vehicle_list_all.txt'
     num_scenes_per_vehicule = NUM_SCENE_TRAINING
 else:
     output_path = args.directory_path + 'input_images_validation'
-    vehicle_list_path = '/home/loic/MasterPDM/codePDM/img2sdf_code/config/vehicle_validation.txt'
+    vehicle_list_path = '/home/loic/MasterPDM/codePDM/img_supervision/config/vehicle_validation.txt'
     num_scenes_per_vehicule = NUM_SCENE_VALIDATION
 
 
@@ -211,7 +211,6 @@ if not os.path.isdir(f'{output_path}/images') :
     os.mkdir(f'{output_path}/images')
     
 annotations_path = f'{output_path}/annotations.pkl'
-matrix_world_to_camera_path = f'{output_path}/matrix_w2c.pkl'
 
 w, h = args.width, args.height
 
@@ -246,8 +245,8 @@ time_start = time.time()
 for i in range(len(vehicle_pool)):
 
     model_dir = vehicle_pool[i]
-    model_id = os.path.split(model_dir)[-1]
-    annotations[model_id] = dict()
+    model_hash = os.path.split(model_dir)[-1]
+    annotations[model_hash] = dict()
 
     load_model(f'{model_dir}/models/model_normalized.obj')
     set_fixed_vehicle_placement(temp_file.name)
@@ -268,15 +267,15 @@ for i in range(len(vehicle_pool)):
             obj.rotation_euler = (mathutils.Matrix.Rotation(math.pi/6 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
             # obj.rotation_euler = (mathutils.Matrix.Rotation(-math.pi/6 * 0.5 * j, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
 
-        rendered_image_path = f'images/{model_id}/{j}.png'
+        rendered_image_path = f'images/{model_hash}/{j}.png'
         render_to_file(f'{output_path}/{rendered_image_path}')
         points_2d, points_3d = get_bounding_box()
 
-        annotations[model_id][j] = dict()
-        annotations[model_id][j]['2d'] = np.array(points_2d)
-        annotations[model_id][j]['3d'] = np.array(points_3d)
-        annotations[model_id][j]['frame'] = [v for v in np.array(bpy.data.objects['Camera'].data.view_frame(scene=bpy.context.scene)[:3])]
-        annotations[model_id][j]['matrix_object_to_world'] = np.array(bpy.data.objects['model'].matrix_world)
+        annotations[model_hash][j] = dict()
+        annotations[model_hash][j]['2d'] = np.array(points_2d)
+        annotations[model_hash][j]['3d'] = np.array(points_3d)
+        annotations[model_hash][j]['frame'] = [v for v in np.array(bpy.data.objects['Camera'].data.view_frame(scene=bpy.context.scene)[:3])]
+        annotations[model_hash][j]['matrix_object_to_world'] = np.array(bpy.data.objects['model'].matrix_world)
 
         # load the image and apply background if needed
         img = Image.open(f'{output_path}/{rendered_image_path}')
@@ -296,13 +295,12 @@ for i in range(len(vehicle_pool)):
         obj.tag = True
 
 matrix_world_to_camera = np.array(bpy.data.objects['Camera'].matrix_world.normalized().inverted())
-
+annotations["matrix_world_to_camera"] = matrix_world_to_camera
 
 print(f"rendering time: {time.time() - time_start}")
 time_start = time.time()
 
 save_pickle_file(annotations, annotations_path)
-save_pickle_file(matrix_world_to_camera, matrix_world_to_camera_path)
 
 print(f"saving time: {time.time() - time_start}")
 
