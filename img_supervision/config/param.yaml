@@ -10,7 +10,7 @@ decoder:
 
     num_epoch_rgb: 5
 
-    num_batch_between_print: 5
+    num_batch_between_print: 2
 
     # lambda_variance: 1.0
     lambda_variance: 0.0
@@ -44,17 +44,17 @@ decoder:
 
 
     optimizer_rgb: 
-        eta_decoder: 0.001
+        eta_decoder: 0.0001
         # eta_latent_space_mu: 0.02
         # eta_latent_space_std: 0.01
         eta_latent_space_mu: 0.0
         eta_latent_space_std: 0.0
-        gamma_decoder_LR: 0.9
+        # gamma_decoder_LR: 0.9
         # gamma_decoder_LR: 0.94
-        # gamma_decoder_LR: 0.98
-        gamma_code_LR: 0.75
+        gamma_decoder_LR: 0.98
+        # gamma_code_LR: 0.75
         # gamma_code_LR: 0.85
-        # gamma_code_LR: 0.95
+        gamma_code_LR: 0.95
 
 encoder:
     # num_epoch: 20

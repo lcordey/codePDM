@@ -457,7 +457,7 @@ if __name__ == '__main__':
     ###### Saving Decoder ######
     # save decoder
     # torch.save(decoder, DECODER_PATH)
-    torch.save(decoder_rgb, DECODER_PATH + "rgb")
+    # torch.save(decoder_rgb, DECODER_PATH + "rgb")
 
 
     # save logs
@@ -465,18 +465,18 @@ if __name__ == '__main__':
     #     pickle.dump(logs, file)
     
 
-    # save latent code in dict
-    dict_hash_2_code = dict()
-    for model_hash in list_model_hash:
-        dict_hash_2_code[model_hash] = lat_code_mu(dict_model_hash_2_idx[model_hash].cuda()).detach().cpu()
+    # # save latent code in dict
+    # dict_hash_2_code = dict()
+    # for model_hash in list_model_hash:
+    #     dict_hash_2_code[model_hash] = lat_code_mu(dict_model_hash_2_idx[model_hash].cuda()).detach().cpu()
 
-    with open(LATENT_CODE_PATH, "wb") as file:
-        pickle.dump(dict_hash_2_code, file)
+    # with open(LATENT_CODE_PATH, "wb") as file:
+    #     pickle.dump(dict_hash_2_code, file)
 
 
-    # save param used
-    with open(PARAM_SAVE_FILE, 'w') as file:
-        yaml.dump(param_all, file)
+    # # save param used
+    # with open(PARAM_SAVE_FILE, 'w') as file:
+    #     yaml.dump(param_all, file)
 
 
  
