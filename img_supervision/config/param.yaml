@@ -8,7 +8,7 @@ decoder:
     # num_epoch_sdf: 30
     # num_epoch_sdf: 100
 
-    num_epoch_rgb: 1
+    num_epoch_rgb: 5
 
     num_batch_between_print: 25
 

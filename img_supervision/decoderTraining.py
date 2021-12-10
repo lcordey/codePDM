@@ -166,9 +166,11 @@ if __name__ == '__main__':
     #     pickle.dump(list_model_hash, file)
 
 
-    list_model_hash = torch.load(LATENT_CODE_PATH_HASH).cuda()
+    list_model_hash = pickle.load(open(LATENT_CODE_PATH_HASH, 'rb'))
     ######################################## only used for testing ########################################
 
+
+    # time.sleep(3)
 
     # 1/0
     # # create duplicated models
