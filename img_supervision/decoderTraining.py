@@ -457,7 +457,7 @@ if __name__ == '__main__':
     ###### Saving Decoder ######
     # save decoder
     # torch.save(decoder, DECODER_PATH)
-    # torch.save(decoder_rgb, DECODER_PATH + "rgb")
+    torch.save(decoder_rgb, DECODER_PATH + "rgb")
 
 
     # save logs
