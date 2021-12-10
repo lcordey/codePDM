@@ -47,8 +47,10 @@ def fc_block(num_fc_layer, num_features, num_features_extracted, latent_size, ba
 
 
 class Decoder(nn.Module):
-    def __init__(self, latent_size, batch_norm=False):
+    def __init__(self, latent_size, mode, batch_norm=False):
         super(Decoder, self).__init__()
+
+        self.mode = mode
 
         num_features = 256
 
@@ -60,10 +62,14 @@ class Decoder(nn.Module):
         self.ln4 = fc_layer(num_features, num_features, batch_norm=batch_norm)
         self.ln5 = fc_layer(num_features, num_features, batch_norm=batch_norm)
 
-        self.lnEnd = nn.Linear(num_features, 4)
-
-        self.sgm = nn.Sigmoid()
-        self.lambda_activation = 3
+        if mode == "sdf":
+            self.lnEnd = nn.Linear(num_features, 1)
+        elif mode == "rgb":
+            self.lnEnd = nn.Linear(num_features, 3)
+            self.sgm = nn.Sigmoid()
+            self.lambda_activation = 3
+        else:
+            raise("error decoder mode should be sdf or rgb")
     
     def forward(self, latent_code, xyz):
         
@@ -79,10 +85,52 @@ class Decoder(nn.Module):
         x = self.lnEnd(x)
 
         # activation function, only for rgb values
-        x[:,1:] = self.sgm(self.lambda_activation * x[:,1:])
+        if self.mode == "rgb":
+            x = self.sgm(self.lambda_activation * x)
 
 
         return x 
+
+
+
+# class Decoder(nn.Module):
+#     def __init__(self, latent_size, batch_norm=False):
+#         super(Decoder, self).__init__()
+
+#         num_features = 256
+
+#         self.lnStart = fc_layer(latent_size + 3, num_features, batch_norm=batch_norm)
+
+#         self.ln1 = fc_layer(num_features, num_features, batch_norm=batch_norm)
+#         self.ln2 = fc_layer(num_features, num_features, batch_norm=batch_norm)
+#         self.ln3 = fc_layer(num_features, num_features, batch_norm=batch_norm)
+#         self.ln4 = fc_layer(num_features, num_features, batch_norm=batch_norm)
+#         self.ln5 = fc_layer(num_features, num_features, batch_norm=batch_norm)
+
+#         self.lnEnd = nn.Linear(num_features, 4)
+
+#         self.sgm = nn.Sigmoid()
+#         self.lambda_activation = 3
+    
+#     def forward(self, latent_code, xyz):
+        
+#         x = torch.cat([latent_code, xyz], dim=1)
+
+#         x = self.lnStart(x)
+#         x = self.ln1(x)
+#         x = self.ln2(x)
+#         x = self.ln3(x)
+#         x = self.ln4(x)
+#         x = self.ln5(x)
+
+#         x = self.lnEnd(x)
+
+#         # activation function, only for rgb values
+#         x[:,1:] = self.sgm(self.lambda_activation * x[:,1:])
+
+
+#         return x 
+
 
 class EncoderGrid(nn.Module):
     def __init__(self,latent_size, param, vae=False,batch_norm_conv=False, batch_norm_fc=False):

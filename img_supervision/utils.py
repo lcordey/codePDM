@@ -19,6 +19,11 @@ MAX_STEP = 1/16
 MAX_ITER = 20
 SCALING_FACTOR = 2
 
+# THRESHOLD = 1/10
+# MAX_STEP = 1/16
+# MAX_ITER = 50
+# SCALING_FACTOR = 2
+
 def chamfer_distance_rgb(
     x,
     y,
@@ -257,7 +262,77 @@ def initialize_rendering(model_hash, image_id, annotations, image_path):
 
     return ground_truth_image, pos_init_ray, ray_marching_vector, min_step, max_step
 
-def ray_marching_rendering(decoder, latent_code, pos_init_ray, ray_marching_vector, min_step, max_step):
+# def ray_marching_rendering(decoder, latent_code, pos_init_ray, ray_marching_vector, min_step, max_step):
+
+#     resolution = RAY_MARCHING_RESOLUTION
+
+#     # marching safely until the "cube" representing the zone where the sdf was trained, and therefore contain the whole object
+#     min_pos = pos_init_ray + min_step.unsqueeze(1).mul(ray_marching_vector)
+#     pos_along_ray = min_pos
+#     sum_step = min_step
+
+
+#     # only compute ray marching for ray passing through the cube
+#     mask_cube = (min_step != 0)
+#     mask_ray_still_marching = mask_cube
+
+#     # define ratio to accelerate ray marching
+#     ratio = torch.ones([resolution * resolution]).cuda()
+#     sdf = torch.zeros([resolution * resolution]).cuda()
+
+#     for iter in range(MAX_ITER):
+#         # compute sdf values
+#         sdf[mask_ray_still_marching] = decoder(latent_code.unsqueeze(0).repeat([mask_ray_still_marching.count_nonzero(),1]), pos_along_ray[mask_ray_still_marching])[:,0].detach()
+
+#         # scaling: unit of 1 from the decoder's prediction correspond to a unit of 1 in the object coordinate
+#         sdf *= 1
+
+#         # compute the ratio using difference between old an new sdf values,
+#         if iter == 0:
+#             # store first sdf
+#             old_sdf = sdf
+#         else:
+#             # only compute ratio when the sdf is high enough and decreasing
+#             mask_ratio = (sdf > THRESHOLD) * (sdf < old_sdf)
+#             ratio[mask_ratio] = old_sdf[mask_ratio]/(old_sdf[mask_ratio] - sdf[mask_ratio])
+
+#             # store new sdf
+#             old_sdf[mask_ray_still_marching] = sdf[mask_ray_still_marching]
+            
+#             # accelarating the step, this is only possible because the decoder tends to underestimate the distance due to the design of the loss
+#             sdf[mask_ratio] *= ratio[mask_ratio]
+
+#         # clamp value to prevent undesired issues
+#         sdf = sdf.clamp(None, MAX_STEP)
+
+#         # march along the ray
+#         step = sdf
+#         sum_step += step
+#         pos_along_ray = pos_along_ray + step.unsqueeze(1).mul(ray_marching_vector)
+
+#         mask_ray_still_marching = mask_ray_still_marching * (sum_step < max_step)
+
+#     # interpolate final position for a higher resolution
+#     pos_along_ray = pos_along_ray.reshape(resolution, resolution, 3).permute(2,0,1).unsqueeze(0)
+#     pos_along_ray = torch.nn.functional.interpolate(pos_along_ray, scale_factor = SCALING_FACTOR, mode='bilinear', align_corners=False)
+#     pos_along_ray = pos_along_ray.squeeze().permute(1,2,0).reshape(resolution * resolution * SCALING_FACTOR * SCALING_FACTOR, 3)
+
+#     # compute corresponding sdf
+#     sdf_and_rgb = decoder(latent_code.unsqueeze(0).repeat([resolution * resolution * SCALING_FACTOR * SCALING_FACTOR,1]), pos_along_ray)[:,:]
+#     sdf_and_rgb = sdf_and_rgb.reshape(resolution * SCALING_FACTOR, resolution * SCALING_FACTOR, 4)
+#     sdf = sdf_and_rgb[:,:,0]
+#     rgb = sdf_and_rgb[:,:,1:]
+
+#     # init image with white background
+#     rendered_image = torch.ones([resolution * SCALING_FACTOR, resolution * SCALING_FACTOR,3]).cuda()
+
+#     mask_car = sdf < THRESHOLD
+#     rendered_image[mask_car] = rgb[mask_car]
+
+#     return rendered_image, mask_car
+
+
+def ray_marching_rendering(decoder_sdf, decoder_rgb, latent_code, pos_init_ray, ray_marching_vector, min_step, max_step):
 
     resolution = RAY_MARCHING_RESOLUTION
 
@@ -277,7 +352,7 @@ def ray_marching_rendering(decoder, latent_code, pos_init_ray, ray_marching_vect
 
     for iter in range(MAX_ITER):
         # compute sdf values
-        sdf[mask_ray_still_marching] = decoder(latent_code.unsqueeze(0).repeat([mask_ray_still_marching.count_nonzero(),1]), pos_along_ray[mask_ray_still_marching])[:,0].detach()
+        sdf[mask_ray_still_marching] = decoder_sdf(latent_code.unsqueeze(0).repeat([mask_ray_still_marching.count_nonzero(),1]), pos_along_ray[mask_ray_still_marching])[:,0].detach()
 
         # scaling: unit of 1 from the decoder's prediction correspond to a unit of 1 in the object coordinate
         sdf *= 1
@@ -313,10 +388,10 @@ def ray_marching_rendering(decoder, latent_code, pos_init_ray, ray_marching_vect
     pos_along_ray = pos_along_ray.squeeze().permute(1,2,0).reshape(resolution * resolution * SCALING_FACTOR * SCALING_FACTOR, 3)
 
     # compute corresponding sdf
-    sdf_and_rgb = decoder(latent_code.unsqueeze(0).repeat([resolution * resolution * SCALING_FACTOR * SCALING_FACTOR,1]), pos_along_ray)[:,:]
-    sdf_and_rgb = sdf_and_rgb.reshape(resolution * SCALING_FACTOR, resolution * SCALING_FACTOR, 4)
-    sdf = sdf_and_rgb[:,:,0]
-    rgb = sdf_and_rgb[:,:,1:]
+    sdf = decoder_sdf(latent_code.unsqueeze(0).repeat([resolution * resolution * SCALING_FACTOR * SCALING_FACTOR,1]), pos_along_ray)[:,:]
+    rgb = decoder_rgb(latent_code.unsqueeze(0).repeat([resolution * resolution * SCALING_FACTOR * SCALING_FACTOR,1]), pos_along_ray)[:,:]
+    sdf = sdf.reshape(resolution * SCALING_FACTOR, resolution * SCALING_FACTOR)
+    rgb = rgb.reshape(resolution * SCALING_FACTOR, resolution * SCALING_FACTOR, 3)
 
     # init image with white background
     rendered_image = torch.ones([resolution * SCALING_FACTOR, resolution * SCALING_FACTOR,3]).cuda()

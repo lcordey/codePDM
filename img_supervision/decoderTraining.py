@@ -2,9 +2,9 @@ import numpy as np
 import torch
 import pickle
 import glob
-from torch.optim import optimizer
 import yaml
 import time
+import matplotlib.pyplot as plt
 
 from networks import Decoder
 from dataLoader import DatasetDecoderRGB, DatasetDecoderSDF
@@ -23,10 +23,16 @@ SDF_DIR = "../../img_supervision/sdf/"
 IMAGES_PATH = "../../img_supervision/input_images/images/"
 ANNOTATIONS_PATH = "../../img_supervision/input_images/annotations.pkl"
 
+PLOT_PATH = "../../img_supervision/plots/decoder/intermediate_results/"
+
+LATENT_CODE_PATH_MU = "models_and_codes/latent_code_mu.pkl"
+LATENT_CODE_PATH_DICT = "models_and_codes/latent_code_dict.pkl"
+
+
 # num_model_duplicate = 20
 
 ######################################## only used for testing ########################################
-num_model_duplicate = 5
+num_model_duplicate = 0
 ######################################## only used for testing ########################################
 
 
@@ -155,10 +161,10 @@ if __name__ == '__main__':
     list_model_hash = list_model_hash[:50]
     ######################################## only used for testing ########################################
 
-    # create duplicated models
-    list_model_hash_dup = []
-    for model_hash, i in zip(list_model_hash, range(num_model_duplicate)):
-        list_model_hash_dup.append(model_hash + "_dup")
+    # # create duplicated models
+    # list_model_hash_dup = []
+    # for model_hash, i in zip(list_model_hash, range(num_model_duplicate)):
+    #     list_model_hash_dup.append(model_hash + "_dup")
 
     num_model_training= len(list_model_hash)
     num_model_total = num_model_training + num_model_duplicate
@@ -167,161 +173,191 @@ if __name__ == '__main__':
     lat_code_mu, lat_code_log_std = init_lat_codes(num_model_total, param_all["latent_size"])
 
     # create a dictionary going from an hash to a corresponding index
-    idx = torch.arange(num_model_total).type(torch.LongTensor)
-    dict_model_hash_2_idx = dict()
+    # idx = torch.arange(num_model_total).type(torch.LongTensor)
+    # dict_model_hash_2_idx = dict()
 
-    # dict for training model
-    for model_hash, i in zip(list_model_hash, range(num_model_training)):
-        dict_model_hash_2_idx[model_hash] = idx[i]
+    # # dict for training model
+    # for model_hash, i in zip(list_model_hash, range(num_model_training)):
+    #     dict_model_hash_2_idx[model_hash] = idx[i]
 
-    # dict for duplicated models
-    for model_hash_dup, i in zip(list_model_hash_dup, range(num_model_duplicate)):
-        dict_model_hash_2_idx[model_hash_dup] = idx[i + num_model_training]
+    # # dict for duplicated models
+    # for model_hash_dup, i in zip(list_model_hash_dup, range(num_model_duplicate)):
+    #     dict_model_hash_2_idx[model_hash_dup] = idx[i + num_model_training]
 
-    # load every models
-    print("Loading models...")
-    dict_gt_data = dict()
-    dict_gt_data["sdf"] = dict()
+    # # load every models
+    # print("Loading models...")
+    # dict_gt_data = dict()
+    # dict_gt_data["sdf"] = dict()
 
-    # load training data in dict
-    for model_hash, i in zip(list_model_hash, range(num_model_training)):
-        if i%25 == 0:
-            print(f"loading models: {i}/{num_model_training:3.0f}")
+    # # load training data in dict
+    # for model_hash, i in zip(list_model_hash, range(num_model_training)):
+    #     if i%25 == 0:
+    #         print(f"loading models: {i}/{num_model_training:3.0f}")
 
-        # load sdf tensor
-        h5f = h5py.File(SDF_DIR + model_hash + '.h5', 'r')
-        h5f_tensor = torch.tensor(h5f["tensor"][()], dtype = torch.float)
+    #     # load sdf tensor
+    #     h5f = h5py.File(SDF_DIR + model_hash + '.h5', 'r')
+    #     h5f_tensor = torch.tensor(h5f["tensor"][()], dtype = torch.float)
 
-        # split sdf and rgb then reshape
-        sdf_gt = np.reshape(h5f_tensor[:,:,:,0], [num_samples_per_model])
+    #     # split sdf and rgb then reshape
+    #     sdf_gt = np.reshape(h5f_tensor[:,:,:,0], [num_samples_per_model])
 
-        # normalize
-        sdf_gt = sdf_gt / resolution
+    #     # normalize
+    #     sdf_gt = sdf_gt / resolution
         
-        # store in dict
-        dict_gt_data["sdf"][model_hash] = sdf_gt
+    #     # store in dict
+    #     dict_gt_data["sdf"][model_hash] = sdf_gt
 
-    # load duplicate data in dict
-    for model_hash, model_hash_dup, i in zip(list_model_hash, list_model_hash_dup, range(num_model_duplicate)):
-        if i%10 == 0:
-            print(f"loading duplicate models: {i}/{num_model_duplicate:3.0f}")
+    # # load duplicate data in dict
+    # for model_hash, model_hash_dup, i in zip(list_model_hash, list_model_hash_dup, range(num_model_duplicate)):
+    #     if i%10 == 0:
+    #         print(f"loading duplicate models: {i}/{num_model_duplicate:3.0f}")
 
-        # store in dict
-        dict_gt_data["sdf"][model_hash_dup] = dict_gt_data["sdf"][model_hash]
+    #     # store in dict
+    #     dict_gt_data["sdf"][model_hash_dup] = dict_gt_data["sdf"][model_hash]
 
-    # Init dataset and dataloader
-    training_dataset = DatasetDecoderSDF(list_model_hash + list_model_hash_dup, dict_gt_data, num_samples_per_model, dict_model_hash_2_idx)
-    training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader_sdf"])
+    # # Init dataset and dataloader
+    # training_dataset = DatasetDecoderSDF(list_model_hash + list_model_hash_dup, dict_gt_data, num_samples_per_model, dict_model_hash_2_idx)
+    # training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader_sdf"])
 
-    # initialize decoder
-    decoder = Decoder(param_all["latent_size"], batch_norm=True).cuda()
+    # # initialize decoder
+    # # decoder_sdf = Decoder(param_all["latent_size"], "sdf", batch_norm=True).cuda()
 
-    # initialize optimizer and scheduler
-    optimizer_decoder, optimizer_code, scheduler_decoder, scheduler_code = init_opt_sched(decoder, lat_code_mu, lat_code_log_std, param["optimizer_sdf"])
+    # # initialize optimizer and scheduler
+    # optimizer_decoder, optimizer_code, scheduler_decoder, scheduler_code = init_opt_sched(decoder_sdf, lat_code_mu, lat_code_log_std, param["optimizer_sdf"])
 
-    # logs
-    logs = dict()
-    logs["total"] = []
-    logs["sdf"] = []
-    logs["reg"] = []
-    logs["l2_dup"] = []
-    logs["l2_rand"] = []
+    # # logs
+    # logs = dict()
+    # logs["total"] = []
+    # logs["sdf"] = []
+    # logs["reg"] = []
+    # logs["l2_dup"] = []
+    # logs["l2_rand"] = []
 
-    print("Start training sdf ...")
-    decoder.train()
+    # print("Start training sdf ...")
+    # decoder_sdf.train()
 
-    time_start = time.time()
+    # time_start = time.time()
 
-    for epoch in range (param["num_epoch_sdf"]):
-        samples_count = 0
-        for model_idx, sdf_gt, xyz_idx in training_generator:
-            optimizer_decoder.zero_grad()
-            optimizer_code.zero_grad()
+    # for epoch in range (param["num_epoch_sdf"]):
+    #     samples_count = 0
+    #     for model_idx, sdf_gt, xyz_idx in training_generator:
+    #         optimizer_decoder.zero_grad()
+    #         optimizer_code.zero_grad()
 
-            batch_size = len(model_idx)
+    #         batch_size = len(model_idx)
 
-            # transfer to gpu
-            sdf_gt = sdf_gt.cuda()
-            model_idx = model_idx.cuda()
-            xyz_idx = xyz_idx
+    #         # transfer to gpu
+    #         sdf_gt = sdf_gt.cuda()
+    #         model_idx = model_idx.cuda()
+    #         xyz_idx = xyz_idx
 
-            # Compute latent code 
-            coeff_std = torch.empty(batch_size, param_all["latent_size"]).normal_().cuda()
-            latent_code = coeff_std * lat_code_log_std(model_idx).exp() * param["lambda_variance"] + lat_code_mu(model_idx)
+    #         # Compute latent code 
+    #         coeff_std = torch.empty(batch_size, param_all["latent_size"]).normal_().cuda()
+    #         latent_code = coeff_std * lat_code_log_std(model_idx).exp() * param["lambda_variance"] + lat_code_mu(model_idx)
 
-            # get sdf from decoder
-            pred = decoder(latent_code, xyz[xyz_idx])
-            pred_sdf = pred[:,0]
+    #         # get sdf from decoder
+    #         pred = decoder_sdf(latent_code, xyz[xyz_idx])
+    #         pred_sdf = pred[:,0]
 
-            # compute loss
-            loss_sdf = compute_loss_sdf(pred_sdf, sdf_gt, threshold_precision, param["lambda_sdf"])
-            loss_kl = compute_loss_reg(lat_code_mu, lat_code_log_std, param["lambda_kl"])
-            loss_total = loss_sdf + loss_kl
+    #         # compute loss
+    #         loss_sdf = compute_loss_sdf(pred_sdf, sdf_gt, threshold_precision, param["lambda_sdf"])
+    #         loss_kl = compute_loss_reg(lat_code_mu, lat_code_log_std, param["lambda_kl"])
+    #         loss_total = loss_sdf + loss_kl
 
-            #update weights
-            loss_total.backward()
-            # optimizer.step()
-            optimizer_decoder.step()
-            optimizer_code.step()
+    #         #update weights
+    #         loss_total.backward()
+    #         # optimizer.step()
+    #         optimizer_decoder.step()
+    #         optimizer_code.step()
 
-            samples_count += batch_size
+    #         samples_count += batch_size
 
-            # print everyl X model seen
-            if samples_count%(param["num_batch_between_print"] * batch_size) == 0:
+    #         # print everyl X model seen
+    #         if samples_count%(param["num_batch_between_print"] * batch_size) == 0:
 
-                # estime time left
-                time_left = compute_time_left(time_start, samples_count, num_model_total, num_samples_per_model, epoch, param["num_epoch_sdf"])
+    #             # estime time left
+    #             time_left = compute_time_left(time_start, samples_count, num_model_total, num_samples_per_model, epoch, param["num_epoch_sdf"])
 
-                print("Epoch {} / {:.2f}% ,loss: sdf: {:.5f}, reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, code std/mu: {:.2f}/{:.2f}, time left: {} min".format(\
-                    epoch, 100 * samples_count / (num_model_total * num_samples_per_model), loss_sdf, loss_kl, \
-                    pred_sdf.min() * resolution, pred_sdf.max() * resolution, \
-                    (lat_code_log_std.weight.exp()).mean(), (lat_code_mu.weight).abs().mean(), (int)(time_left/60)))
+    #             print("Epoch {} / {:.2f}% ,loss: sdf: {:.5f}, reg: {:.5f}, min/max sdf: {:.2f}/{:.2f}, code std/mu: {:.2f}/{:.2f}, time left: {} min".format(\
+    #                 epoch, 100 * samples_count / (num_model_total * num_samples_per_model), loss_sdf, loss_kl, \
+    #                 pred_sdf.min() * resolution, pred_sdf.max() * resolution, \
+    #                 (lat_code_log_std.weight.exp()).mean(), (lat_code_mu.weight).abs().mean(), (int)(time_left/60)))
 
-                # compute l2 dist between training models and their duplicate ones
-                dist_duplicate = []
-                for i in range(num_model_duplicate):
-                    dist_duplicate.append((lat_code_mu(idx[i].cuda()) - lat_code_mu(idx[i + num_model_training].cuda())).norm().detach().cpu())
+    #             # compute l2 dist between training models and their duplicate ones
+    #             dist_duplicate = []
+    #             for i in range(num_model_duplicate):
+    #                 dist_duplicate.append((lat_code_mu(idx[i].cuda()) - lat_code_mu(idx[i + num_model_training].cuda())).norm().detach().cpu())
 
-                # compute l2 dist between random models
-                dist_random = []
-                for i in range(100):
-                    rand = np.random.randint(num_model_training, size = 2)
-                    dist_random.append((lat_code_mu(idx[rand[0]].cuda()) - lat_code_mu(idx[rand[1]].cuda())).norm().detach().cpu())
+    #             # compute l2 dist between random models
+    #             dist_random = []
+    #             for i in range(100):
+    #                 rand = np.random.randint(num_model_training, size = 2)
+    #                 dist_random.append((lat_code_mu(idx[rand[0]].cuda()) - lat_code_mu(idx[rand[1]].cuda())).norm().detach().cpu())
 
 
-                # print(dist_duplicate)
-                l2_dup = abs(np.array(dist_duplicate)).mean()
-                l2_rnd = abs(np.array(dist_random)).mean()
-                # print(f"avrg dist between same models: {l2_dup}")
-                # print(f"avrg dist between diff models: {l2_rnd}")
+    #             # print(dist_duplicate)
+    #             l2_dup = abs(np.array(dist_duplicate)).mean()
+    #             l2_rnd = abs(np.array(dist_random)).mean()
+    #             # print(f"avrg dist between same models: {l2_dup}")
+    #             # print(f"avrg dist between diff models: {l2_rnd}")
 
-                #log
-                logs["total"].append(loss_total.detach().cpu())
-                logs["sdf"].append(loss_sdf.detach().cpu())
-                logs["reg"].append(loss_kl.detach().cpu())
-                logs["l2_dup"].append(l2_dup)
-                logs["l2_rand"].append(l2_rnd)
+    #             #log
+    #             logs["total"].append(loss_total.detach().cpu())
+    #             logs["sdf"].append(loss_sdf.detach().cpu())
+    #             logs["reg"].append(loss_kl.detach().cpu())
+    #             logs["l2_dup"].append(l2_dup)
+    #             logs["l2_rand"].append(l2_rnd)
                 
                 
-        scheduler_decoder.step()
-        scheduler_code.step()
+    #     scheduler_decoder.step()
+    #     scheduler_code.step()
 
-    print(f"Training sdf done in {(int)((time.time() - time_start) / 60)} min")
+    # print(f"Training sdf done in {(int)((time.time() - time_start) / 60)} min")
+
+
+    # torch.save(decoder_sdf, DECODER_PATH)
+
+    # # save latent code in dict
+    # dict_hash_2_code = dict()
+    # for model_hash in list_model_hash:
+    #     dict_hash_2_code[model_hash] = lat_code_mu(dict_model_hash_2_idx[model_hash].cuda()).detach().cpu()
+
+    # with open(LATENT_CODE_PATH, "wb") as file:
+    #     pickle.dump(dict_hash_2_code, file)
+
+    # with open(LATENT_CODE_PATH_MU, "wb") as file:
+    #     pickle.dump(lat_code_mu, file)
+
+    # with open(LATENT_CODE_PATH_DICT, "wb") as file:
+    #     pickle.dump(dict_model_hash_2_idx, file)
+
+
     
+    decoder_sdf = torch.load(DECODER_PATH).cuda()
+    lat_code_mu = pickle.load(open(LATENT_CODE_PATH_MU, 'rb'))
+    dict_model_hash_2_idx = pickle.load(open(LATENT_CODE_PATH_DICT, 'rb'))
+
+    decoder_rgb = Decoder(param_all["latent_size"], "rgb", batch_norm=True).cuda()
+
+    torch.save(decoder_rgb, DECODER_PATH + "rgb")
 
     # initialize optimizer and scheduler
-    optimizer_decoder, optimizer_code, scheduler_decoder, scheduler_code = init_opt_sched(decoder, lat_code_mu, lat_code_log_std, param["optimizer_rgb"])
+    optimizer_decoder, optimizer_code, scheduler_decoder, scheduler_code = init_opt_sched(decoder_rgb, lat_code_mu, lat_code_log_std, param["optimizer_rgb"])
 
     annotations = pickle.load(open(ANNOTATIONS_PATH, 'rb'))
     num_images_per_model = len(annotations[list_model_hash[0]])
 
     # Init dataset and dataloader
-    training_dataset = DatasetDecoderRGB(list_model_hash + list_model_hash_dup, annotations, num_images_per_model, dict_model_hash_2_idx, IMAGES_PATH)
+    # training_dataset = DatasetDecoderRGB(list_model_hash + list_model_hash_dup, annotations, num_images_per_model, dict_model_hash_2_idx, IMAGES_PATH)
+    training_dataset = DatasetDecoderRGB(list_model_hash, annotations, num_images_per_model, dict_model_hash_2_idx, IMAGES_PATH)
     training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader_rgb"])
 
-    logs["rgb"] = []
+    # logs["rgb"] = []
 
     print("Start training rgb ...")
+    decoder_rgb.train()
+    decoder_sdf.eval()
+    
     time_start = time.time()
 
     for epoch in range (param["num_epoch_rgb"]):
@@ -332,6 +368,7 @@ if __name__ == '__main__':
             optimizer_code.zero_grad()
 
             batch_size = len(model_idx)
+
 
             # convert into cuda
             model_idx = model_idx.cuda()
@@ -345,9 +382,12 @@ if __name__ == '__main__':
             # Compute latent code 
             coeff_std = torch.empty(batch_size, param_all["latent_size"]).normal_().cuda()
             latent_code = coeff_std * lat_code_log_std(model_idx).exp() * param["lambda_variance"] + lat_code_mu(model_idx)
+            
+            
 
             for sample in range(batch_size):
-                rendered_image_temp, mask_car_temp = ray_marching_rendering(decoder, latent_code[sample], pos_init_ray[sample], ray_marching_vector[sample], min_step[sample], max_step[sample])
+                # rendered_image_temp, mask_car_temp = ray_marching_rendering(decoder, latent_code[sample], pos_init_ray[sample], ray_marching_vector[sample], min_step[sample], max_step[sample])
+                rendered_image_temp, mask_car_temp = ray_marching_rendering(decoder_sdf, decoder_rgb, latent_code[sample], pos_init_ray[sample], ray_marching_vector[sample], min_step[sample], max_step[sample])
                 
                 if sample == 0:
                     rendered_image = torch.empty([batch_size] + list(rendered_image_temp.shape)).cuda()
@@ -364,14 +404,14 @@ if __name__ == '__main__':
 
             #update weights
             loss_rgb.backward()
-            # optimizer.step()
+
             optimizer_decoder.step()
             optimizer_code.step()
 
             images_count += batch_size
 
             # print everyl X model seen
-            if samples_count%(param["num_batch_between_print"] * batch_size) == 0:
+            if images_count%(param["num_batch_between_print"] * batch_size) == 0:
 
                 # estime time left
                 time_left = compute_time_left(time_start, images_count, num_model_total, num_images_per_model, epoch, param["num_epoch_rgb"])
@@ -380,17 +420,37 @@ if __name__ == '__main__':
                         epoch, 100 * images_count / (num_model_total * num_images_per_model), loss_rgb, \
                         (lat_code_log_std.weight.exp()).mean(), (lat_code_mu.weight).abs().mean(), (int)(time_left/60)))
 
+
+                mask_car = mask_car[0].cpu().numpy()
+                min_step = min_step[0].reshape(50,50).cpu().numpy()
+                min_step = cv2.resize(min_step, rendered_image.shape[1:3])
+
+                rendered_image[0][mask_car == False] = 1
+                rendered_image[0][min_step == 0] = 0
+                        
+                # plt.figure()
+                # plt.title(f"result after {images_count} images seen")
+                # plt.imshow(rendered_image[0].cpu().detach().numpy())
+                # plt.savefig(PLOT_PATH + f"{images_count}.png")     
+                
+                # plt.figure()
+                # plt.title(f"ground after {images_count} images seen")
+                # plt.imshow(rescale_ground_truth_image[0].cpu().detach().numpy())
+                # plt.savefig(PLOT_PATH + f"{images_count}_gt.png")
+
+
     print(f"Training rgb done in {(int)((time.time() - time_start) / 60)} min")
 
 
     ###### Saving Decoder ######
     # save decoder
-    torch.save(decoder, DECODER_PATH)
+    # torch.save(decoder, DECODER_PATH)
+    torch.save(decoder_rgb, DECODER_PATH + "rgb")
 
 
     # save logs
-    with open(LOGS_PATH, "wb") as file:
-        pickle.dump(logs, file)
+    # with open(LOGS_PATH, "wb") as file:
+    #     pickle.dump(logs, file)
     
 
     # save latent code in dict
