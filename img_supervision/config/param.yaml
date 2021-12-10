@@ -22,14 +22,14 @@ decoder:
     dataLoader_sdf:
         batch_size: 10000
         shuffle: True
-        # num_workers: 42
-        num_workers: 8
+        num_workers: 42
+        # num_workers: 8
 
     dataLoader_rgb:
-        batch_size: 2
+        batch_size: 20
         shuffle: True
-        # num_workers: 42
-        num_workers: 8
+        num_workers: 42
+        # num_workers: 8
     
     optimizer_sdf: 
         eta_decoder: 0.001
