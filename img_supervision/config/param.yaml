@@ -10,7 +10,7 @@ decoder:
 
     num_epoch_rgb: 5
 
-    num_batch_between_print: 25
+    num_batch_between_print: 5
 
     # lambda_variance: 1.0
     lambda_variance: 0.0
