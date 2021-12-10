@@ -27,6 +27,7 @@ PLOT_PATH = "../../img_supervision/plots/decoder/intermediate_results/"
 
 LATENT_CODE_PATH_MU = "models_and_codes/latent_code_mu.pkl"
 LATENT_CODE_PATH_DICT = "models_and_codes/latent_code_dict.pkl"
+LATENT_CODE_PATH_HASH = "models_and_codes/latent_code_hash.pkl"
 
 
 # num_model_duplicate = 20
@@ -158,9 +159,18 @@ if __name__ == '__main__':
         list_model_hash.append(os.path.basename(val).split('.')[0])
 
     ######################################## only used for testing ########################################
-    list_model_hash = list_model_hash[:50]
+    # list_model_hash = list_model_hash[:50]
+
+
+    # with open(LATENT_CODE_PATH_HASH, "wb") as file:
+    #     pickle.dump(list_model_hash, file)
+
+
+    list_model_hash = torch.load(LATENT_CODE_PATH_HASH).cuda()
     ######################################## only used for testing ########################################
 
+
+    # 1/0
     # # create duplicated models
     # list_model_hash_dup = []
     # for model_hash, i in zip(list_model_hash, range(num_model_duplicate)):
