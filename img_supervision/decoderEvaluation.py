@@ -20,7 +20,8 @@ DEFAULT_LOGS = True
 warnings.filterwarnings("ignore")
 
 
-DECODER_PATH = "models_and_codes/decoder.pth"
+DECODER_SDF_PATH = "models_and_codes/decoder_sdf.pth"
+DECODER_RGB_PATH = "models_and_codes/decoder_rgb.pth"
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
 OUTPUT_DIR = "../../img_supervision/decoder_output/evaluation"
 SDF_DIR = "../../img_supervision/sdf/"
@@ -92,9 +93,9 @@ if __name__ == '__main__':
                 vertices_pred, faces_pred = marching_cubes(sdf_result[:,:,:,0])
                 colors_v_pred = exctract_colors_v(vertices_pred, sdf_result)
                 colors_f_pred = exctract_colors_f(colors_v_pred, faces_pred)
-                off_file = "%s/%s_rgb.off" %(OUTPUT_DIR, model_hash)
+                off_file = "%s/%s.off" %(OUTPUT_DIR, model_hash)
                 write_off(off_file, vertices_pred, faces_pred, colors_f_pred)
-                print("Wrote %s_rgb.off" % model_hash)
+                print("Wrote %s.off" % model_hash)
             else:
                 print("surface level: 0, should be comprise in between the minimum and maximum value")
 
@@ -177,7 +178,7 @@ if __name__ == '__main__':
         dict_hash_2_code = pickle.load(open(LATENT_CODE_PATH, 'rb'))
 
         param_all = yaml.safe_load(open(PARAM_FILE))
-        param = param_all["decoder"]
+        param = param_all["decoder_sdf"]
 
         list_hash = list(dict_hash_2_code.keys())
         num_model = len(list_hash)
@@ -226,15 +227,15 @@ if __name__ == '__main__':
         plt.ylabel("norm")
         plt.savefig(PLOT_PATH + "norms.png")
 
-        # dist same model
-        plt.figure()
-        plt.title("logs dist models")
-        plt.plot(x_timestamp,logs["l2_dup"], 'b', label = 'duplicate')
-        plt.plot(x_timestamp,logs["l2_rand"], 'r', label = 'differents')
-        plt.ylabel("l2 dist")
-        plt.xlabel("epoch")
-        plt.legend()
-        plt.savefig(PLOT_PATH + "dist_duplicate_models.png")
+        # # dist same model
+        # plt.figure()
+        # plt.title("logs dist models")
+        # plt.plot(x_timestamp,logs["l2_dup"], 'b', label = 'duplicate')
+        # plt.plot(x_timestamp,logs["l2_rand"], 'r', label = 'differents')
+        # plt.ylabel("l2 dist")
+        # plt.xlabel("epoch")
+        # plt.legend()
+        # plt.savefig(PLOT_PATH + "dist_duplicate_models.png")
 
     print("done")
 

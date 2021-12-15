@@ -46,6 +46,7 @@ def fc_block(num_fc_layer, num_features, num_features_extracted, latent_size, ba
     return nn.Sequential(*layers)
 
 
+
 class Decoder(nn.Module):
     def __init__(self, latent_size, mode, batch_norm=False):
         super(Decoder, self).__init__()
@@ -90,6 +91,60 @@ class Decoder(nn.Module):
 
 
         return x 
+
+
+
+class DecoderComplex(nn.Module):
+    def __init__(self, latent_size, mode, batch_norm=False):
+        super(DecoderComplex, self).__init__()
+
+        self.mode = mode
+
+        num_features = 512
+
+        self.lnStart = fc_layer(latent_size + 3, num_features, batch_norm=batch_norm)
+
+        self.ln1 = fc_layer(num_features, num_features, batch_norm=batch_norm)
+        self.ln2 = fc_layer(num_features, num_features, batch_norm=batch_norm)
+        self.ln3 = fc_layer(num_features, num_features, batch_norm=batch_norm)
+        self.ln4 = fc_layer(num_features, num_features, batch_norm=batch_norm)
+        self.ln5 = fc_layer(num_features, num_features, batch_norm=batch_norm)
+        self.ln6 = fc_layer(num_features, num_features, batch_norm=batch_norm)
+        self.ln7 = fc_layer(num_features, num_features, batch_norm=batch_norm)
+        self.ln8 = fc_layer(num_features, num_features, batch_norm=batch_norm)
+
+        if mode == "sdf":
+            self.lnEnd = nn.Linear(num_features, 1)
+        elif mode == "rgb":
+            self.lnEnd = nn.Linear(num_features, 3)
+            self.sgm = nn.Sigmoid()
+            self.lambda_activation = 3
+        else:
+            raise("error decoder mode should be sdf or rgb")
+    
+    def forward(self, latent_code, xyz):
+        
+        x = torch.cat([latent_code, xyz], dim=1)
+
+        x = self.lnStart(x)
+        x = self.ln1(x)
+        x = self.ln2(x)
+        x = self.ln3(x)
+        x = self.ln4(x)
+        x = self.ln5(x)
+        x = self.ln6(x)
+        x = self.ln7(x)
+        x = self.ln8(x)
+
+        x = self.lnEnd(x)
+
+        # activation function, only for rgb values
+        if self.mode == "rgb":
+            x = self.sgm(self.lambda_activation * x)
+
+
+        return x 
+
 
 
 

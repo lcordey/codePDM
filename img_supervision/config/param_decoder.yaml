@@ -1,26 +1,14 @@
-decoder:
-  dataLoader_rgb:
-    batch_size: 2
-    num_workers: 8
-    shuffle: true
-  dataLoader_sdf:
+decoder_sdf:
+  dataLoader:
     batch_size: 10000
     num_workers: 8
     shuffle: true
   lambda_kl: 0.001
-  lambda_rgb: 0.01
   lambda_sdf: 1.0
-  lambda_variance: 0.0
-  num_batch_between_print: 100
-  num_epoch_rgb: 1
-  num_epoch_sdf: 1
-  optimizer_rgb:
-    eta_decoder: 0.001
-    eta_latent_space_mu: 0.02
-    eta_latent_space_std: 0.01
-    gamma_code_LR: 0.75
-    gamma_decoder_LR: 0.9
-  optimizer_sdf:
+  lambda_variance: 0.1
+  num_batch_between_print: 20
+  num_epoch: 10
+  optimizer:
     eta_decoder: 0.001
     eta_latent_space_mu: 0.02
     eta_latent_space_std: 0.01

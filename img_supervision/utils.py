@@ -14,13 +14,14 @@ RAY_MARCHING_RESOLUTION = 50
 
 BOUND_MAX_CUBE = 0.5
 BOUND_MIN_CUBE = -0.5
+
 THRESHOLD = 1/64
 MAX_STEP = 1/16
 MAX_ITER = 20
 SCALING_FACTOR = 2
 
-# THRESHOLD = 1/10
-# MAX_STEP = 1/16
+# THRESHOLD = 1/256
+# MAX_STEP = 1/20
 # MAX_ITER = 50
 # SCALING_FACTOR = 2
 
@@ -336,6 +337,12 @@ def ray_marching_rendering(decoder_sdf, decoder_rgb, latent_code, pos_init_ray, 
 
     resolution = RAY_MARCHING_RESOLUTION
 
+    # print(latent_code.mean())
+    # print(pos_init_ray.mean())
+    # print(ray_marching_vector.mean())
+    # print(min_step.mean())
+    # print(max_step.mean())
+
     # marching safely until the "cube" representing the zone where the sdf was trained, and therefore contain the whole object
     min_pos = pos_init_ray + min_step.unsqueeze(1).mul(ray_marching_vector)
     pos_along_ray = min_pos
@@ -387,9 +394,10 @@ def ray_marching_rendering(decoder_sdf, decoder_rgb, latent_code, pos_init_ray, 
     pos_along_ray = torch.nn.functional.interpolate(pos_along_ray, scale_factor = SCALING_FACTOR, mode='bilinear', align_corners=False)
     pos_along_ray = pos_along_ray.squeeze().permute(1,2,0).reshape(resolution * resolution * SCALING_FACTOR * SCALING_FACTOR, 3)
 
+
     # compute corresponding sdf
-    sdf = decoder_sdf(latent_code.unsqueeze(0).repeat([resolution * resolution * SCALING_FACTOR * SCALING_FACTOR,1]), pos_along_ray)[:,:]
-    rgb = decoder_rgb(latent_code.unsqueeze(0).repeat([resolution * resolution * SCALING_FACTOR * SCALING_FACTOR,1]), pos_along_ray)[:,:]
+    sdf = decoder_sdf(latent_code.unsqueeze(0).repeat([resolution * resolution * SCALING_FACTOR * SCALING_FACTOR,1]), pos_along_ray).detach()
+    rgb = decoder_rgb(latent_code.unsqueeze(0).repeat([resolution * resolution * SCALING_FACTOR * SCALING_FACTOR,1]), pos_along_ray)
     sdf = sdf.reshape(resolution * SCALING_FACTOR, resolution * SCALING_FACTOR)
     rgb = rgb.reshape(resolution * SCALING_FACTOR, resolution * SCALING_FACTOR, 3)
 

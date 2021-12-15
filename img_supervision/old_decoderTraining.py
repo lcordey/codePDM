@@ -132,9 +132,13 @@ def compute_loss_reg(lat_code_mu, lat_code_log_std, lambda_kl):
 
 def compute_loss_rgb(ground_truth_image, rendered_image, mask_car, lambda_rgb):
     
-    loss_rgb = abs(ground_truth_image - rendered_image)
-    loss_rgb[mask_car == False] = 0
-    loss_rgb = loss_rgb.mean()
+    loss = torch.nn.MSELoss(reduction='mean')
+
+    loss_rgb = loss(ground_truth_image[mask_car == True], rendered_image[mask_car == True])
+
+    # loss_rgb = abs(ground_truth_image - rendered_image)
+    # loss_rgb[mask_car == False] = 0
+    # loss_rgb = loss_rgb.mean()
     loss_rgb *= lambda_rgb
 
     return loss_rgb
@@ -358,10 +362,11 @@ if __name__ == '__main__':
 
     annotations = pickle.load(open(ANNOTATIONS_PATH, 'rb'))
     num_images_per_model = len(annotations[list_model_hash[0]])
+    num_images_per_model = 10
 
     # Init dataset and dataloader
     # training_dataset = DatasetDecoderRGB(list_model_hash + list_model_hash_dup, annotations, num_images_per_model, dict_model_hash_2_idx, IMAGES_PATH)
-    training_dataset = DatasetDecoderRGB(list_model_hash, annotations, num_images_per_model, dict_model_hash_2_idx, IMAGES_PATH)
+    training_dataset = DatasetDecoderRGB(list_model_hash[0:1], annotations, num_images_per_model, dict_model_hash_2_idx, IMAGES_PATH)
     training_generator = torch.utils.data.DataLoader(training_dataset, **param["dataLoader_rgb"])
 
     # logs["rgb"] = []
@@ -423,7 +428,8 @@ if __name__ == '__main__':
             images_count += batch_size
 
             # print everyl X model seen
-            if images_count%(param["num_batch_between_print"] * batch_size) == 0:
+            # if images_count%(param["num_batch_between_print"] * batch_size) == 0:
+            if epoch%(10) == 0:
 
                 # estime time left
                 time_left = compute_time_left(time_start, images_count, num_model_total, num_images_per_model, epoch, param["num_epoch_rgb"])
@@ -440,15 +446,17 @@ if __name__ == '__main__':
                 rendered_image[0][mask_car == False] = 1
                 rendered_image[0][min_step == 0] = 0
                         
-                # plt.figure()
-                # plt.title(f"result after {images_count} images seen")
-                # plt.imshow(rendered_image[0].cpu().detach().numpy())
-                # plt.savefig(PLOT_PATH + f"{images_count}.png")     
+                plt.figure()
+                plt.title(f"result after {images_count} images seen")
+                plt.imshow(rendered_image[0].cpu().detach().numpy())
+                plt.savefig(PLOT_PATH + f"{epoch}_{images_count}.png")  
+                plt.close()   
                 
-                # plt.figure()
-                # plt.title(f"ground after {images_count} images seen")
-                # plt.imshow(rescale_ground_truth_image[0].cpu().detach().numpy())
-                # plt.savefig(PLOT_PATH + f"{images_count}_gt.png")
+                plt.figure()
+                plt.title(f"ground after {images_count} images seen")
+                plt.imshow(rescale_ground_truth_image[0].cpu().detach().numpy())
+                plt.savefig(PLOT_PATH + f"{epoch}_{images_count}_gt.png")
+                plt.close()   
 
 
     print(f"Training rgb done in {(int)((time.time() - time_start) / 60)} min")
