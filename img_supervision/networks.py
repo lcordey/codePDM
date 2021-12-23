@@ -1,4 +1,4 @@
-from pickle import FALSE
+
 import torch.nn as nn
 import torch
 import math
@@ -15,14 +15,14 @@ def conv_layer3D(chann_in, chann_out, k_size, p_size, batch_norm=False):
 
     return nn.Sequential(*layers)
 
-def conv_block3D(in_list, out_list, k_list, p_list, pooling_k, batch_norm=FALSE):
+def conv_block3D(in_list, out_list, k_list, p_list, pooling_k, batch_norm=False):
 
     layers = [ conv_layer3D(in_list[i], out_list[i], k_list[i], p_list[i], batch_norm) for i in range(len(in_list)) ]
     layers += [ nn.MaxPool3d(kernel_size = pooling_k)]
 
     return nn.Sequential(*layers)
 
-def features_extraction_conv_block3D(num_block, num_features, k_list, p_list, pooling_k, batch_norm=FALSE):
+def features_extraction_conv_block3D(num_block, num_features, k_list, p_list, pooling_k, batch_norm=False):
     layers  = [conv_block3D([3, num_features], [num_features, num_features], k_list, p_list, pooling_k, batch_norm=batch_norm)]
     for i in range(1, num_block):
         layers += [conv_block3D([num_features, num_features], [num_features, num_features], k_list, p_list, pooling_k, batch_norm=batch_norm)]
@@ -33,12 +33,12 @@ def fc_layer(chann_in, chann_out, batch_norm=False):
 
     layers = [nn.Linear(chann_in, chann_out)]
     if batch_norm:
-        layers += [nn.BatchNorm1d(chann_out)]
+        layers += [nn.BatchNorm1d(chann_out, momentum=0.1)]
     layers += [nn.ReLU()]
 
     return nn.Sequential(*layers)
 
-def fc_block(num_fc_layer, num_features, num_features_extracted, latent_size, batch_norm=False):
+def fc_block(num_fc_layer, num_features, num_features_extracted, batch_norm=False):
     layers = [fc_layer(num_features_extracted * num_features, num_features, batch_norm=batch_norm)]
     for i in range(1, num_fc_layer):
         layers += [fc_layer(num_features, num_features, batch_norm=batch_norm)]
@@ -100,7 +100,7 @@ class DecoderComplex(nn.Module):
 
         self.mode = mode
 
-        num_features = 512
+        num_features = 128
 
         self.lnStart = fc_layer(latent_size + 3, num_features, batch_norm=batch_norm)
 
@@ -112,6 +112,8 @@ class DecoderComplex(nn.Module):
         self.ln6 = fc_layer(num_features, num_features, batch_norm=batch_norm)
         self.ln7 = fc_layer(num_features, num_features, batch_norm=batch_norm)
         self.ln8 = fc_layer(num_features, num_features, batch_norm=batch_norm)
+        self.ln9 = fc_layer(num_features, num_features, batch_norm=batch_norm)
+        self.ln10 = fc_layer(num_features, num_features, batch_norm=batch_norm)
 
         if mode == "sdf":
             self.lnEnd = nn.Linear(num_features, 1)
@@ -135,6 +137,8 @@ class DecoderComplex(nn.Module):
         x = self.ln6(x)
         x = self.ln7(x)
         x = self.ln8(x)
+        x = self.ln9(x)
+        x = self.ln10(x)
 
         x = self.lnEnd(x)
 
@@ -209,7 +213,7 @@ class EncoderGrid(nn.Module):
         print(f"Init Encoder, features size of: {num_slice_features} x {num_width_features} x {num_height_features}")
 
         # MLP
-        self.MLP = fc_block(param["num_fc_layer"], features_encoder, num_features_extracted, latent_size, batch_norm=batch_norm_fc)
+        self.MLP = fc_block(param["num_fc_layer"], features_encoder, num_features_extracted, batch_norm=batch_norm_fc)
 
         # last fc layer used for regression to sdf prediction
         if not vae:

@@ -8,6 +8,8 @@ from pytorch3d.ops.knn import knn_points
 from skimage.transform import downscale_local_mean
 from skimage import color
 
+import IPython
+
 
 
 RAY_MARCHING_RESOLUTION = 50
@@ -17,7 +19,8 @@ BOUND_MIN_CUBE = -0.5
 
 THRESHOLD = 1/64
 MAX_STEP = 1/16
-MAX_ITER = 20
+# MAX_ITER = 20
+MAX_ITER = 50
 SCALING_FACTOR = 2
 
 # THRESHOLD = 1/256
@@ -212,12 +215,13 @@ def get_camera_matrix_and_frame(model_hash, image_id, annotations):
     return frame, matrix_camera_to_object
 
 
-def initialize_rendering(model_hash, image_id, annotations, image_path):
+def initialize_rendering_image(model_hash, image_id, annotations, image_path):
 
     image_pth = image_path + model_hash + '/' + str(image_id) + '.png'
     ground_truth_image = np.array(imageio.imread(image_pth))/255
 
-    resolution = RAY_MARCHING_RESOLUTION
+    # resolution = RAY_MARCHING_RESOLUTION
+    resolution = 250
 
     frame, matrix_camera_to_object = get_camera_matrix_and_frame(model_hash, image_id, annotations)
 
@@ -263,85 +267,82 @@ def initialize_rendering(model_hash, image_id, annotations, image_path):
 
     return ground_truth_image, pos_init_ray, ray_marching_vector, min_step, max_step
 
-# def ray_marching_rendering(decoder, latent_code, pos_init_ray, ray_marching_vector, min_step, max_step):
 
-#     resolution = RAY_MARCHING_RESOLUTION
+def initialize_rendering_pixels(model_hash, image_id, annotations, image_path, nb_samples):
 
-#     # marching safely until the "cube" representing the zone where the sdf was trained, and therefore contain the whole object
-#     min_pos = pos_init_ray + min_step.unsqueeze(1).mul(ray_marching_vector)
-#     pos_along_ray = min_pos
-#     sum_step = min_step
+    image_pth = image_path + model_hash + '/' + str(image_id) + '.png'
+    ground_truth_image = np.array(imageio.imread(image_pth))/255
+    ground_truth_pixels = np.empty([nb_samples, 3])
 
+    height, width, _ = ground_truth_image.shape
 
-#     # only compute ray marching for ray passing through the cube
-#     mask_cube = (min_step != 0)
-#     mask_ray_still_marching = mask_cube
+    frame, matrix_camera_to_object = get_camera_matrix_and_frame(model_hash, image_id, annotations)
 
-#     # define ratio to accelerate ray marching
-#     ratio = torch.ones([resolution * resolution]).cuda()
-#     sdf = torch.zeros([resolution * resolution]).cuda()
+    cam_pos_cam_coord = np.array([0,0,0,1])
+    cam_pos_obj_coord = matrix_camera_to_object.dot(cam_pos_cam_coord)
 
-#     for iter in range(MAX_ITER):
-#         # compute sdf values
-#         sdf[mask_ray_still_marching] = decoder(latent_code.unsqueeze(0).repeat([mask_ray_still_marching.count_nonzero(),1]), pos_along_ray[mask_ray_still_marching])[:,0].detach()
+    pos_init_ray = np.ones([nb_samples, 3])
+    pos_init_ray[:,0] *= cam_pos_obj_coord[0]
+    pos_init_ray[:,1] *= cam_pos_obj_coord[1]
+    pos_init_ray[:,2] *= cam_pos_obj_coord[2]
 
-#         # scaling: unit of 1 from the decoder's prediction correspond to a unit of 1 in the object coordinate
-#         sdf *= 1
-
-#         # compute the ratio using difference between old an new sdf values,
-#         if iter == 0:
-#             # store first sdf
-#             old_sdf = sdf
-#         else:
-#             # only compute ratio when the sdf is high enough and decreasing
-#             mask_ratio = (sdf > THRESHOLD) * (sdf < old_sdf)
-#             ratio[mask_ratio] = old_sdf[mask_ratio]/(old_sdf[mask_ratio] - sdf[mask_ratio])
-
-#             # store new sdf
-#             old_sdf[mask_ray_still_marching] = sdf[mask_ray_still_marching]
-            
-#             # accelarating the step, this is only possible because the decoder tends to underestimate the distance due to the design of the loss
-#             sdf[mask_ratio] *= ratio[mask_ratio]
-
-#         # clamp value to prevent undesired issues
-#         sdf = sdf.clamp(None, MAX_STEP)
-
-#         # march along the ray
-#         step = sdf
-#         sum_step += step
-#         pos_along_ray = pos_along_ray + step.unsqueeze(1).mul(ray_marching_vector)
-
-#         mask_ray_still_marching = mask_ray_still_marching * (sum_step < max_step)
-
-#     # interpolate final position for a higher resolution
-#     pos_along_ray = pos_along_ray.reshape(resolution, resolution, 3).permute(2,0,1).unsqueeze(0)
-#     pos_along_ray = torch.nn.functional.interpolate(pos_along_ray, scale_factor = SCALING_FACTOR, mode='bilinear', align_corners=False)
-#     pos_along_ray = pos_along_ray.squeeze().permute(1,2,0).reshape(resolution * resolution * SCALING_FACTOR * SCALING_FACTOR, 3)
-
-#     # compute corresponding sdf
-#     sdf_and_rgb = decoder(latent_code.unsqueeze(0).repeat([resolution * resolution * SCALING_FACTOR * SCALING_FACTOR,1]), pos_along_ray)[:,:]
-#     sdf_and_rgb = sdf_and_rgb.reshape(resolution * SCALING_FACTOR, resolution * SCALING_FACTOR, 4)
-#     sdf = sdf_and_rgb[:,:,0]
-#     rgb = sdf_and_rgb[:,:,1:]
-
-#     # init image with white background
-#     rendered_image = torch.ones([resolution * SCALING_FACTOR, resolution * SCALING_FACTOR,3]).cuda()
-
-#     mask_car = sdf < THRESHOLD
-#     rendered_image[mask_car] = rgb[mask_car]
-
-#     return rendered_image, mask_car
+    ray_marching_vector = np.empty([nb_samples, 3])
 
 
-def ray_marching_rendering(decoder_sdf, decoder_rgb, latent_code, pos_init_ray, ray_marching_vector, min_step, max_step):
+    # sampling_resolution = 2000
+    # rescaled_ground_truth_image = cv2.resize(ground_truth_image, (sampling_resolution,sampling_resolution))
 
-    resolution = RAY_MARCHING_RESOLUTION
+    for i in range(nb_samples):
 
-    # print(latent_code.mean())
-    # print(pos_init_ray.mean())
-    # print(ray_marching_vector.mean())
-    # print(min_step.mean())
-    # print(max_step.mean())
+
+        upsampling_factor = 100
+
+        # select pixel to render
+        rnd_height = np.random.randint(height * upsampling_factor)
+        rnd_width = np.random.randint(width * upsampling_factor)
+        pixel_pos = ((int)(rnd_height/upsampling_factor), (int)(rnd_width/upsampling_factor))
+
+        ground_truth_pixels[i] = ground_truth_image[pixel_pos]
+
+        pixel_pos_normalized = (rnd_height / ( upsampling_factor * height - 1), rnd_width / ( upsampling_factor * width - 1))
+
+        
+
+
+
+
+        # convert pixel in world coordinate
+        pixel_pos_cam_coord = convert_view_to_camera_coordinates(frame, pixel_pos_normalized)
+        pixel_pos_obj_coord = matrix_camera_to_object.dot(pixel_pos_cam_coord)
+
+        ray_marching_vector[i,:] = ((pixel_pos_obj_coord - cam_pos_obj_coord)/np.linalg.norm(pixel_pos_obj_coord - cam_pos_obj_coord))[:3]
+
+
+    min_step = np.zeros([nb_samples, 3])
+    max_step = np.ones([nb_samples, 3]) * 1e38
+
+    min_step[ray_marching_vector > 0] = (BOUND_MIN_CUBE - pos_init_ray[ray_marching_vector > 0]) / ray_marching_vector[ray_marching_vector > 0]
+    min_step[ray_marching_vector < 0] = (BOUND_MAX_CUBE - pos_init_ray[ray_marching_vector < 0]) / ray_marching_vector[ray_marching_vector < 0]
+
+    max_step[ray_marching_vector > 0] = (BOUND_MAX_CUBE - pos_init_ray[ray_marching_vector > 0]) / ray_marching_vector[ray_marching_vector > 0]
+    max_step[ray_marching_vector < 0] = (BOUND_MIN_CUBE - pos_init_ray[ray_marching_vector < 0]) / ray_marching_vector[ray_marching_vector < 0]
+
+    max_step[(ray_marching_vector == 0) * ~((pos_init_ray > BOUND_MIN_CUBE) * (pos_init_ray < BOUND_MAX_CUBE))] = 0
+
+    min_step = min_step.max(1)
+    max_step = max_step.min(1)
+
+    max_step[min_step >= max_step] = 0
+    min_step[min_step >= max_step] = 0
+
+    return ground_truth_pixels, pos_init_ray, ray_marching_vector, min_step, max_step
+
+
+def get_pos_from_ray_marching(decoder_sdf, latent_code, pos_init_ray, ray_marching_vector, min_step, max_step):
+
+    assert len(pos_init_ray) == len(ray_marching_vector) == len(min_step) == len(max_step), "Initialized parameters should have the same length"
+
+    nb_samples = pos_init_ray.shape[0]
 
     # marching safely until the "cube" representing the zone where the sdf was trained, and therefore contain the whole object
     min_pos = pos_init_ray + min_step.unsqueeze(1).mul(ray_marching_vector)
@@ -354,15 +355,20 @@ def ray_marching_rendering(decoder_sdf, decoder_rgb, latent_code, pos_init_ray, 
     mask_ray_still_marching = mask_cube
 
     # define ratio to accelerate ray marching
-    ratio = torch.ones([resolution * resolution]).cuda()
-    sdf = torch.zeros([resolution * resolution]).cuda()
+    ratio = torch.ones([nb_samples]).cuda()
+    sdf = torch.zeros([nb_samples]).cuda()
 
     for iter in range(MAX_ITER):
         # compute sdf values
-        sdf[mask_ray_still_marching] = decoder_sdf(latent_code.unsqueeze(0).repeat([mask_ray_still_marching.count_nonzero(),1]), pos_along_ray[mask_ray_still_marching])[:,0].detach()
+        if len(latent_code.shape) == 1:
+            sdf[mask_ray_still_marching] = decoder_sdf(latent_code.unsqueeze(0).repeat([mask_ray_still_marching.count_nonzero(),1]), pos_along_ray[mask_ray_still_marching]).squeeze().detach()
+        else:
+            sdf[mask_ray_still_marching] = decoder_sdf(latent_code[mask_ray_still_marching], pos_along_ray[mask_ray_still_marching]).squeeze().detach()
+
+        # IPython.embed()
 
         # scaling: unit of 1 from the decoder's prediction correspond to a unit of 1 in the object coordinate
-        sdf *= 1
+        sdf[mask_ray_still_marching] *= 1
 
         # compute the ratio using difference between old an new sdf values,
         if iter == 0:
@@ -389,20 +395,43 @@ def ray_marching_rendering(decoder_sdf, decoder_rgb, latent_code, pos_init_ray, 
 
         mask_ray_still_marching = mask_ray_still_marching * (sum_step < max_step)
 
-    # interpolate final position for a higher resolution
-    pos_along_ray = pos_along_ray.reshape(resolution, resolution, 3).permute(2,0,1).unsqueeze(0)
-    pos_along_ray = torch.nn.functional.interpolate(pos_along_ray, scale_factor = SCALING_FACTOR, mode='bilinear', align_corners=False)
-    pos_along_ray = pos_along_ray.squeeze().permute(1,2,0).reshape(resolution * resolution * SCALING_FACTOR * SCALING_FACTOR, 3)
+    return pos_along_ray
 
+
+def render_pixels_from_pos(decoder_sdf, decoder_rgb, pos_along_ray, latent_code):
 
     # compute corresponding sdf
-    sdf = decoder_sdf(latent_code.unsqueeze(0).repeat([resolution * resolution * SCALING_FACTOR * SCALING_FACTOR,1]), pos_along_ray).detach()
-    rgb = decoder_rgb(latent_code.unsqueeze(0).repeat([resolution * resolution * SCALING_FACTOR * SCALING_FACTOR,1]), pos_along_ray)
-    sdf = sdf.reshape(resolution * SCALING_FACTOR, resolution * SCALING_FACTOR)
-    rgb = rgb.reshape(resolution * SCALING_FACTOR, resolution * SCALING_FACTOR, 3)
+    sdf = decoder_sdf(latent_code, pos_along_ray).squeeze().detach()
+    rgb = decoder_rgb(latent_code, pos_along_ray)
+
+    rendered_pixels = torch.ones(rgb.shape).cuda()
+
+    mask_car = sdf < THRESHOLD
+
+    rendered_pixels[mask_car] = rgb[mask_car]
+
+    return rendered_pixels, mask_car
+
+
+def interpolate_final_pos(pos_along_ray, resolution=50, scaling_factor=2):
+
+    # interpolate final position for a higher resolution
+    pos_along_ray = pos_along_ray.reshape(resolution, resolution, 3).permute(2,0,1).unsqueeze(0)
+    pos_along_ray = torch.nn.functional.interpolate(pos_along_ray, scale_factor = scaling_factor, mode='bilinear', align_corners=False)
+    pos_along_ray = pos_along_ray.squeeze().permute(1,2,0).reshape(resolution * resolution * scaling_factor * scaling_factor, 3)
+
+    return pos_along_ray
+
+def render_image_from_pos(decoder_sdf, decoder_rgb, pos_along_ray, latent_code, resolution=50, scaling_factor=2):
+
+    # compute corresponding sdf
+    sdf = decoder_sdf(latent_code.unsqueeze(0).repeat([resolution * resolution * scaling_factor * scaling_factor,1]), pos_along_ray).detach()
+    rgb = decoder_rgb(latent_code.unsqueeze(0).repeat([resolution * resolution * scaling_factor * scaling_factor,1]), pos_along_ray).detach()
+    sdf = sdf.reshape(resolution * scaling_factor, resolution * scaling_factor)
+    rgb = rgb.reshape(resolution * scaling_factor, resolution * scaling_factor, 3)
 
     # init image with white background
-    rendered_image = torch.ones([resolution * SCALING_FACTOR, resolution * SCALING_FACTOR,3]).cuda()
+    rendered_image = torch.ones([resolution * scaling_factor, resolution * scaling_factor,3]).cuda()
 
     mask_car = sdf < THRESHOLD
     rendered_image[mask_car] = rgb[mask_car]

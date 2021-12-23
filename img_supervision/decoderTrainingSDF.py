@@ -131,7 +131,7 @@ if __name__ == '__main__':
     param_all = yaml.safe_load(open(PARAM_FILE))
     param_sdf = param_all["decoder_sdf"]
     resolution = param_all["resolution_used_for_training"]
-
+ 
     threshold_precision = 1.0/resolution
     num_samples_per_model = resolution * resolution * resolution
 
@@ -144,7 +144,8 @@ if __name__ == '__main__':
         list_model_hash.append(os.path.basename(val).split('.')[0])
 
     ######################################## only used for testing ########################################
-    list_model_hash = list_model_hash[:50]
+    # list_model_hash = list_model_hash[:50]
+    list_model_hash = list_model_hash[:10]
     ######################################## only used for testing ########################################
 
 

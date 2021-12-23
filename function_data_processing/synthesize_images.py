@@ -31,8 +31,8 @@ parser.add_argument('--venv', dest='venv_path', default='/home/loic/venvs/blende
 parser.add_argument('--shapenet_path', dest='shapenet_path', default='/home/loic/data/vehicle',
                     help='path to the dataset')
 parser.add_argument('--directory_path', dest='directory_path', default='/home/loic/MasterPDM/img_supervision/', help='path to the folder directory')
-parser.add_argument('--height', type=int, dest='height', default=300)
-parser.add_argument('--width', type=int, dest='width', default=300)
+parser.add_argument('--height', type=int, dest='height', default=1000)
+parser.add_argument('--width', type=int, dest='width', default=1000)
 
 args = parser.parse_args(args=sys.argv[5:])
 
@@ -50,8 +50,8 @@ def init_blender():
 
     bpy.context.scene.render.film_transparent = True
 
-    scene.render.resolution_x = 300
-    scene.render.resolution_y = 300
+    scene.render.resolution_x = 1000
+    scene.render.resolution_y = 1000
     scene.render.resolution_percentage = 100
 
     objs = bpy.data.objects

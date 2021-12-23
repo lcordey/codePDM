@@ -56,7 +56,40 @@ class DatasetDecoderSDF(torch.utils.data.Dataset):
 
         return model_idx, sdf_gt, xyz_idx
 
-class DatasetDecoderRGB(torch.utils.data.Dataset):
+class DatasetDecoderTrainingRGB(torch.utils.data.Dataset):
+    "One epoch is num_model * num_images_per_model"
+
+    def __init__(self, list_hash, annotations, num_images_per_model, num_sample_per_image, dict_model_hash_2_idx, image_path):
+        'Initialization'
+        self.list_hash = list_hash
+        self.annotations = annotations
+        self.num_images_per_model = num_images_per_model
+        self.num_sample_per_image = num_sample_per_image
+        self.dict_model_hash_2_idx = dict_model_hash_2_idx
+        self.image_path = image_path
+        self.matrix_world_to_camera = annotations["matrix_world_to_camera"]
+
+    def __len__(self):
+        'Denotes the total number of samples'
+        return len(self.list_hash) * self.num_images_per_model
+
+    def __getitem__(self, index):
+        'Generates one sample of data'
+
+        # Select sample
+        image_id = index%self.num_images_per_model
+        model_hash = self.list_hash[(int)((index - image_id)/self.num_images_per_model)]
+
+        # get model idx
+        model_idx = self.dict_model_hash_2_idx[model_hash]
+
+        ground_truth_pixels, pos_init_ray, ray_marching_vector, min_step, max_step = initialize_rendering_pixels(model_hash, image_id, self.annotations, self.image_path, self.num_sample_per_image)
+
+        return model_idx, ground_truth_pixels, pos_init_ray, ray_marching_vector, min_step, max_step
+
+
+
+class DatasetDecoderValidationRGB(torch.utils.data.Dataset):
     "One epoch is num_model * num_images_per_model"
 
     def __init__(self, list_hash, annotations, num_images_per_model, dict_model_hash_2_idx, image_path):
@@ -77,15 +110,12 @@ class DatasetDecoderRGB(torch.utils.data.Dataset):
 
         # Select sample
         image_id = index%self.num_images_per_model
-        model_hash = self.list_hash[(int)((index - image_id) / self.num_images_per_model)]
-
-        if (model_hash[-4:] == "_dup"):
-            model_hash = model_hash[ : -4]
+        model_hash = self.list_hash[(int)((index - image_id)/self.num_images_per_model)]
 
         # get model idx
         model_idx = self.dict_model_hash_2_idx[model_hash]
 
-        ground_truth_image, pos_init_ray, ray_marching_vector, min_step, max_step = initialize_rendering(model_hash, image_id, self.annotations, self.image_path)
+        ground_truth_image, pos_init_ray, ray_marching_vector, min_step, max_step = initialize_rendering_image(model_hash, image_id, self.annotations, self.image_path)
 
         return model_idx, ground_truth_image, pos_init_ray, ray_marching_vector, min_step, max_step
 

@@ -1,13 +1,13 @@
 
 resolution_used_for_training: 64
-# latent_size: 6
-latent_size: 2
+latent_size: 6
+# latent_size: 2
 
 decoder_sdf:
-    num_epoch: 10
+    num_epoch: 50
     num_batch_between_print: 20
 
-    lambda_variance: 0.1
+    lambda_variance: 0.0
     lambda_sdf: 1.0
     lambda_kl: 0.001
 
@@ -21,32 +21,47 @@ decoder_sdf:
         eta_decoder: 0.001
         eta_latent_space_mu: 0.02
         eta_latent_space_std: 0.01
-        gamma_decoder_LR: 0.9
-        # gamma_decoder_LR: 0.98
-        gamma_code_LR: 0.75
-        # gamma_code_LR: 0.95
+        # gamma_decoder_LR: 0.9
+        gamma_decoder_LR: 0.98
+        # gamma_code_LR: 0.75
+        gamma_code_LR: 0.95
 
 
 decoder_rgb:
-    num_epoch: 100
-    num_batch_between_print: 10
+    num_epoch: 1
+    num_batch_between_print: 1
+    # num_batch_between_print: 20
 
     lambda_variance: 0.0
-    lambda_rgb: 1.0
+    lambda_rgb: 1
     lambda_kl: 0.0
 
-    dataLoader:
-        batch_size: 2
+    # num_sample_per_image: 2500
+    num_sample_per_image: 250
+    # num_sample_per_image: 100
+    dataLoaderTraining:
+        batch_size: 10 # num image per batch
+        # batch_size: 1 num image per batch
         shuffle: True
         # num_workers: 42
-        num_workers: 8
+        # num_workers: 8
+        num_workers: 6
+    
+
+    dataLoaderValidation:
+        batch_size: 1
+        shuffle: False
+        # num_workers: 42
+        num_workers: 4
+    
     
     optimizer: 
-        eta_decoder: 0.001
-        eta_latent_space_mu: 0.0
-        eta_latent_space_std: 0.0
+        eta_decoder: 0.0001
+        # eta_decoder: 0.00001
+        eta_latent_space_mu: 0.00
+        eta_latent_space_std: 0.00
         gamma_decoder_LR: 1.0
-        # gamma_decoder_LR: 0.9
+        # gamma_decoder_LR: 0.99
         # gamma_decoder_LR: 0.98
         gamma_code_LR: 0.75
         # gamma_code_LR: 0.95

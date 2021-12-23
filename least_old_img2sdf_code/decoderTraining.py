@@ -19,13 +19,13 @@ DECODER_PATH = "models_and_codes/decoder.pth"
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
 PARAM_FILE = "config/param.yaml"
 PARAM_SAVE_FILE = "config/param_decoder.yaml"
-LOGS_PATH = "../../image2sdf/logs/decoder/log.pkl"
-SDF_DIR = "../../image2sdf/sdf/"
+LOGS_PATH = "../../least_old_image2sdf/logs/decoder/log.pkl"
+SDF_DIR = "../../least_old_image2sdf/sdf/"
 
 num_model_duplicate = 20
 
 ######################################## only used for testing ########################################
-num_model_duplicate = 5
+num_model_duplicate = 0
 ######################################## only used for testing ########################################
 
 
@@ -143,7 +143,7 @@ if __name__ == '__main__':
         list_model_hash.append(os.path.basename(val).split('.')[0])
 
     ######################################## only used for testing ########################################
-    list_model_hash = list_model_hash[:50]
+    list_model_hash = list_model_hash[:10]
     ######################################## only used for testing ########################################
 
     # create duplicated models
