@@ -53,8 +53,11 @@ class DatasetDecoderSDF(torch.utils.data.Dataset):
 
         # get sdf and rgb values
         sdf_gt = self.dict_gt_data["sdf"][model_hash][xyz_idx]
+    ######################################## only used for testing ########################################
+        rgb_gt = self.dict_gt_data["rgb"][model_hash][xyz_idx]
+    ######################################## only used for testing ########################################
 
-        return model_idx, sdf_gt, xyz_idx
+        return model_idx, sdf_gt, rgb_gt, xyz_idx
 
 class DatasetDecoderTrainingRGB(torch.utils.data.Dataset):
     "One epoch is num_model * num_images_per_model"

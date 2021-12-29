@@ -31,8 +31,8 @@ parser.add_argument('--venv', dest='venv_path', default='/home/loic/venvs/blende
 parser.add_argument('--shapenet_path', dest='shapenet_path', default='/home/loic/data/vehicle',
                     help='path to the dataset')
 parser.add_argument('--directory_path', dest='directory_path', default='/home/loic/MasterPDM/img_supervision/', help='path to the folder directory')
-parser.add_argument('--height', type=int, dest='height', default=1000)
-parser.add_argument('--width', type=int, dest='width', default=1000)
+parser.add_argument('--height', type=int, dest='height', default=300)
+parser.add_argument('--width', type=int, dest='width', default=300)
 
 args = parser.parse_args(args=sys.argv[5:])
 
@@ -50,8 +50,8 @@ def init_blender():
 
     bpy.context.scene.render.film_transparent = True
 
-    scene.render.resolution_x = 1000
-    scene.render.resolution_y = 1000
+    scene.render.resolution_x = 300
+    scene.render.resolution_y = 300
     scene.render.resolution_percentage = 100
 
     objs = bpy.data.objects
@@ -256,16 +256,30 @@ for i in range(len(vehicle_pool)):
 
     for j in range(num_scenes_per_vehicule):
         
-        # rotate the car randomly
-        if j != 0:
-            obj.rotation_euler.rotate_axis("Y", math.radians(2 * random() * 180)) 
-            # obj.rotation_euler.rotate_axis("Y", math.radians(2 * (-0.1) * 180)) 
+        # # rotate the car randomly
+        # if j != 0:
+        #     obj.rotation_euler.rotate_axis("Y", math.radians(2 * random() * 180)) 
 
-        # add a random rotation to simulate different height of camera 
-        if j != 0:
+        # # add a random rotation to simulate different height of camera 
+        # if j != 0:
+        #     rz = (random() - 0.5) * 2
+        #     obj.rotation_euler = (mathutils.Matrix.Rotation(math.pi/6 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+
+
+        if j == 0:
+            obj.rotation_euler = (mathutils.Matrix.Rotation(-math.pi/4, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+
+        elif j == 1:
+            obj.rotation_euler = (mathutils.Matrix.Rotation(math.pi/4, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+
+        elif j == 2:
+            obj.rotation_euler.rotate_axis("Y", math.radians(-90)) 
+            obj.rotation_euler = (mathutils.Matrix.Rotation(-math.pi/4, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+
+        else:
+            obj.rotation_euler.rotate_axis("Y", math.radians(2 * random() * 180)) 
             rz = (random() - 0.5) * 2
             obj.rotation_euler = (mathutils.Matrix.Rotation(math.pi/6 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
-            # obj.rotation_euler = (mathutils.Matrix.Rotation(-math.pi/6 * 0.5 * j, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
 
         rendered_image_path = f'images/{model_hash}/{j}.png'
         render_to_file(f'{output_path}/{rendered_image_path}')
@@ -283,10 +297,24 @@ for i in range(len(vehicle_pool)):
         background_image_crop.paste(img, (0, 0), img)
         background_image_crop.save(f'{output_path}/{rendered_image_path}', "PNG")
 
-        # replace the camera to the original orientation
-        if j != 0:
+        # # replace the camera to the original orientation
+        # if j != 0:
+        #     obj.rotation_euler = (mathutils.Matrix.Rotation(-math.pi/6 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+
+
+        if j == 0:
+            obj.rotation_euler = (mathutils.Matrix.Rotation(+math.pi/4, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+
+        elif j == 1:
+            obj.rotation_euler = (mathutils.Matrix.Rotation(-math.pi/4, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+
+        elif j == 2:
+            obj.rotation_euler.rotate_axis("Y", math.radians(+90)) 
+            obj.rotation_euler = (mathutils.Matrix.Rotation(+math.pi/4, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+
+        else:
             obj.rotation_euler = (mathutils.Matrix.Rotation(-math.pi/6 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
-            # obj.rotation_euler = (mathutils.Matrix.Rotation(math.pi/6 * 0.5 * j, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+
 
     # reload the scene to reduce the memory leak issue
     bpy.ops.wm.read_factory_settings(use_empty=True)

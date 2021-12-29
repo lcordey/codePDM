@@ -9,8 +9,11 @@ import time
 import matplotlib.pyplot as plt
 
 from networks import Decoder, DecoderComplex
-from dataLoader import DatasetDecoderTrainingRGB, DatasetDecoderValidationRGB
+from dataLoader import DatasetDecoderSDF, DatasetDecoderTrainingRGB, DatasetDecoderValidationRGB
 from utils import *
+
+import h5py
+
 
 
 from marching_cubes_rgb import *
@@ -19,10 +22,10 @@ import IPython
 
 # INPUT FILE
 SDF_DIR = "../../img_supervision/sdf/"
-# IMAGES_PATH = "../../img_supervision/input_images/images/"
-# ANNOTATIONS_PATH = "../../img_supervision/input_images/annotations.pkl"
-IMAGES_PATH = "../../img_supervision/input_images_validation/images/"
-ANNOTATIONS_PATH = "../../img_supervision/input_images_validation/annotations.pkl"
+IMAGES_PATH = "../../img_supervision/input_images/images/"
+ANNOTATIONS_PATH = "../../img_supervision/input_images/annotations.pkl"
+# IMAGES_PATH = "../../img_supervision/input_images_validation/images/"
+# ANNOTATIONS_PATH = "../../img_supervision/input_images_validation/annotations.pkl"
 PARAM_FILE = "config/param.yaml"
 DECODER_SDF_PATH = "models_and_codes/decoder_sdf.pth"
 
@@ -96,22 +99,45 @@ def compute_loss_rgb(ground_truth_image, rendered_image, mask_car, lambda_rgb):
     loss = torch.nn.MSELoss(reduction='mean')
     loss_rgb = loss(ground_truth_image[mask_car], rendered_image[mask_car])
 
-    # print(loss_rgb)
-
-
-    # loss = torch.nn.MSELoss(reduction='sum')
-    # loss_rgb = loss(ground_truth_image * mask_car.unsqueeze(-1), rendered_image * mask_car.unsqueeze(-1))
-    # loss_rgb = loss_rgb/mask_car.count_nonzero()/3
-
-
-    # loss_rgb = loss(ground_truth_image, rendered_image)
-
-
-    # print(loss_rgb)
-
     loss_rgb *= lambda_rgb
 
     return loss_rgb
+
+
+
+
+def init_xyz(resolution):
+    """ fill 3d grid representing 3d location to give as input to the decoder """
+    xyz = torch.empty(resolution * resolution * resolution, 3).cuda()
+
+    for x in range(resolution):
+        for y in range(resolution):
+            for z in range(resolution):
+                xyz[x * resolution * resolution + y * resolution + z, :] = torch.Tensor([x/(resolution-1)-0.5,y/(resolution-1)-0.5,z/(resolution-1)-0.5])
+
+    return xyz
+
+
+
+
+
+def compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, lat_code_mu, lat_code_log_std, threshold_precision, param):
+    """ compute sdf, rgb and regression loss """
+
+    loss = torch.nn.MSELoss(reduction='none')
+
+    # assign weight of 0 for easy samples that are well trained
+    weight_sdf = ~((pred_sdf > threshold_precision).squeeze() * (sdf_gt > threshold_precision).squeeze()) \
+        * ~((pred_sdf < -threshold_precision).squeeze() * (sdf_gt < -threshold_precision).squeeze())
+
+    # loss rgb
+    loss_rgb = loss(pred_rgb, rgb_gt)
+    loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).sum()/weight_sdf.count_nonzero()
+    loss_rgb *= param["lambda_rgb"]
+    
+
+    return loss_rgb
+
 
 
 
@@ -147,13 +173,54 @@ if __name__ == '__main__':
     ######################################## only used for testing ########################################
 
 
-    training_dataset = DatasetDecoderTrainingRGB(np.repeat(list_model_hash,2000), annotations, num_images_per_model, param_rgb["num_sample_per_image"], dict_model_hash_2_idx, IMAGES_PATH)
+    training_dataset = DatasetDecoderTrainingRGB(np.repeat(list_model_hash,1000), annotations, num_images_per_model, param_rgb["num_sample_per_image"], dict_model_hash_2_idx, IMAGES_PATH)
     # training_dataset = DatasetDecoderValidationRGB(np.repeat(list_model_hash,1000), annotations, num_images_per_model, dict_model_hash_2_idx, IMAGES_PATH)
     training_generator = torch.utils.data.DataLoader(training_dataset, **param_rgb["dataLoaderTraining"])
 
     num_images_per_model_validation = 3
     validation_dataset = DatasetDecoderValidationRGB(list_model_hash, annotations, num_images_per_model_validation, dict_model_hash_2_idx, IMAGES_PATH)
     validation_generator = torch.utils.data.DataLoader(validation_dataset, **param_rgb["dataLoaderValidation"])
+
+
+
+
+
+
+
+    # # fill a xyz grid to give as input to the decoder 
+    # xyz = init_xyz(64)
+
+    # # test for training with 3D supervision
+    # model_hash = "468780ef4ace9a422e877e82c90c24d"
+    # num_samples_per_model = 64 * 64 * 64
+    # dict_gt_data = dict()
+    # dict_gt_data["sdf"] = dict()
+    # dict_gt_data["rgb"] = dict()
+
+
+    # # load sdf tensor
+    # h5f = h5py.File(SDF_DIR + model_hash + '.h5', 'r')
+    # h5f_tensor = torch.tensor(h5f["tensor"][()], dtype = torch.float)
+
+    # # split sdf and rgb then reshape
+    # sdf_gt = np.reshape(h5f_tensor[:,:,:,0], [num_samples_per_model])
+    # rgb_gt = np.reshape(h5f_tensor[:,:,:,1:], [num_samples_per_model , 3])
+
+    # # normalize
+    # sdf_gt = sdf_gt / 64
+    # rgb_gt = rgb_gt / 255
+
+
+    # # store in dict
+    # dict_gt_data["sdf"][model_hash] = sdf_gt
+    # dict_gt_data["rgb"][model_hash] = rgb_gt
+
+
+    # param_3d = param_all["param_3d"]
+
+    # training_dataset = DatasetDecoderSDF(np.repeat(list_model_hash,20), dict_gt_data, num_samples_per_model, dict_model_hash_2_idx)
+    # training_generator = torch.utils.data.DataLoader(training_dataset, **param_3d["dataLoader"])
+
 
 
 
@@ -165,7 +232,42 @@ if __name__ == '__main__':
 
     for epoch in range (param_rgb["num_epoch"]):
 
+        # for model_idx, sdf_gt, rgb_gt, xyz_idx in training_generator:
+        #     optimizer_decoder.zero_grad()
+        #     optimizer_code.zero_grad()
+
+        #     batch_size = len(model_idx)
+
+        #     # transfer to gpu
+        #     sdf_gt = sdf_gt.cuda()
+        #     rgb_gt = rgb_gt.cuda()
+        #     model_idx = model_idx.cuda()
+        #     xyz_idx = xyz_idx
+
+        #     # Compute latent code 
+        #     latent_code =  lat_code_mu(model_idx)
+
+        #     # get sdf from decoder
+        #     pred_sdf = decoder_sdf(latent_code, xyz[xyz_idx])
+        #     pred_rgb = decoder_rgb(latent_code, xyz[xyz_idx])
+
+        #     # compute loss
+        #     loss_rgb = compute_loss(pred_sdf, pred_rgb, sdf_gt, rgb_gt, lat_code_mu, lat_code_log_std, 1/64, param_3d)
+        #     loss_total = loss_rgb
+
+        #     #update weights
+        #     loss_total.backward()
+        #     # optimizer.step()
+        #     optimizer_decoder.step()
+        #     optimizer_code.step()
+
+
+        #     print(loss_rgb)
+
+
         print("\n**************************************** TRAINING ****************************************")
+
+
         images_count = 0
         for model_idx, ground_truth_pixels, pos_init_ray, ray_marching_vector, min_step, max_step in training_generator:
             optimizer_decoder.zero_grad()
@@ -225,7 +327,6 @@ if __name__ == '__main__':
             optimizer_code.step()
             scheduler_decoder.step()
 
-
             # num_neg_sample_mining = 5
             # for i in range(num_neg_sample_mining):
             #     optimizer_decoder.zero_grad()
@@ -278,88 +379,101 @@ if __name__ == '__main__':
                 # plt.savefig(PLOT_PATH + f"{epoch}_{images_count}_train_gt.png")  
                 # plt.close()   
 
+    epoch = 0
 
-        if epoch%1 == 0:
-            print("\n**************************************** VALIDATION ****************************************")
-            decoder_rgb.eval()
-            images_count = 0
-            for model_idx, ground_truth_image, pos_init_ray, ray_marching_vector, min_step, max_step in validation_generator:
-                # optimizer_decoder.zero_grad()
-                # optimizer_code.zero_grad()
+    if epoch%1 == 0:
+        print("\n**************************************** VALIDATION ****************************************")
+        decoder_rgb.eval()
+        images_count = 0
+        for model_idx, ground_truth_image, pos_init_ray, ray_marching_vector, min_step, max_step in validation_generator:
+            # optimizer_decoder.zero_grad()
+            # optimizer_code.zero_grad()
 
-                batch_size = len(model_idx)
+            batch_size = len(model_idx)
 
-                assert batch_size == 1, "batch size validation should be equal to 1"
+            assert batch_size == 1, "batch size validation should be equal to 1"
 
 
-                # convert into cuda
-                model_idx = model_idx.squeeze().cuda()
-                pos_init_ray = pos_init_ray.squeeze().float().cuda()
-                ray_marching_vector = ray_marching_vector.squeeze().float().cuda()
-                min_step = min_step.squeeze().float().cuda()
-                max_step = max_step.squeeze().float().cuda()
+            # convert into cuda
+            model_idx = model_idx.squeeze().cuda()
+            pos_init_ray = pos_init_ray.squeeze().float().cuda()
+            ray_marching_vector = ray_marching_vector.squeeze().float().cuda()
+            min_step = min_step.squeeze().float().cuda()
+            max_step = max_step.squeeze().float().cuda()
 
-                ground_truth_image = np.array(ground_truth_image)
+            ground_truth_image = np.array(ground_truth_image)
+            
+            # Compute latent code 
+            latent_code = lat_code_mu(model_idx)
+            
+            pos_along_ray = get_pos_from_ray_marching(decoder_sdf, latent_code, pos_init_ray, ray_marching_vector, min_step, max_step)
+            pos_along_ray = interpolate_final_pos(pos_along_ray, resolution=250, scaling_factor=1)
+            rendered_image, mask_car = render_image_from_pos(decoder_sdf, decoder_rgb, pos_along_ray, latent_code, resolution=250, scaling_factor=1)
+            rescale_ground_truth_image = cv2.resize(np.squeeze(ground_truth_image), rendered_image.shape[:2])
+            rescale_ground_truth_image = torch.tensor(rescale_ground_truth_image,dtype=torch.float).cuda()
+
+
+            mask_gt_silhouette = rescale_ground_truth_image.mean(2) != 1
+            mask_loss = mask_car * mask_gt_silhouette
+
+            loss_rgb = compute_loss_rgb(rescale_ground_truth_image, rendered_image, mask_loss, param_rgb["lambda_rgb"])
+
+            # #update weights
+            # loss_rgb.backward()
+
+            # optimizer_decoder.step()
+            # optimizer_code.step()
+
+
+            images_count += batch_size
+
+            print("Epoch {} / {} , loss: rgb: {:.5f}".format(epoch, images_count, loss_rgb))
+
+            if epoch%10 == 0:
+                mask_car = mask_car.cpu().numpy()
+                # min_step = min_step.reshape(50,50).cpu().numpy()
+                min_step = min_step.reshape(250,250).cpu().numpy()
+                min_step = cv2.resize(min_step, rendered_image.shape[0:2])
+
+                rendered_image[mask_car == False] = 1
+                rendered_image[min_step == 0] = 1
+
+                # image_loss = torch.zeros([250,250,3]).cuda()
+                # image_loss[mask_loss] = abs(rendered_image[mask_loss] - rescale_ground_truth_image[mask_loss])
+
+                silhouette_comparison = torch.zeros([250,250,3]).cuda()
+                silhouette_comparison[mask_car] += torch.tensor([0,0,1]).cuda()
+                silhouette_comparison[mask_gt_silhouette] += torch.tensor([0,1,0]).cuda()
+
+
+                # print(image_loss.mean().item())
+                        
+                plt.figure()
+                plt.title(f"result after {images_count} images seen")
+                plt.imshow(rendered_image.cpu().detach().numpy())
+                plt.savefig(PLOT_PATH + f"{epoch}_{images_count}_valid_pred.png")  
+                plt.close()   
                 
-                # Compute latent code 
-                latent_code = lat_code_mu(model_idx)
-                
-                pos_along_ray = get_pos_from_ray_marching(decoder_sdf, latent_code, pos_init_ray, ray_marching_vector, min_step, max_step)
-                pos_along_ray = interpolate_final_pos(pos_along_ray, resolution=250, scaling_factor=1)
-                rendered_image, mask_car = render_image_from_pos(decoder_sdf, decoder_rgb, pos_along_ray, latent_code, resolution=250, scaling_factor=1)
-                rescale_ground_truth_image = cv2.resize(np.squeeze(ground_truth_image), rendered_image.shape[:2])
-                rescale_ground_truth_image = torch.tensor(rescale_ground_truth_image,dtype=torch.float).cuda()
+                plt.figure()
+                plt.title(f"ground after {images_count} images seen")
+                plt.imshow(rescale_ground_truth_image.cpu().detach().numpy())
+                plt.savefig(PLOT_PATH + f"{epoch}_{images_count}_gt.png")
+                plt.close() 
+
+                plt.figure()
+                plt.title(f"silhouette gt and rendering comparison")
+                plt.imshow(silhouette_comparison.cpu().detach().numpy())
+                plt.savefig(PLOT_PATH + f"{epoch}_{images_count}_diff_silhouettes.png")
+                plt.close() 
 
 
-                mask_gt_silhouette = rescale_ground_truth_image.mean(2) != 1
-                mask_loss = mask_car * mask_gt_silhouette
-
-                loss_rgb = compute_loss_rgb(rescale_ground_truth_image, rendered_image, mask_loss, param_rgb["lambda_rgb"])
-
-                # #update weights
-                # loss_rgb.backward()
-
-                # optimizer_decoder.step()
-                # optimizer_code.step()
-
-                images_count += batch_size
-
-                print("Epoch {} / {} , loss: rgb: {:.5f}".format(epoch, images_count, loss_rgb))
-
-                if epoch%10 == 0:
-                    mask_car = mask_car.cpu().numpy()
-                    # min_step = min_step.reshape(50,50).cpu().numpy()
-                    min_step = min_step.reshape(250,250).cpu().numpy()
-                    min_step = cv2.resize(min_step, rendered_image.shape[0:2])
-
-                    rendered_image[mask_car == False] = 1
-                    rendered_image[min_step == 0] = 1
-
-                    # image_loss = torch.zeros([100,100,3]).cuda()
-                    # image_loss[mask_loss] = abs(rendered_image[mask_loss] - rescale_ground_truth_image[mask_loss])
-                    # image_loss[mask_loss] *= abs(rendered_image[mask_loss] - rescale_ground_truth_image[mask_loss])
-
-                    # print(image_loss.mean().item())
-                            
-                    plt.figure()
-                    plt.title(f"result after {images_count} images seen")
-                    plt.imshow(rendered_image.cpu().detach().numpy())
-                    plt.savefig(PLOT_PATH + f"{epoch}_{images_count}_valid_pred.png")  
-                    plt.close()   
-                    
-                    plt.figure()
-                    plt.title(f"ground after {images_count} images seen")
-                    plt.imshow(rescale_ground_truth_image.cpu().detach().numpy())
-                    plt.savefig(PLOT_PATH + f"{epoch}_{images_count}_gt.png")
-                    plt.close() 
-
-                    # plt.figure()
-                    # plt.title(f"ground after {images_count} images seen")
-                    # plt.imshow(image_loss.mean(2).cpu().detach().numpy())
-                    # plt.savefig(PLOT_PATH + f"{epoch}_{images_count}_diff.png")
-                    # plt.close() 
-                
-            decoder_rgb.train()
+                # plt.figure()
+                # plt.title(f"ground after {images_count} images seen")
+                # plt.imshow(image_loss.mean(2).cpu().detach().numpy())
+                # plt.savefig(PLOT_PATH + f"{epoch}_{images_count}_diff.png")
+                # plt.close() 
+            
+        decoder_rgb.train()
 
 
     print(f"Training rgb done in {(int)((time.time() - time_start) / 60)} min")
@@ -388,36 +502,38 @@ def init_xyz(resolution):
 resolution = 64
 xyz = init_xyz(resolution)
 
+for model_idx in range(len(list_model_hash)):
+    latent_code = lat_code_mu(torch.tensor(model_idx).cuda())
 
-# variable to store results
-sdf_result = np.empty([resolution, resolution, resolution, 4])
+    # variable to store results
+    sdf_result = np.empty([resolution, resolution, resolution, 4])
 
-# loop because it requires too much GPU memory on my computer
-for x in range(resolution):
-    # latent_code = dict_hash_2_code[model_hash].repeat(resolution * resolution, 1).cuda()
-    xyz_sub_sample = xyz[x * resolution * resolution: (x+1) * resolution * resolution]
-    sdf_sub_result = torch.empty([resolution * resolution, 4])
+    # loop because it requires too much GPU memory on my computer
+    for x in range(resolution):
+        # latent_code = dict_hash_2_code[model_hash].repeat(resolution * resolution, 1).cuda()
+        xyz_sub_sample = xyz[x * resolution * resolution: (x+1) * resolution * resolution]
+        sdf_sub_result = torch.empty([resolution * resolution, 4])
 
-    sdf_pred = decoder_sdf(latent_code.repeat(resolution * resolution, 1), xyz_sub_sample).detach().cpu()
-    sdf_pred = sdf_pred * resolution
-    color_pred = decoder_rgb(latent_code.repeat(resolution * resolution, 1), xyz_sub_sample).detach().cpu()
-    color_pred = torch.clamp(color_pred, 0, 1)
-    color_pred = color_pred * 255
+        sdf_pred = decoder_sdf(latent_code.repeat(resolution * resolution, 1), xyz_sub_sample).detach().cpu()
+        sdf_pred = sdf_pred * resolution
+        color_pred = decoder_rgb(latent_code.repeat(resolution * resolution, 1), xyz_sub_sample).detach().cpu()
+        color_pred = torch.clamp(color_pred, 0, 1)
+        color_pred = color_pred * 255
 
-    sdf_sub_result[:,0] = sdf_pred.squeeze()
-    sdf_sub_result[:,1:] = color_pred
+        sdf_sub_result[:,0] = sdf_pred.squeeze()
+        sdf_sub_result[:,1:] = color_pred
 
-    sdf_result[x, :, :, :] = np.reshape(sdf_sub_result[:,:], [resolution, resolution, 4])
+        sdf_result[x, :, :, :] = np.reshape(sdf_sub_result[:,:], [resolution, resolution, 4])
 
-if(np.min(sdf_result[:,:,:,0]) < 0 and np.max(sdf_result[:,:,:,0]) > 0):
-    vertices_pred, faces_pred = marching_cubes(sdf_result[:,:,:,0])
-    colors_v_pred = exctract_colors_v(vertices_pred, sdf_result)
-    colors_f_pred = exctract_colors_f(colors_v_pred, faces_pred)
-    off_file = "%s/_test.off" %(PLOT_PATH)
-    write_off(off_file, vertices_pred, faces_pred, colors_f_pred)
-    print("Wrote %_test.off")
-else:
-    print("surface level: 0, should be comprise in between the minimum and maximum value")
+    if(np.min(sdf_result[:,:,:,0]) < 0 and np.max(sdf_result[:,:,:,0]) > 0):
+        vertices_pred, faces_pred = marching_cubes(sdf_result[:,:,:,0])
+        colors_v_pred = exctract_colors_v(vertices_pred, sdf_result)
+        colors_f_pred = exctract_colors_f(colors_v_pred, faces_pred)
+        off_file = "%s/_pred_%d.off" %(PLOT_PATH, model_idx)
+        write_off(off_file, vertices_pred, faces_pred, colors_f_pred)
+        print(f"Wrote %_pred_{model_idx}.off")
+    else:
+        print("surface level: 0, should be comprise in between the minimum and maximum value")
 
 
 

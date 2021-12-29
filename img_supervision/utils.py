@@ -19,9 +19,11 @@ BOUND_MIN_CUBE = -0.5
 
 THRESHOLD = 1/64
 MAX_STEP = 1/16
-# MAX_ITER = 20
-MAX_ITER = 50
+MAX_ITER = 20
 SCALING_FACTOR = 2
+
+SCALING_RATIO_DU_TO_PADDING = 1/1.15625
+OFFSET = torch.tensor([-0.05,0.005, -0.025]).cuda()
 
 # THRESHOLD = 1/256
 # MAX_STEP = 1/20
@@ -295,19 +297,35 @@ def initialize_rendering_pixels(model_hash, image_id, annotations, image_path, n
     for i in range(nb_samples):
 
 
-        upsampling_factor = 100
+        # upsampling_factor = 100
 
-        # select pixel to render
-        rnd_height = np.random.randint(height * upsampling_factor)
-        rnd_width = np.random.randint(width * upsampling_factor)
-        pixel_pos = ((int)(rnd_height/upsampling_factor), (int)(rnd_width/upsampling_factor))
+        # # select pixel to render
+        # rnd_height = np.random.randint(height * upsampling_factor)
+        # rnd_width = np.random.randint(width * upsampling_factor)
+        # pixel_pos = ((int)(rnd_height/upsampling_factor), (int)(rnd_width/upsampling_factor))
 
-        ground_truth_pixels[i] = ground_truth_image[pixel_pos]
+        # ground_truth_pixels[i] = ground_truth_image[pixel_pos]
 
-        pixel_pos_normalized = (rnd_height / ( upsampling_factor * height - 1), rnd_width / ( upsampling_factor * width - 1))
+        # pixel_pos_normalized = (rnd_height / ( upsampling_factor * height - 1), rnd_width / ( upsampling_factor * width - 1))
 
         
+        sampling_res = 100
 
+        # select pixel to render
+        rnd_height = np.random.randint(height - 1)
+        rnd_height_sampling = np.random.randint(sampling_res + 1)
+        rnd_width = np.random.randint(width - 1)
+        rnd_width_sampling = np.random.randint(sampling_res + 1)
+
+        ground_truth_pixels[i] = ground_truth_image[rnd_height, rnd_width] * (sampling_res - rnd_height_sampling) * (sampling_res - rnd_width_sampling) \
+                                + ground_truth_image[rnd_height + 1, rnd_width] * rnd_height_sampling * (sampling_res - rnd_width_sampling) \
+                                + ground_truth_image[rnd_height, rnd_width + 1] * (sampling_res - rnd_height_sampling) * rnd_width_sampling \
+                                + ground_truth_image[rnd_height + 1, rnd_width + 1] * rnd_height_sampling * rnd_width_sampling
+
+
+        ground_truth_pixels[i] = ground_truth_pixels[i] / (sampling_res * sampling_res)
+
+        pixel_pos_normalized = ((rnd_height * sampling_res + rnd_height_sampling) / ((height - 1) * sampling_res), (rnd_width * sampling_res + rnd_width_sampling) / ((width - 1) * sampling_res))
 
 
 
@@ -361,9 +379,9 @@ def get_pos_from_ray_marching(decoder_sdf, latent_code, pos_init_ray, ray_marchi
     for iter in range(MAX_ITER):
         # compute sdf values
         if len(latent_code.shape) == 1:
-            sdf[mask_ray_still_marching] = decoder_sdf(latent_code.unsqueeze(0).repeat([mask_ray_still_marching.count_nonzero(),1]), pos_along_ray[mask_ray_still_marching]).squeeze().detach()
+            sdf[mask_ray_still_marching] = decoder_sdf(latent_code.unsqueeze(0).repeat([mask_ray_still_marching.count_nonzero(),1]), OFFSET + SCALING_RATIO_DU_TO_PADDING * pos_along_ray[mask_ray_still_marching]).squeeze().detach()
         else:
-            sdf[mask_ray_still_marching] = decoder_sdf(latent_code[mask_ray_still_marching], pos_along_ray[mask_ray_still_marching]).squeeze().detach()
+            sdf[mask_ray_still_marching] = decoder_sdf(latent_code[mask_ray_still_marching], OFFSET +  pos_along_ray[mask_ray_still_marching] * SCALING_RATIO_DU_TO_PADDING).squeeze().detach()
 
         # IPython.embed()
 
@@ -395,18 +413,20 @@ def get_pos_from_ray_marching(decoder_sdf, latent_code, pos_init_ray, ray_marchi
 
         mask_ray_still_marching = mask_ray_still_marching * (sum_step < max_step)
 
+
     return pos_along_ray
 
 
 def render_pixels_from_pos(decoder_sdf, decoder_rgb, pos_along_ray, latent_code):
 
     # compute corresponding sdf
-    sdf = decoder_sdf(latent_code, pos_along_ray).squeeze().detach()
-    rgb = decoder_rgb(latent_code, pos_along_ray)
+    sdf = decoder_sdf(latent_code, OFFSET + SCALING_RATIO_DU_TO_PADDING * pos_along_ray).squeeze().detach()
+    rgb = decoder_rgb(latent_code, OFFSET + SCALING_RATIO_DU_TO_PADDING * pos_along_ray)
 
     rendered_pixels = torch.ones(rgb.shape).cuda()
 
     mask_car = sdf < THRESHOLD
+    # mask_car = sdf < 1000000000
 
     rendered_pixels[mask_car] = rgb[mask_car]
 
@@ -425,8 +445,8 @@ def interpolate_final_pos(pos_along_ray, resolution=50, scaling_factor=2):
 def render_image_from_pos(decoder_sdf, decoder_rgb, pos_along_ray, latent_code, resolution=50, scaling_factor=2):
 
     # compute corresponding sdf
-    sdf = decoder_sdf(latent_code.unsqueeze(0).repeat([resolution * resolution * scaling_factor * scaling_factor,1]), pos_along_ray).detach()
-    rgb = decoder_rgb(latent_code.unsqueeze(0).repeat([resolution * resolution * scaling_factor * scaling_factor,1]), pos_along_ray).detach()
+    sdf = decoder_sdf(latent_code.unsqueeze(0).repeat([resolution * resolution * scaling_factor * scaling_factor,1]), OFFSET + SCALING_RATIO_DU_TO_PADDING * pos_along_ray).detach()
+    rgb = decoder_rgb(latent_code.unsqueeze(0).repeat([resolution * resolution * scaling_factor * scaling_factor,1]), OFFSET + SCALING_RATIO_DU_TO_PADDING * pos_along_ray).detach()
     sdf = sdf.reshape(resolution * scaling_factor, resolution * scaling_factor)
     rgb = rgb.reshape(resolution * scaling_factor, resolution * scaling_factor, 3)
 
@@ -434,6 +454,10 @@ def render_image_from_pos(decoder_sdf, decoder_rgb, pos_along_ray, latent_code, 
     rendered_image = torch.ones([resolution * scaling_factor, resolution * scaling_factor,3]).cuda()
 
     mask_car = sdf < THRESHOLD
+    # mask_car = sdf < 1000000000
+
+    # rendered_image[mask_car] = rendered_image[mask_car] * (pos_along_ray.reshape([resolution,resolution,3])[mask_car][:,2] + 0.5).unsqueeze(-1)
     rendered_image[mask_car] = rgb[mask_car]
+
 
     return rendered_image, mask_car
