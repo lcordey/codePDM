@@ -12,7 +12,8 @@ import IPython
 
 
 
-RAY_MARCHING_RESOLUTION = 50
+RAY_MARCHING_RESOLUTION_PIXELS = 50
+RAY_MARCHING_RESOLUTION_IMAGE = 250
 
 BOUND_MAX_CUBE = 0.5
 BOUND_MIN_CUBE = -0.5
@@ -22,8 +23,17 @@ MAX_STEP = 1/16
 MAX_ITER = 20
 SCALING_FACTOR = 2
 
-SCALING_RATIO_DU_TO_PADDING = 1/1.15625
-OFFSET = torch.tensor([-0.05,0.005, -0.025]).cuda()
+
+# THRESHOLD = 1/64
+# MAX_STEP = 1/16
+# MAX_ITER = 5
+# SCALING_FACTOR = 2
+
+# SCALING_RATIO_DU_TO_PADDING = 1/1.15625
+# OFFSET = torch.tensor([-0.05,0.005, -0.025]).cuda()
+
+SCALING_RATIO_DU_TO_PADDING = 1
+OFFSET = torch.tensor([0,0,0]).cuda()
 
 # THRESHOLD = 1/256
 # MAX_STEP = 1/20
@@ -222,8 +232,7 @@ def initialize_rendering_image(model_hash, image_id, annotations, image_path):
     image_pth = image_path + model_hash + '/' + str(image_id) + '.png'
     ground_truth_image = np.array(imageio.imread(image_pth))/255
 
-    # resolution = RAY_MARCHING_RESOLUTION
-    resolution = 250
+    resolution = RAY_MARCHING_RESOLUTION_IMAGE
 
     frame, matrix_camera_to_object = get_camera_matrix_and_frame(model_hash, image_id, annotations)
 
@@ -378,6 +387,7 @@ def get_pos_from_ray_marching(decoder_sdf, latent_code, pos_init_ray, ray_marchi
 
     for iter in range(MAX_ITER):
         # compute sdf values
+
         if len(latent_code.shape) == 1:
             sdf[mask_ray_still_marching] = decoder_sdf(latent_code.unsqueeze(0).repeat([mask_ray_still_marching.count_nonzero(),1]), OFFSET + SCALING_RATIO_DU_TO_PADDING * pos_along_ray[mask_ray_still_marching]).squeeze().detach()
         else:
@@ -454,10 +464,49 @@ def render_image_from_pos(decoder_sdf, decoder_rgb, pos_along_ray, latent_code, 
     rendered_image = torch.ones([resolution * scaling_factor, resolution * scaling_factor,3]).cuda()
 
     mask_car = sdf < THRESHOLD
-    # mask_car = sdf < 1000000000
 
-    # rendered_image[mask_car] = rendered_image[mask_car] * (pos_along_ray.reshape([resolution,resolution,3])[mask_car][:,2] + 0.5).unsqueeze(-1)
     rendered_image[mask_car] = rgb[mask_car]
 
 
     return rendered_image, mask_car
+
+
+
+
+
+def initialize_rendering_from_3d_pos(model_hash, image_id, annotations, pos_3d):
+    nb_samples = len(pos_3d)
+
+    frame, matrix_camera_to_object = get_camera_matrix_and_frame(model_hash, image_id, annotations)
+
+    cam_pos_cam_coord = np.array([0,0,0,1])
+    cam_pos_obj_coord = matrix_camera_to_object.dot(cam_pos_cam_coord)
+
+    pos_init_ray = np.ones([nb_samples, 3])
+    pos_init_ray[:,0] *= cam_pos_obj_coord[0]
+    pos_init_ray[:,1] *= cam_pos_obj_coord[1]
+    pos_init_ray[:,2] *= cam_pos_obj_coord[2]
+
+    ray_marching_vector = np.empty([nb_samples, 3])
+
+    for i in range(nb_samples):
+        ray_marching_vector[i,:] = ((pos_3d[i] - cam_pos_obj_coord[:3])/np.linalg.norm(pos_3d[i] - cam_pos_obj_coord[:3]))
+
+    min_step = np.zeros([nb_samples, 3])
+    max_step = np.ones([nb_samples, 3]) * 1e38
+
+    min_step[ray_marching_vector > 0] = (BOUND_MIN_CUBE - pos_init_ray[ray_marching_vector > 0]) / ray_marching_vector[ray_marching_vector > 0]
+    min_step[ray_marching_vector < 0] = (BOUND_MAX_CUBE - pos_init_ray[ray_marching_vector < 0]) / ray_marching_vector[ray_marching_vector < 0]
+
+    max_step[ray_marching_vector > 0] = (BOUND_MAX_CUBE - pos_init_ray[ray_marching_vector > 0]) / ray_marching_vector[ray_marching_vector > 0]
+    max_step[ray_marching_vector < 0] = (BOUND_MIN_CUBE - pos_init_ray[ray_marching_vector < 0]) / ray_marching_vector[ray_marching_vector < 0]
+
+    max_step[(ray_marching_vector == 0) * ~((pos_init_ray > BOUND_MIN_CUBE) * (pos_init_ray < BOUND_MAX_CUBE))] = 0
+
+    min_step = min_step.max(1)
+    max_step = max_step.min(1)
+
+    max_step[min_step >= max_step] = 0
+    min_step[min_step >= max_step] = 0
+
+    return pos_init_ray, ray_marching_vector, min_step, max_step

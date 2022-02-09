@@ -20,7 +20,7 @@ from random import random, randrange, choice
 
 DEFAULT_MODE = 'validation'
 NUM_SCENE_TRAINING = 100
-NUM_SCENE_VALIDATION = 10
+NUM_SCENE_VALIDATION = 100
 
 # import IPython
 
@@ -279,7 +279,8 @@ for i in range(len(vehicle_pool)):
         else:
             obj.rotation_euler.rotate_axis("Y", math.radians(2 * random() * 180)) 
             rz = (random() - 0.5) * 2
-            obj.rotation_euler = (mathutils.Matrix.Rotation(math.pi/6 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+            # obj.rotation_euler = (mathutils.Matrix.Rotation(math.pi/6 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+            obj.rotation_euler = (mathutils.Matrix.Rotation(math.pi/3 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
 
         rendered_image_path = f'images/{model_hash}/{j}.png'
         render_to_file(f'{output_path}/{rendered_image_path}')
@@ -313,7 +314,8 @@ for i in range(len(vehicle_pool)):
             obj.rotation_euler = (mathutils.Matrix.Rotation(+math.pi/4, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
 
         else:
-            obj.rotation_euler = (mathutils.Matrix.Rotation(-math.pi/6 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+            # obj.rotation_euler = (mathutils.Matrix.Rotation(-math.pi/6 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
+            obj.rotation_euler = (mathutils.Matrix.Rotation(-math.pi/3 * rz, 3, 'Y') @ obj.rotation_euler.to_matrix()).to_euler()
 
 
     # reload the scene to reduce the memory leak issue

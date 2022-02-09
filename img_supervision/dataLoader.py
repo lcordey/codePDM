@@ -123,6 +123,34 @@ class DatasetDecoderValidationRGB(torch.utils.data.Dataset):
         return model_idx, ground_truth_image, pos_init_ray, ray_marching_vector, min_step, max_step
 
 
+class DatasetLearnSDF(torch.utils.data.Dataset):
+    "One epoch is num_model * num_image_per_model"
+    def __init__(self, list_hash, annotations, num_images_per_model, image_path):
+        'Initialization'
+        self.list_hash = list_hash
+        self.annotations = annotations
+        self.num_images_per_model = num_images_per_model
+        self.image_path = image_path
+
+    def __len__(self):
+        'Denotes the total number of samples'
+        return len(self.list_hash) * self.num_images_per_model
+
+
+    def __getitem__(self, index):
+        'Generates one sample of data'
+
+
+        # Select sample
+        image_id = index%self.num_images_per_model
+        model_hash = self.list_hash[(int)((index - image_id)/self.num_images_per_model)]
+
+        ground_truth_image, pos_init_ray, ray_marching_vector, min_step, max_step = initialize_rendering_image(model_hash, image_id, self.annotations, self.image_path)
+
+
+        return ground_truth_image, pos_init_ray, ray_marching_vector, min_step, max_step
+
+
 class DatasetGrid(torch.utils.data.Dataset):
     "One epoch is num_model * num_image_per_model"
     def __init__(self, list_hash, annotations, num_images_per_model, param_image, param_network, image_path):
@@ -193,3 +221,121 @@ class DatasetGrid(torch.utils.data.Dataset):
         input_grid = torch.tensor(input_grid, dtype = torch.float)
 
         return input_grid, model_hash
+
+
+
+class DatasetDecoderSDF2(torch.utils.data.Dataset):
+    "One epoch is num_model * num_samples_per_model"
+    def __init__(self, data):
+        'Initialization'
+        self.data = data
+        self.num_samples = len(data)
+    def __len__(self):
+        'Denotes the total number of samples'
+        return self.num_samples
+
+    def __getitem__(self, index):
+        'Generates one sample of data'
+
+        # Select sample
+        xyz_idx = index%self.num_samples
+
+        # get sdf and rgb values
+        sdf_gt = self.data[xyz_idx]
+
+        return sdf_gt, xyz_idx
+
+
+class DatasetDecoderSDF3(torch.utils.data.Dataset):
+    "One epoch is num_model * num_samples_per_model"
+    def __init__(self, num_samples, num_images, matrix_world_to_camera, frame, model_annotations):
+        'Initialization'
+        self.num_samples = num_samples
+        self.num_images = num_images
+        self.matrix_world_to_camera = matrix_world_to_camera
+        self.frame = frame
+        self.model_annotations = model_annotations
+
+    def __len__(self):
+        'Denotes the total number of samples'
+        return self.num_samples
+
+    def __getitem__(self, index):
+        'Generates one sample of data'
+
+        sdf_estimation = -1e42
+
+        pos_3d_ojbect = np.random.rand(3) - 0.5
+
+        for image_id in range(self.num_images):
+
+            matrix_object_to_world = self.model_annotations[image_id]['matrix_object_to_world'].copy()
+            matrix_object_to_world = matrix_object_to_world[:,[1,0,2,3]][[2,1,0,3]]
+
+            pos_3d_world = matrix_object_to_world[:3,:3].dot(pos_3d_ojbect)
+            pos_2d = convert_w2c(self.matrix_world_to_camera, self.frame, pos_3d_world)
+            pos_2d[:2] *= 300
+
+            try:
+                img_dist = self.model_annotations[image_id]["2d_sdf"][pos_2d[0].astype(int), pos_2d[1].astype(int)]
+            except:
+                img_dist = 1e-10
+
+            result_from_image = img_dist * pos_2d[2]
+
+            sdf_estimation = max(sdf_estimation, result_from_image)
+
+        return pos_3d_world, sdf_estimation
+
+
+
+class DatasetDecoderTrainingRGB_2(torch.utils.data.Dataset):
+    "One epoch is num_model * num_images_per_model"
+
+    def __init__(self, model_hash, num_repetition_image_per_epoch, num_images_per_model, num_sample_per_image, annotations, image_path):
+        'Initialization'
+        self.model_hash = model_hash
+        self.num_repetition_image_per_epoch = num_repetition_image_per_epoch
+        self.num_images_per_model = num_images_per_model
+        self.num_sample_per_image = num_sample_per_image
+        self.annotations = annotations
+        self.matrix_world_to_camera = annotations["matrix_world_to_camera"]
+        self.image_path = image_path
+
+    def __len__(self):
+        'Denotes the total number of samples'
+        return self.num_repetition_image_per_epoch * self.num_images_per_model
+
+    def __getitem__(self, index):
+        'Generates one sample of data'
+        # Select sample
+        image_id = index%self.num_images_per_model
+        ground_truth_pixels, pos_init_ray, ray_marching_vector, min_step, max_step = initialize_rendering_pixels(self.model_hash, image_id, self.annotations, self.image_path, self.num_sample_per_image)
+
+        return ground_truth_pixels, pos_init_ray, ray_marching_vector, min_step, max_step
+
+
+
+class DatasetDecoderValidationRGB_2(torch.utils.data.Dataset):
+    "One epoch is num_model * num_images_per_model"
+
+    def __init__(self, model_hash, num_images_validation, annotations, image_path):
+        'Initialization'
+        self.model_hash = model_hash
+        self.num_images_validation = num_images_validation
+        self.annotations = annotations
+        self.matrix_world_to_camera = annotations["matrix_world_to_camera"]
+        self.image_path = image_path
+
+    def __len__(self):
+        'Denotes the total number of samples'
+        return self.num_images_validation
+
+    def __getitem__(self, index):
+        'Generates one sample of data'
+
+        # Select sample
+        image_id = index
+        ground_truth_image, pos_init_ray, ray_marching_vector, min_step, max_step = initialize_rendering_image(self.model_hash, image_id, self.annotations, self.image_path)
+
+        return ground_truth_image, pos_init_ray, ray_marching_vector, min_step, max_step

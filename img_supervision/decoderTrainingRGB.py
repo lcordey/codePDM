@@ -1,6 +1,7 @@
-from cv2 import threshold
+from cv2 import absdiff
 import numpy as np
 from numpy.core.numeric import count_nonzero
+from numpy.random.mtrand import sample
 import torch
 import pickle
 import glob
@@ -8,7 +9,7 @@ import yaml
 import time
 import matplotlib.pyplot as plt
 
-from networks import Decoder, DecoderComplex
+from networks import Decoder
 from dataLoader import DatasetDecoderSDF, DatasetDecoderTrainingRGB, DatasetDecoderValidationRGB
 from utils import *
 
@@ -170,10 +171,11 @@ if __name__ == '__main__':
     ######################################## only used for testing ########################################
     num_images_per_model = 1
     list_model_hash = list_model_hash[0:1]
+    list_model_hash = np.repeat(list_model_hash,1000)
     ######################################## only used for testing ########################################
 
 
-    training_dataset = DatasetDecoderTrainingRGB(np.repeat(list_model_hash,1000), annotations, num_images_per_model, param_rgb["num_sample_per_image"], dict_model_hash_2_idx, IMAGES_PATH)
+    training_dataset = DatasetDecoderTrainingRGB(list_model_hash, annotations, num_images_per_model, param_rgb["num_sample_per_image"], dict_model_hash_2_idx, IMAGES_PATH)
     # training_dataset = DatasetDecoderValidationRGB(np.repeat(list_model_hash,1000), annotations, num_images_per_model, dict_model_hash_2_idx, IMAGES_PATH)
     training_generator = torch.utils.data.DataLoader(training_dataset, **param_rgb["dataLoaderTraining"])
 
@@ -563,3 +565,5 @@ for model_idx in range(len(list_model_hash)):
     # save param used
     with open(PARAM_SAVE_FILE, 'w') as file:
         yaml.dump(param_all, file)
+
+

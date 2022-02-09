@@ -25,12 +25,12 @@ ENCODER_PATH = "models_and_codes/encoderGrid.pth"
 LATENT_CODE_PATH = "models_and_codes/latent_code.pkl"
 PARAM_FILE = "config/param_encoder.yaml"
 VEHICLE_VALIDATION_PATH = "config/vehicle_validation.txt"
-MATRIX_PATH = "../../image2sdf/input_images_validation/matrix_w2c.pkl"
-ANNOTATIONS_PATH = "../../image2sdf/input_images_validation/annotations.pkl"
-IMAGES_PATH = "../../image2sdf/input_images_validation/images/"
-OUTPUT_DIR = "../../image2sdf/encoder_output/evaluation"
-LOGS_PATH = "../../image2sdf/logs/encoder/log.pkl"
-PLOT_PATH = "../../image2sdf/plots/encoder/"
+MATRIX_PATH = "../../least_old_image2sdf/input_images_validation/matrix_w2c.pkl"
+ANNOTATIONS_PATH = "../../least_old_image2sdf/input_images_validation/annotations.pkl"
+IMAGES_PATH = "../../least_old_image2sdf/input_images_validation/images/"
+OUTPUT_DIR = "../../least_old_image2sdf/encoder_output/evaluation"
+LOGS_PATH = "../../least_old_image2sdf/logs/encoder/log.pkl"
+PLOT_PATH = "../../least_old_image2sdf/plots/encoder/"
 
 def init_xyz(resolution):
     xyz = torch.empty(resolution * resolution * resolution, 3).cuda()

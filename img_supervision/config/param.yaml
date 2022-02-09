@@ -1,9 +1,55 @@
 
 resolution_used_for_training: 64
 latent_size: 6
-# latent_size: 2
 
-    ######################################## only used for testing ########################################
+decoder_learning_sdf:
+    num_epoch: 20
+
+    dataLoader:
+        batch_size: 1000
+        shuffle: True
+        # num_workers: 42
+        num_workers: 8
+
+    optimizer: 
+        eta_decoder: 0.001
+        # gamma_decoder_LR: 0.95  # for presampled sdf
+        gamma_decoder_LR: 0.998  # for continous sdf
+
+    lambda_sdf: 0.01
+
+
+decoder_learning_rgb:
+    num_batch_between_print: 10
+
+    lambda_rgb: 1
+
+    num_repetition_image: 10000
+    num_sample_per_image: 100
+    dataLoaderTraining:
+        batch_size: 10 # num image per batch
+        shuffle: True
+        # num_workers: 42
+        num_workers: 8
+
+    optimizer: 
+        eta_decoder: 0.00001
+        gamma_decoder_LR: 1
+        # gamma_decoder_LR: 0.995
+        # gamma_decoder_LR: 0.9993
+
+    num_images_validation: 5
+
+    dataLoaderValidation:
+        batch_size: 1
+        shuffle: False
+        # num_workers: 42
+        num_workers: 8
+    
+
+    
+
+
 
 param_3d:
     dataLoader:
@@ -12,7 +58,6 @@ param_3d:
         # num_workers: 42
         num_workers: 8
     
-
     lambda_variance: 0.0
     lambda_rgb: 0.01
 
