@@ -1,0 +1,13 @@
+mkdir results
+mkdir results/decoder_output
+mkdir results/decoder_output/evaluation
+mkdir results/decoder_output/interpolation
+mkdir results/decoder_output/synthesized
+mkdir results/encoder_output
+mkdir results/encoder_output/evaluation
+mkdir results/logs
+mkdir results/logs/decoder
+mkdir results/logs/encoder
+mkdir results/plots
+mkdir results/plots/decoder
+mkdir results/plots/encoder
