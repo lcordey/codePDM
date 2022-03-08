@@ -20,8 +20,9 @@ run "blender -b -P synthesize_images.py" to generate the input images for the en
 
 ## Training the networks
 Now your ready for training the network, you can run:
-- python code_neural_networks/scripts/decoderTraining.py
-- pyhton code_neural_networks/scripts/encoderTraining.py
+- cd code_neural_networks/scripts
+- python decoderTraining.py
+- pyhton encoderTraining.py
 
 ## Visualize results
 Finally, you can compute the results with the various "evaluations" scripts in code_neural_networks/scripts and then visualize them in the results folder.
