@@ -5,6 +5,7 @@ Render random code in the latent space with the decoder.
 import torch
 import pickle
 
+from utils import *
 from marching_cubes_rgb import *
 import IPython
 
@@ -15,20 +16,6 @@ DEFAULT_RENDER_RESOLUTION = 64
 DECODER_PATH = "../models_and_codes/decoder.pth"
 LATENT_CODE_PATH = "../models_and_codes/latent_code.pkl"
 OUTPUT_DIR = "../../results/decoder_output/synthesized"
-
-def init_xyz(resolution):
-    """
-    Init a grid, with 3D coordinates going from -0.5 to 0.5 in every direction.
-    """
-    
-    xyz = torch.empty(resolution * resolution * resolution, 3).cuda()
-
-    for x in range(resolution):
-        for y in range(resolution):
-            for z in range(resolution):
-                xyz[x * resolution * resolution + y * resolution + z, :] = torch.Tensor([x/(resolution-1)-0.5,y/(resolution-1)-0.5,z/(resolution-1)-0.5])
-
-    return xyz
 
 if __name__ == '__main__':
 

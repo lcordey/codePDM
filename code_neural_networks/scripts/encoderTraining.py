@@ -13,7 +13,7 @@ import pickle
 import time
 from skimage import color
 
-# from marching_cubes_rgb import *
+from marching_cubes_rgb import *
 from utils import *
 
 from networks import EncoderGrid
@@ -31,6 +31,8 @@ VEHICLE_VALIDATION_PATH = "../config/vehicle_validation.txt"
 ANNOTATIONS_PATH = "../../results/input_images/annotations.pkl"
 LOGS_PATH = "../../results/logs/encoder/log.pkl"
 IMAGES_PATH = "../../results/input_images/images/"
+
+VALIDATION_DURING_TRAINING = False
 
 
 def init_weights(m):
@@ -191,132 +193,133 @@ if __name__ == '__main__':
 
 
             # # validation 
-            # if samples_count%(param["num_batch_between_validation"] * batch_size) == 0 or samples_count == batch_size:
+            if VALIDATION_DURING_TRAINING:
+                if samples_count%(param["num_batch_between_validation"] * batch_size) == 0 or samples_count == batch_size:
 
-            #     encoder.eval()
+                    encoder.eval()
 
-            #     log_l2_val = []
-            #     log_sdf = []
-            #     log_rgb = []
-            #     log_lab = []
-            #     log_cham_sdf = []
-            #     log_cham_rgb = []
-            #     log_cham_lab = []
+                    log_l2_val = []
+                    log_sdf = []
+                    log_rgb = []
+                    log_lab = []
+                    log_cham_sdf = []
+                    log_cham_rgb = []
+                    log_cham_lab = []
 
-            #     samples_count_val = 0
-            #     for images_val, model_hash_val in validation_generator:
+                    samples_count_val = 0
+                    for images_val, model_hash_val in validation_generator:
 
-            #         # transfer to gpu
-            #         images_val = images_val.cuda()
-            #         target_code_val = dict_hash_2_code[model_hash_val[0]].unsqueeze(0).cuda() # -> [0] because batch size should always be 1 for validation
+                        # transfer to gpu
+                        images_val = images_val.cuda()
+                        target_code_val = dict_hash_2_code[model_hash_val[0]].unsqueeze(0).cuda() # -> [0] because batch size should always be 1 for validation
 
-            #         # compute predicted code
-            #         predicted_code_val = encoder(images_val)
+                        # compute predicted code
+                        predicted_code_val = encoder(images_val)
 
-            #         # compute loss
-            #         loss_l2= (predicted_code_val-target_code_val).norm()
-            #         log_l2_val.append(loss_l2.detach().cpu())
+                        # compute loss
+                        loss_l2= (predicted_code_val-target_code_val).norm()
+                        log_l2_val.append(loss_l2.detach().cpu())
 
-            #         # compute the sdf from codes 
-            #         sdf_validation = decoder(predicted_code_val.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
-            #         sdf_target= decoder(target_code_val.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
+                        # compute the sdf from codes 
+                        sdf_validation = decoder(predicted_code_val.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
+                        sdf_target= decoder(target_code_val.repeat_interleave(resolution * resolution * resolution, dim=0),xyz).detach()
 
-            #         # assign weight of 0 for easy samples that are well trained
-            #         threshold_precision = 1/resolution
-            #         weight_sdf = ~((sdf_validation[:,0] > threshold_precision).squeeze() * (sdf_target[:,0] > threshold_precision).squeeze()) \
-            #             * ~((sdf_validation[:,0] < -threshold_precision).squeeze() * (sdf_target[:,0] < -threshold_precision).squeeze())
+                        # assign weight of 0 for easy samples that are well trained
+                        threshold_precision = 1/resolution
+                        weight_sdf = ~((sdf_validation[:,0] > threshold_precision).squeeze() * (sdf_target[:,0] > threshold_precision).squeeze()) \
+                            * ~((sdf_validation[:,0] < -threshold_precision).squeeze() * (sdf_target[:,0] < -threshold_precision).squeeze())
 
-            #         # loss l1 in distance error per samples
-            #         loss_sdf = torch.nn.L1Loss(reduction='none')(sdf_validation[:,0].squeeze(), sdf_target[:,0])
-            #         loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
-            #         loss_sdf *= resolution
-                
-            #         # loss rgb in pixel value difference per color per samples
-            #         rgb_gt_normalized = sdf_target[:,1:]
-            #         loss_rgb = torch.nn.L1Loss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
-            #         loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
-            #         loss_rgb *= 255
+                        # loss l1 in distance error per samples
+                        loss_sdf = torch.nn.L1Loss(reduction='none')(sdf_validation[:,0].squeeze(), sdf_target[:,0])
+                        loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
+                        loss_sdf *= resolution
+                    
+                        # loss rgb in pixel value difference per color per samples
+                        rgb_gt_normalized = sdf_target[:,1:]
+                        loss_rgb = torch.nn.L1Loss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
+                        loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
+                        loss_rgb *= 255
 
-            #         # lab loss
-            #         # lab_validation = sdf_validation[:,1:] / 255
-            #         lab_validation = sdf_validation[:,1:]
-            #         lab_validation = torch.tensor(color.rgb2lab(lab_validation.cpu())).cuda()
+                        # lab loss
+                        # lab_validation = sdf_validation[:,1:] / 255
+                        lab_validation = sdf_validation[:,1:]
+                        lab_validation = torch.tensor(color.rgb2lab(lab_validation.cpu())).cuda()
 
-            #         # lab_target = sdf_target[:,1:] / 255
-            #         lab_target = sdf_target[:,1:]
-            #         lab_target = torch.tensor(color.rgb2lab(lab_target.cpu())).cuda()
+                        # lab_target = sdf_target[:,1:] / 255
+                        lab_target = sdf_target[:,1:]
+                        lab_target = torch.tensor(color.rgb2lab(lab_target.cpu())).cuda()
 
-            #         # loss LAB in pixel value difference per color per samples
-            #         loss_lab = torch.nn.L1Loss(reduction='none')(lab_validation, lab_target)
-            #         loss_lab = ((loss_lab[:,0] * weight_sdf) + (loss_lab[:,1] * weight_sdf) + (loss_lab[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
+                        # loss LAB in pixel value difference per color per samples
+                        loss_lab = torch.nn.L1Loss(reduction='none')(lab_validation, lab_target)
+                        loss_lab = ((loss_lab[:,0] * weight_sdf) + (loss_lab[:,1] * weight_sdf) + (loss_lab[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
 
-            #         # save losses
-            #         log_sdf.append(loss_sdf.detach().cpu())
-            #         log_rgb.append(loss_rgb.detach().cpu())
-            #         log_lab.append(loss_lab.detach().cpu())
+                        # save losses
+                        log_sdf.append(loss_sdf.detach().cpu())
+                        log_rgb.append(loss_rgb.detach().cpu())
+                        log_lab.append(loss_lab.detach().cpu())
 
-            #         # compute chamfer losses
+                        # compute chamfer losses
 
-            #         sdf_target[:,1:] = sdf_target[:,1:] * 255
-            #         sdf_target = sdf_target.reshape(resolution, resolution, resolution, 4).cpu().numpy()
-            #         if(np.min(sdf_target[:,:,:,0]) < 0 and np.max(sdf_target[:,:,:,0]) > 0):
-            #             vertices_target, faces_target = marching_cubes(sdf_target[:,:,:,0])
-            #             colors_v_target = exctract_colors_v(vertices_target, sdf_target)
+                        sdf_target[:,1:] = sdf_target[:,1:] * 255
+                        sdf_target = sdf_target.reshape(resolution, resolution, resolution, 4).cpu().numpy()
+                        if(np.min(sdf_target[:,:,:,0]) < 0 and np.max(sdf_target[:,:,:,0]) > 0):
+                            vertices_target, faces_target = marching_cubes(sdf_target[:,:,:,0])
+                            colors_v_target = exctract_colors_v(vertices_target, sdf_target)
 
-            #         vertices_target = torch.tensor(vertices_target.copy())
-            #         colors_v_target = torch.tensor(colors_v_target/255).unsqueeze(0).cuda()
-
-
-            #         sdf_validation[:,1:] = sdf_validation[:,1:] * 255
-            #         sdf_validation = sdf_validation.reshape(resolution, resolution, resolution, 4).cpu().numpy()
-            #         if(np.min(sdf_validation[:,:,:,0]) < 0 and np.max(sdf_validation[:,:,:,0]) > 0):
-            #             vertices_validation, faces_validation = marching_cubes(sdf_validation[:,:,:,0])
-            #             colors_v_validation = exctract_colors_v(vertices_validation, sdf_validation)
-
-            #         vertices_validation = torch.tensor(vertices_validation.copy())
-            #         colors_v_validation = torch.tensor(colors_v_validation/255).unsqueeze(0).cuda()
-
-            #         cham_sdf, cham_rgb, cham_lab = chamfer_distance_rgb(vertices_validation, vertices_target, colors_x = colors_v_validation, colors_y = colors_v_target)
-
-            #         log_cham_sdf.append(cham_sdf)
-            #         log_cham_rgb.append(cham_rgb)
-            #         log_cham_lab.append(cham_lab)
-
-            #         samples_count_val += 1
-            #         if samples_count_val == param["num_images_validation"] :
-            #             break
-
-            #     loss_l2_val = torch.tensor(log_l2_val).mean()
-            #     loss_sdf_val = torch.tensor(log_sdf).mean()
-            #     loss_rgb_val = torch.tensor(log_rgb).mean()
-            #     loss_lab_val = torch.tensor(log_lab).mean()
-            #     error_cham_sdf = torch.tensor(log_cham_sdf).mean()
-            #     error_cham_rgb = torch.tensor(log_cham_rgb).mean()
-            #     error_cham_lab = torch.tensor(log_cham_lab).mean()
-
-            #     logs["validation"]["l2"].append(loss_l2_val)
-            #     logs["validation"]["sdf"].append(loss_sdf_val)
-            #     logs["validation"]["rgb"].append(loss_rgb_val)
-            #     logs["validation"]["lab"].append(loss_lab_val)
-            #     logs["validation"]["cham_sdf"].append(error_cham_sdf)
-            #     logs["validation"]["cham_rgb"].append(error_cham_rgb)
-            #     logs["validation"]["cham_lab"].append(error_cham_lab)
+                        vertices_target = torch.tensor(vertices_target.copy())
+                        colors_v_target = torch.tensor(colors_v_target/255).unsqueeze(0).cuda()
 
 
-            #     print("\n****************************** VALIDATION ******************************")
+                        sdf_validation[:,1:] = sdf_validation[:,1:] * 255
+                        sdf_validation = sdf_validation.reshape(resolution, resolution, resolution, 4).cpu().numpy()
+                        if(np.min(sdf_validation[:,:,:,0]) < 0 and np.max(sdf_validation[:,:,:,0]) > 0):
+                            vertices_validation, faces_validation = marching_cubes(sdf_validation[:,:,:,0])
+                            colors_v_validation = exctract_colors_v(vertices_validation, sdf_validation)
 
-            #     print(f"l2 predicted code error: {loss_l2_val:2.3f}")
-            #     print(f"sdf error: {loss_sdf_val:2.3f}")
-            #     print(f"rgb error: {loss_rgb_val:2.3f}")
-            #     print(f"lab error: {loss_lab_val:2.3f}")
-            #     print(f"cham sdf error: {error_cham_sdf:2.3f}")
-            #     print(f"cham rgb error: {error_cham_rgb:2.3f}")
-            #     print(f"cham lab error: {error_cham_lab:2.3f}")
+                        vertices_validation = torch.tensor(vertices_validation.copy())
+                        colors_v_validation = torch.tensor(colors_v_validation/255).unsqueeze(0).cuda()
 
-            #     print("****************************** VALIDATION ******************************\n")
+                        cham_sdf, cham_rgb, cham_lab = chamfer_distance_rgb(vertices_validation, vertices_target, colors_x = colors_v_validation, colors_y = colors_v_target)
 
-                
-            #     encoder.train()
+                        log_cham_sdf.append(cham_sdf)
+                        log_cham_rgb.append(cham_rgb)
+                        log_cham_lab.append(cham_lab)
+
+                        samples_count_val += 1
+                        if samples_count_val == param["num_images_validation"] :
+                            break
+
+                    loss_l2_val = torch.tensor(log_l2_val).mean()
+                    loss_sdf_val = torch.tensor(log_sdf).mean()
+                    loss_rgb_val = torch.tensor(log_rgb).mean()
+                    loss_lab_val = torch.tensor(log_lab).mean()
+                    error_cham_sdf = torch.tensor(log_cham_sdf).mean()
+                    error_cham_rgb = torch.tensor(log_cham_rgb).mean()
+                    error_cham_lab = torch.tensor(log_cham_lab).mean()
+
+                    logs["validation"]["l2"].append(loss_l2_val)
+                    logs["validation"]["sdf"].append(loss_sdf_val)
+                    logs["validation"]["rgb"].append(loss_rgb_val)
+                    logs["validation"]["lab"].append(loss_lab_val)
+                    logs["validation"]["cham_sdf"].append(error_cham_sdf)
+                    logs["validation"]["cham_rgb"].append(error_cham_rgb)
+                    logs["validation"]["cham_lab"].append(error_cham_lab)
+
+
+                    print("\n****************************** VALIDATION ******************************")
+
+                    print(f"l2 predicted code error: {loss_l2_val:2.3f}")
+                    print(f"sdf error: {loss_sdf_val:2.3f}")
+                    print(f"rgb error: {loss_rgb_val:2.3f}")
+                    print(f"lab error: {loss_lab_val:2.3f}")
+                    print(f"cham sdf error: {error_cham_sdf:2.3f}")
+                    print(f"cham rgb error: {error_cham_rgb:2.3f}")
+                    print(f"cham lab error: {error_cham_lab:2.3f}")
+
+                    print("****************************** VALIDATION ******************************\n")
+
+                    
+                    encoder.train()
 
 
         scheduler.step()

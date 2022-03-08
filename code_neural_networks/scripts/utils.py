@@ -35,6 +35,21 @@ OFFSET = torch.tensor([-0.05,0.005, -0.025]).cuda()
 # OFFSET = torch.tensor([0,0,0]).cuda()
 
 
+def init_xyz(resolution):
+    """
+    Init a grid, with 3D coordinates going from -0.5 to 0.5 in every direction.
+    """
+    
+    xyz = torch.empty(resolution * resolution * resolution, 3).cuda()
+
+    for x in range(resolution):
+        for y in range(resolution):
+            for z in range(resolution):
+                xyz[x * resolution * resolution + y * resolution + z, :] = torch.Tensor([x/(resolution-1)-0.5,y/(resolution-1)-0.5,z/(resolution-1)-0.5])
+
+    return xyz
+    
+
 def chamfer_distance_rgb(
     x,
     y,
@@ -487,41 +502,3 @@ def render_image_from_pos(decoder_sdf, decoder_rgb, pos_along_ray, latent_code, 
 
 
 
-
-
-# def initialize_rendering_from_3d_pos(model_hash, image_id, annotations, pos_3d):
-#     nb_samples = len(pos_3d)
-
-#     frame, matrix_camera_to_object = get_camera_matrix_and_frame(model_hash, image_id, annotations)
-
-#     cam_pos_cam_coord = np.array([0,0,0,1])
-#     cam_pos_obj_coord = matrix_camera_to_object.dot(cam_pos_cam_coord)
-
-#     pos_init_ray = np.ones([nb_samples, 3])
-#     pos_init_ray[:,0] *= cam_pos_obj_coord[0]
-#     pos_init_ray[:,1] *= cam_pos_obj_coord[1]
-#     pos_init_ray[:,2] *= cam_pos_obj_coord[2]
-
-#     ray_marching_vector = np.empty([nb_samples, 3])
-
-#     for i in range(nb_samples):
-#         ray_marching_vector[i,:] = ((pos_3d[i] - cam_pos_obj_coord[:3])/np.linalg.norm(pos_3d[i] - cam_pos_obj_coord[:3]))
-
-#     min_step = np.zeros([nb_samples, 3])
-#     max_step = np.ones([nb_samples, 3]) * 1e38
-
-#     min_step[ray_marching_vector > 0] = (BOUND_MIN_CUBE - pos_init_ray[ray_marching_vector > 0]) / ray_marching_vector[ray_marching_vector > 0]
-#     min_step[ray_marching_vector < 0] = (BOUND_MAX_CUBE - pos_init_ray[ray_marching_vector < 0]) / ray_marching_vector[ray_marching_vector < 0]
-
-#     max_step[ray_marching_vector > 0] = (BOUND_MAX_CUBE - pos_init_ray[ray_marching_vector > 0]) / ray_marching_vector[ray_marching_vector > 0]
-#     max_step[ray_marching_vector < 0] = (BOUND_MIN_CUBE - pos_init_ray[ray_marching_vector < 0]) / ray_marching_vector[ray_marching_vector < 0]
-
-#     max_step[(ray_marching_vector == 0) * ~((pos_init_ray > BOUND_MIN_CUBE) * (pos_init_ray < BOUND_MAX_CUBE))] = 0
-
-#     min_step = min_step.max(1)
-#     max_step = max_step.min(1)
-
-#     max_step[min_step >= max_step] = 0
-#     min_step[min_step >= max_step] = 0
-
-#     return pos_init_ray, ray_marching_vector, min_step, max_step

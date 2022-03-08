@@ -12,9 +12,16 @@ from utils import *
 
 
 class DatasetDecoder(torch.utils.data.Dataset):
-    "One epoch is num_model * num_samples_per_model"
+    "This dataset is used to train the Decoder, it returns a random set of sample from random models with their ground truth sdf and rgb values"
+
     def __init__(self, list_hash, dict_gt_data, num_samples_per_model, dict_model_hash_2_idx):
-        'Initialization'
+        """ 
+        list_hash: list of strings, each the hash of a model to load
+        dict_gt_data: Dictionnary that contains the ground truth value given a model and an sample ID
+        num_samples_per_model: number of training samples per model
+        dict_model_hash_2_idx: Dictionnary that returns the ID corresponding to a model hash
+        """
+        
         self.list_hash = list_hash
         self.dict_gt_data = dict_gt_data
         self.num_samples_per_model = num_samples_per_model
@@ -23,7 +30,6 @@ class DatasetDecoder(torch.utils.data.Dataset):
     def __len__(self):
         'Denotes the total number of samples'
         return len(self.list_hash) * self.num_samples_per_model
-        # return len(self.list_hash)
 
     def __getitem__(self, index):
         'Generates one sample of data'
@@ -41,9 +47,19 @@ class DatasetDecoder(torch.utils.data.Dataset):
         return model_idx, sdf_gt, rgb_gt, xyz_idx
 
 class DatasetGrid(torch.utils.data.Dataset):
-    "One epoch is num_model * num_image_per_model"
+    "This dataset is used to train the Encoder, it returns a 3D tensor generated with an image and a bounding box"
+
     def __init__(self, list_hash, annotations, num_images_per_model, param_image, param_network, image_path):
-        'Initialization'
+        """ 
+        list_hash: list of strings, each the hash of a model to load
+        annotations: Dictionnary annotations that contains the 3D position of the bounding box,
+                     as well as the intrinsics and extrinsics matrices
+        num_samples_per_model: number of training images per model
+        param_image: contains the specs of the images
+        param_network: contains the specs of the networks, can be modified in the "config/param.yaml" file
+        image_path: path of the folder containing the images
+        """
+
         self.list_hash = list_hash
         self.annotations = annotations
         self.num_images_per_model = num_images_per_model

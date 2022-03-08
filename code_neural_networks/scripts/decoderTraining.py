@@ -20,7 +20,7 @@ from skimage import color
 
 from networks import Decoder
 from dataLoader import DatasetDecoder
-# from marching_cubes_rgb import *
+from utils import *
 
 import IPython
 
@@ -38,18 +38,6 @@ num_model_duplicate = 2
 # num_model_duplicate = 0
 ######################################## only used for testing ########################################
 
-
-
-def init_xyz(resolution):
-    """ fill 3d grid representing 3d location to give as input to the decoder """
-    xyz = torch.empty(resolution * resolution * resolution, 3).cuda()
-
-    for x in range(resolution):
-        for y in range(resolution):
-            for z in range(resolution):
-                xyz[x * resolution * resolution + y * resolution + z, :] = torch.Tensor([x/(resolution-1)-0.5,y/(resolution-1)-0.5,z/(resolution-1)-0.5])
-
-    return xyz
 
 def init_lat_codes(num_scenes, latent_size):
     """initialize random latent code for every model"""

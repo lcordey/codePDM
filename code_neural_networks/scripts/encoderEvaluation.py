@@ -238,79 +238,7 @@ if __name__ == '__main__':
             vertices_target = torch.tensor(vertices_target.copy())
             colors_v_target = torch.tensor(colors_v_target/255).unsqueeze(0).cuda()
 
-            ########################################################### CODE FOR RENDERING ALL IMAGES ############################################################
 
-            # for j in range(num_model_2_render):
-            
-            #     # decode
-            #     sdf_result = np.empty([resolution, resolution, resolution, 4])
-
-            #     for x in range(resolution):
-
-            #         sdf_pred = decoder(latent_code[model_id,j,:].repeat(resolution * resolution, 1),xyz[x * resolution * resolution: (x+1) * resolution * resolution]).detach()
-
-            #         sdf_pred[:,0] = sdf_pred[:,0] * resolution
-            #         sdf_pred[:,1:] = torch.clamp(sdf_pred[:,1:], 0, 1)
-            #         sdf_pred[:,1:] = sdf_pred[:,1:] * 255
-
-            #         sdf_result[x, :, :, :] = np.reshape(sdf_pred[:,:].cpu(), [resolution, resolution, 4])
-
-
-            #     # print('Minimum and maximum value: %f and %f. ' % (np.min(sdf_result[:,:,:,0]), np.max(sdf_result[:,:,:,0])))
-            #     if(np.min(sdf_result[:,:,:,0]) < 0 and np.max(sdf_result[:,:,:,0]) > 0):
-            #         vertices, faces = marching_cubes(sdf_result[:,:,:,0])
-            #         colors_v = exctract_colors_v(vertices, sdf_result)
-            #         colors_f = exctract_colors_f(colors_v, faces)
-            #         off_file = '%s/%s_%d.off' %(OUTPUT_DIR, model_hash, j)
-            #         write_off(off_file, vertices, faces, colors_f)
-            #         print('Wrote %s_%d.off' % (model_hash, j))
-            #     else:
-            #         print("surface level: 0, should be comprise in between the minimum and maximum value")
-
-            #     # compute the sdf from codes 
-            #     sdf_validation = torch.tensor(sdf_result).reshape(resolution * resolution * resolution, 4)
-            #     sdf_target= torch.tensor(sdf_target).reshape(resolution * resolution * resolution, 4)
-
-            #     # assign weight of 0 for easy samples that are well trained
-            #     threshold_precision = 1/resolution
-            #     weight_sdf = ~((sdf_validation[:,0] > threshold_precision).squeeze() * (sdf_target[:,0] > threshold_precision).squeeze()) \
-            #         * ~((sdf_validation[:,0] < -threshold_precision).squeeze() * (sdf_target[:,0] < -threshold_precision).squeeze())
-
-            #     # loss l1 in distance error per samples
-            #     loss_sdf = torch.nn.L1Loss(reduction='none')(sdf_validation[:,0].squeeze(), sdf_target[:,0])
-            #     loss_sdf = (loss_sdf * weight_sdf).mean() * weight_sdf.numel()/weight_sdf.count_nonzero()
-            
-            #     # loss rgb in pixel value difference per color per samples
-            #     rgb_gt_normalized = sdf_target[:,1:]
-            #     loss_rgb = torch.nn.L1Loss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
-            #     loss_rgb = ((loss_rgb[:,0] * weight_sdf) + (loss_rgb[:,1] * weight_sdf) + (loss_rgb[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
-
-            #     print(f"loss_sdf: {loss_sdf}")
-            #     print(f"loss_rgb: {loss_rgb}")
-
-
-            #     # lab loss
-            #     sdf_validation[:,1:] = sdf_validation[:,1:] / 255
-            #     sdf_validation[:,1:] = torch.tensor(color.rgb2lab(sdf_validation[:,1:]))
-
-            #     sdf_target[:,1:] = sdf_target[:,1:] / 255
-            #     sdf_target[:,1:] = torch.tensor(color.rgb2lab(sdf_target[:,1:]))
-
-            #     # loss LAB in pixel value difference per color per samples
-            #     rgb_gt_normalized = sdf_target[:,1:]
-            #     loss_lab = torch.nn.L1Loss(reduction='none')(sdf_validation[:,1:], rgb_gt_normalized)
-            #     loss_lab = ((loss_lab[:,0] * weight_sdf) + (loss_lab[:,1] * weight_sdf) + (loss_lab[:,2] * weight_sdf)).mean()/3 * weight_sdf.numel()/weight_sdf.count_nonzero()
-
-            #     print(f"loss_lab: {loss_lab}")
-
-            #     l2_error = (dict_hash_2_code[model_hash].cuda() - latent_code[model_id,j,:]).norm()
-            #     print(f"l2_error: {l2_error}")
-
-            ########################################################### CODE FOR RENDERING ALL IMAGES ############################################################
-
-
-            ################################################# CODE FOR RENDERING ONLY THE MEAN OF ALL PREDICTION #################################################
-        
             # decode
             sdf_validation = np.empty([resolution, resolution, resolution, 4])
             mean_code = latent_code[model_id,:,:].mean(dim=0)
@@ -375,8 +303,6 @@ if __name__ == '__main__':
 
 
             cham_sdf, cham_rgb, cham_lab = chamfer_distance_rgb(vertices, vertices_target, colors_x = colors_v, colors_y = colors_v_target)
-
-            ################################################# CODE FOR RENDERING ONLY THE MEAN OF ALL PREDICTION #################################################
 
 
 
