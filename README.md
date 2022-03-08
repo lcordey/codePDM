@@ -6,17 +6,17 @@ We aim at modeling the shape and appearance of a vehicle detected by a tracker t
 One can find the report in this folder.
 
 ## Creating the environment
-create the python virutal environment with ./code_neural_networks/create_venv.sh
+create the python virutal environment with "cd code_neural_networks" and "./create_venv.sh"
 
 ## Initializing folders
-Init the result folder with ./init_results_folder.sh
+Init the result folder with "./init_results_folder.sh"
 
 Add the SDF files of the models that you want to use for training, then update the "vehicle_list_all.txt" file in "code_neural_networks/config/"
 
 ## Generate training images
 open synthesize_images.py with a text editor and update the path of DEFAULT_SHAPENET_DIRECTORY and DEFAULT_DIRECTORY.
 
-run blender -b -P synthesize_images.py to generate the input images for the encoder.
+run "blender -b -P synthesize_images.py" to generate the input images for the encoder.
 
 ## Training the networks
 Now your ready for training the network, you can run:
