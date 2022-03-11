@@ -1,0 +1,1 @@
+mkdir -p results/decoder_output/evaluation results/decoder_output/interpolation results/decoder_output/synthesized results/encoder_output results/encoder_output/evaluation results/logs results/logs/decoder results/logs/encoder results/plots results/plots/decoder results/plots/encoder
